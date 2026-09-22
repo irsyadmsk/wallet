@@ -112,10 +112,10 @@ class _QAutoCompleteState extends State<QAutoComplete> {
                                       textEditingController.clear();
                                       widget.onChanged(null, null);
                                     },
-                                    child: Icon(Icons.close),
+                                    child: Icon(Icons.close_rounded),
                                   ),
                                   const SizedBox(width: 8.0),
-                                  Icon(Icons.search),
+                                  Icon(Icons.search_rounded),
                                   const SizedBox(width: 8.0),
                                 ],
                               ),

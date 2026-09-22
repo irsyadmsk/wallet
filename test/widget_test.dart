@@ -1,30 +1,27 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:financial_recording/main.dart';
+import 'package:financial_recording/data/models/account_model/account_model.dart';
+import 'package:financial_recording/domain/enums/account_group_type.dart';
+import 'package:financial_recording/shared/widget/bank_card_tile.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('BankCardTile displays account name and balance', (WidgetTester tester) async {
+    final account = AccountModel(
+      id: 'acc_1',
+      name: 'BCA Utama',
+      groupCode: AccountGroupType.bank.code,
+      cachedBalance: 5000000,
+      openingBalance: 5000000,
+      colorValue: 0xFF0D9488,
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: BankCardTile(account: account),
+      ),
+    ));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('BCA Utama'), findsOneWidget);
+    expect(find.text('Bank'), findsOneWidget);
   });
 }

@@ -1,322 +1,457 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:financial_recording/core.dart';
-import 'package:financial_recording/presentation/dashboard/widget/monthly_budget_card.dart';
+import 'package:financial_recording/app/shell_controller.dart';
+import 'package:financial_recording/config/app_config.dart';
+import 'package:financial_recording/presentation/account_detail/view/account_detail_view.dart';
+import 'package:financial_recording/presentation/dashboard/controller/dashboard_controller.dart';
+import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
+import 'package:financial_recording/presentation/goals/view/goals_view.dart';
+import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
+import 'package:financial_recording/shared/responsive/adaptive_grid.dart';
+import 'package:financial_recording/shared/responsive/breakpoints.dart';
+import 'package:financial_recording/shared/responsive/content_shell.dart';
+import 'package:financial_recording/shared/theme/app_colors.dart';
+import 'package:financial_recording/shared/theme/app_spacing.dart';
+import 'package:financial_recording/shared/widget/art_icon.dart';
+import 'package:financial_recording/shared/widget/bank_card_tile.dart';
+import 'package:financial_recording/shared/widget/health_score_card.dart';
+import 'package:financial_recording/shared/widget/quick_template_bar.dart';
+import 'package:financial_recording/shared/widget/section_card.dart';
+import 'package:financial_recording/shared/widget/tx_tile.dart';
+import 'package:financial_recording/util/money/money_format.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(DashboardController());
+    final c = Get.put(DashboardController(), tag: 'dashboard');
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: scaffoldBackgroundColor,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        titleSpacing: 20,
-        title: Row(
-          children: [
-            // User Avatar
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4F46E5), Color(0xFF818CF8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF4F46E5).withOpacity(0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  "MI",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  controller.greeting,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  controller.authorName,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+        backgroundColor: Colors.transparent,
+        title: Text(AppConfig.appName),
         actions: [
           IconButton(
-            onPressed: () {
-              Get.to(() => const ProfileView());
+            tooltip: 'Target Finansial',
+            icon: const Icon(Icons.flag_rounded),
+            onPressed: () async {
+              await Get.to(() => const GoalsView());
+              c.refresh();
             },
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.settings_outlined,
-                color: Color(0xFF334155),
-                size: 20,
-              ),
-            ),
-            tooltip: "Pengaturan",
           ),
-          const SizedBox(width: 12),
+          IconButton(
+            tooltip: 'Pengaturan',
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: () => Get.find<ShellController>().goTo(8),
+          ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          await controller.initializeData();
-        },
+        onRefresh: () async => c.refresh(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Hero Card Wallet
-              CardWallet(controller: controller),
-              const SizedBox(height: 18),
-
-              // 2. Quick Action Buttons
-              const ButtonTransaction(),
-              const SizedBox(height: 18),
-
-              // 3. Monthly Budget Tracker Card
-              MonthlyBudgetCard(controller: controller),
-              const SizedBox(height: 24),
-
-              // 4. Recent Transactions Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Transaksi Terkini",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      if (Get.isRegistered<MenuListController>()) {
-                        Get.find<MenuListController>().selectedIndex.value = 1;
-                      } else {
-                        Get.to(() => const HistoryTransactionView());
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+          child: ContentShell(
+            child: Obx(() => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _NetWorthCard(controller: c),
+                    const SizedBox(height: AppSpacing.lg),
+                    if (c.accountsList.isNotEmpty) ...[
+                      _BankCardsCarousel(controller: c),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    if (c.templates.isNotEmpty) ...[
+                      QuickTemplateBar(
+                        templates: c.templates,
+                        onRecorded: c.refresh,
                       ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "Lihat Semua",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 11,
-                            color: primaryColor,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // 5. Recent Transactions List
-              Obx(() {
-                if (controller.transactions.isEmpty) {
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 36),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    if (c.healthReport.value != null) ...[
+                      HealthScoreCard(report: c.healthReport.value!),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    AdaptiveGrid(
+                      columnsOverride: context.isCompact ? 1 : 2,
                       children: [
-                        Icon(
-                          Icons.receipt_long_outlined,
-                          size: 48,
-                          color: Colors.grey[350],
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Belum ada transaksi tercatat",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF94A3B8),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        _CashflowCard(controller: c),
+                        _BudgetOverviewCard(controller: c),
                       ],
                     ),
-                  );
-                }
-
-                // Show top 6 recent transactions
-                final recentList = controller.transactions.take(6).toList();
-
-                return ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: recentList.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final item = recentList[index];
-                    return _buildTransactionCard(item);
-                  },
-                );
-              }),
-            ],
+                    const SizedBox(height: AppSpacing.lg),
+                    if (c.activeDebtCount.value > 0) ...[
+                      InkWell(
+                        onTap: () => Get.find<ShellController>().goTo(6),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceRaised.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: colors.border.withValues(alpha: 0.6)),
+                          ),
+                          child: Row(
+                            children: [
+                              ArtIcon(
+                                size: 38,
+                                icon: Icons.handshake_rounded,
+                                iconColor: colors.primary,
+                                backgroundColor: colors.primaryContainer.withValues(alpha: 0.35),
+                                borderColor: colors.primary.withValues(alpha: 0.25),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'Utang & Piutang Aktif',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13.5,
+                                            color: colors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: colors.primaryContainer,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            '${c.activeDebtCount.value}',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: colors.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Utang: ${c.activeDebtAmount.value.rupiah}  ·  Piutang: ${c.activeLoanAmount.value.rupiah}',
+                                      style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.chevron_right_rounded, color: colors.textTertiary, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    if (c.upcomingRecurring.isNotEmpty) ...[
+                      SectionCard(
+                        title: 'Jatuh tempo minggu ini',
+                        child: Column(
+                          children: [
+                            for (final r in c.upcomingRecurring)
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(Icons.event_repeat_rounded, color: colors.warning),
+                                title: Text(r.memo?.isNotEmpty == true ? r.memo! : 'Transaksi berulang'),
+                                subtitle: Text('Jatuh tempo ${DateFormat('d MMM', 'id_ID').format(r.nextRunDate)}'),
+                                trailing: TextButton(
+                                  onPressed: () async {
+                                    await c.confirmRecurring(r.id);
+                                  },
+                                  child: Text(r.amount.rupiah),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    SectionCard(
+                      title: 'Transaksi terbaru',
+                      trailing: TextButton(
+                        onPressed: () => Get.find<ShellController>().goTo(1),
+                        child: const Text('Lihat semua'),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                      child: c.recentTransactions.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(AppSpacing.lg),
+                              child: Text('Belum ada transaksi.'),
+                            )
+                          : Column(
+                              children: [
+                                for (final tx in c.recentTransactions)
+                                  TxTile(
+                                    tx: tx,
+                                    onTap: () async {
+                                      final saved = await showAdaptiveSheet<bool>(
+                                        context,
+                                        builder: (_) => FormTxView(existing: tx),
+                                      );
+                                      if (saved == true) c.refresh();
+                                    },
+                                  ),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: AppSpacing.xxxl),
+                  ],
+                ))
+                .animate()
+                .fadeIn(duration: _entranceDuration(context), curve: Curves.easeOut)
+                .slideY(begin: 0.02, end: 0, duration: _entranceDuration(context), curve: Curves.easeOut),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTransactionCard(TransactionModel item) {
-    Color typeColor;
-    Color iconBgColor;
-    IconData iconData;
-    String prefix;
+  /// One staged opening on entry — skipped (zero-duration) when the user
+  /// has reduced-motion accessibility settings enabled.
+  Duration _entranceDuration(BuildContext context) =>
+      (MediaQuery.maybeOf(context)?.disableAnimations ?? false) ? Duration.zero : const Duration(milliseconds: 320);
+}
 
-    if (item.type == 'income') {
-      typeColor = const Color(0xFF10B981); // Emerald
-      iconBgColor = const Color(0xFFD1FAE5);
-      iconData = Icons.arrow_downward_rounded;
-      prefix = "+ ";
-    } else if (item.type == 'expense') {
-      typeColor = const Color(0xFFEF4444); // Red
-      iconBgColor = const Color(0xFFFEE2E2);
-      iconData = Icons.arrow_upward_rounded;
-      prefix = "- ";
-    } else {
-      typeColor = const Color(0xFF0EA5E9); // Blue
-      iconBgColor = const Color(0xFFE0F2FE);
-      iconData = Icons.swap_horiz_rounded;
-      prefix = "";
-    }
+class _NetWorthCard extends StatelessWidget {
+  const _NetWorthCard({required this.controller});
+  final DashboardController controller;
 
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
     return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.015),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        gradient: LinearGradient(
+          colors: [colors.primary, Color.lerp(colors.primary, Colors.black, 0.25)!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        onTap: () {
-          Get.to(() => TransactionDetailView(transaction: item));
-        },
-        leading: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: iconBgColor,
-            borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Kekayaan bersih', style: TextStyle(color: colors.onPrimary.withValues(alpha: 0.8))),
+          const SizedBox(height: 6),
+          Text(
+            controller.netWorth.value.rupiah,
+            style: TextStyle(color: colors.onPrimary, fontSize: 30, fontWeight: FontWeight.w800),
           ),
-          child: Icon(iconData, color: typeColor, size: 20),
-        ),
-        title: Text(
-          item.categoryName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: Color(0xFF0F172A),
-          ),
-        ),
-        subtitle: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                item.walletName,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniStat(
+                  label: 'Aset',
+                  value: controller.totalAssets.value.rupiah,
+                  color: colors.onPrimary,
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              DateFormat("dd MMM yyyy", "id").format(item.createdAt),
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF94A3B8),
+              Container(width: 1, height: 32, color: colors.onPrimary.withValues(alpha: 0.25)),
+              Expanded(
+                child: _MiniStat(
+                  label: 'Liabilitas',
+                  value: controller.totalLiabilities.value.rupiah,
+                  color: colors.onPrimary,
+                ),
               ),
-            ),
-          ],
-        ),
-        trailing: Text(
-          "$prefix Rp ${NumberFormat.decimalPattern('id').format(item.amount)}",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: typeColor,
+            ],
           ),
-        ),
+        ],
       ),
     );
   }
 }
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({required this.label, required this.value, required this.color});
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: color.withValues(alpha: 0.75), fontSize: 12)),
+          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CashflowCard extends StatelessWidget {
+  const _CashflowCard({required this.controller});
+  final DashboardController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return SectionCard(
+      title: 'Bulan ini',
+      child: Row(
+        children: [
+          Expanded(
+            child: _FlowStat(
+              icon: Icons.arrow_downward_rounded,
+              label: 'Pemasukan',
+              value: controller.monthIncome.value.rupiah,
+              color: colors.income,
+            ),
+          ),
+          Expanded(
+            child: _FlowStat(
+              icon: Icons.arrow_upward_rounded,
+              label: 'Pengeluaran',
+              value: controller.monthExpense.value.rupiah,
+              color: colors.expense,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlowStat extends StatelessWidget {
+  const _FlowStat({required this.icon, required this.label, required this.value, required this.color});
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(color: context.colors.textSecondary, fontSize: 12)),
+        ]),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+      ],
+    );
+  }
+}
+
+class _BudgetOverviewCard extends StatelessWidget {
+  const _BudgetOverviewCard({required this.controller});
+  final DashboardController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final b = controller.overallBudget.value;
+    if (b == null || b.limit <= 0) {
+      return SectionCard(
+        title: 'Anggaran bulanan',
+        trailing: TextButton(
+          onPressed: () => Get.find<ShellController>().goTo(3),
+          child: const Text('Atur'),
+        ),
+        child: Text('Belum ada anggaran diset.', style: TextStyle(color: colors.textSecondary)),
+      );
+    }
+    final progressColor = b.isOver ? colors.budgetOver : (b.isNearLimit ? colors.budgetWarn : colors.budgetSafe);
+    return SectionCard(
+      title: 'Anggaran bulanan',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: b.percent.clamp(0, 1).toDouble(),
+              minHeight: 8,
+              backgroundColor: colors.border,
+              valueColor: AlwaysStoppedAnimation(progressColor),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text('${b.spent.rupiah} dari ${b.limit.rupiah}', style: TextStyle(color: colors.textSecondary, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+}
+
+class _BankCardsCarousel extends StatelessWidget {
+  const _BankCardsCarousel({required this.controller});
+  final DashboardController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final accounts = controller.accountsList.where((a) => !a.isArchived).toList();
+    if (accounts.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.credit_card_rounded, size: 18, color: colors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Kartu Rekening & Dompet',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () => Get.find<ShellController>().goTo(2),
+              child: const Text('Lihat semua'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        SizedBox(
+          height: 124,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: accounts.length,
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final acc = accounts[index];
+              return BankCardTile(
+                account: acc,
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AccountDetailView(accountId: acc.id)),
+                  );
+                  controller.refresh();
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+

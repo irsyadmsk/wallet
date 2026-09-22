@@ -1,0 +1,30 @@
+{
+  // Deployed as a Cloudflare Worker serving static assets — same pattern as
+  // apps/academy in the irsyads monorepo. `flutter build web --release`
+  // produces the static bundle in build/web; there is no server code, this
+  // Worker is purely a file server + custom-domain attachment.
+  "name": "wallet",
+  "compatibility_date": "2026-09-22",
+
+  "assets": {
+    "directory": "./build/web",
+
+    // Flutter Web is a single-page app with in-app (not URL-based)
+    // navigation — any unknown path should still resolve to index.html so
+    // the app can boot instead of hitting a raw 404.
+    "not_found_handling": "single-page-application"
+  },
+
+  // Custom domain. Wrangler creates the DNS record itself on first deploy
+  // (same as academy.irsyads.com) — no manual dashboard step needed.
+  "routes": [
+    {
+      "pattern": "wallet.irsyads.com",
+      "custom_domain": true
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}

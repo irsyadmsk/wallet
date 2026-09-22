@@ -45,3 +45,8 @@ app.*.map.json
 /android/app/release
 
 .vscode/templates
+
+# Personal financial data imported from a Money Manager (.mmbak) backup —
+# never commit this, it's the user's private financial history.
+assets/seed/*.json
+*.mmbak

@@ -35,7 +35,6 @@ dependencies:
   get: ^4.7.3
   google_fonts: ^6.1.1
   flutter_animate: ^4.5.0
-  dio: ^5.0.1
   intl: ^0.20.1
   shared_preferences: ^2.2.2
   hive: ^2.2.3
@@ -46,6 +45,13 @@ dependencies:
   url_launcher: ^6.3.2
   file_picker: ^10.3.7
   permission_handler: ^12.0.1
+  uuid: ^4.5.1
+  fl_chart: ^1.0.0
+  sqlite3: ^2.4.6
+  sqlite3_flutter_libs: ^0.5.24
+  path: ^1.9.0
+  image_picker: ^1.1.2
+  google_mlkit_text_recognition: ^0.15.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0
@@ -53,7 +59,7 @@ dev_dependencies:
   build_runner: ^2.4.0
   flutter_test:
     sdk: flutter
-    
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -78,6 +84,7 @@ flutter:
     - assets/visual/phone.png
     - assets/icon_pack/
     - assets/icon_pack/bank_logo/
+    - assets/seed/
     
 
   # An image asset can refer to one or more resolution-specific "variants", see

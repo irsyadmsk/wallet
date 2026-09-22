@@ -45,8 +45,6 @@ class _QNumberFieldState extends State<QNumberField> {
   void initState() {
     super.initState();
     value = widget.value?.replaceAll(RegExp('[^0-9.]'), '');
-    print('value: $value');
-    print('value: ${widget.value}');
     controller = TextEditingController();
     controller.text = formattedValue?.toString() ?? '';
   }
@@ -67,16 +65,17 @@ class _QNumberFieldState extends State<QNumberField> {
       constraints: BoxConstraints(minHeight: inputHeight),
       child: TextFormField(
         controller: controller,
+        style: TextStyle(color: textColor),
         validator: widget.validator,
         keyboardType: TextInputType.number,
         maxLength: widget.maxLength,
         enabled: widget.enabled,
         decoration: InputDecoration(
           labelText: widget.label,
-          suffixIcon: widget.hideSuffix ? null : Icon(Icons.numbers),
+          suffixIcon: widget.hideSuffix ? null : Icon(Icons.numbers, color: secondaryTextColor),
           helperText: widget.helper,
           hintText: widget.hint,
-          fillColor: Colors.white,
+          fillColor: inputColor,
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: primaryColor),
             borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -92,11 +91,9 @@ class _QNumberFieldState extends State<QNumberField> {
         ),
         onChanged: (newValue) {
           final newValue = controller.text;
-          print('newValue: $newValue');
 
           value = newValue.replaceAll(RegExp('[^0-9.]'), '');
 
-          print('value: $value');
           controller.text = formattedValue ?? '';
           controller.selection = TextSelection.collapsed(
             offset: controller.text.length,
@@ -107,11 +104,9 @@ class _QNumberFieldState extends State<QNumberField> {
         },
         onFieldSubmitted: (newValue) {
           final newValue = controller.text;
-          print('newValue: $newValue');
 
           value = newValue.replaceAll(RegExp('[^0-9.]'), '');
 
-          print('value: $value');
           controller.text = formattedValue ?? '';
           controller.selection = TextSelection.collapsed(
             offset: controller.text.length,

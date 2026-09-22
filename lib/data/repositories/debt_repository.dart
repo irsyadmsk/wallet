@@ -1,0 +1,67 @@
+import 'package:hive/hive.dart';
+import 'package:financial_recording/config/app_config_v2.dart';
+import 'package:financial_recording/data/models/debt_model/debt_model.dart';
+
+class DebtRepository {
+  Box<DebtLoanModel> get _box => Hive.box<DebtLoanModel>(AppBoxes.debts);
+
+  List<DebtLoanModel> all() {
+    final list = _box.values.toList();
+    list.sort((a, b) {
+      if (a.isSettled != b.isSettled) {
+        return a.isSettled ? 1 : -1;
+      }
+      return (a.dueDate ?? DateTime(2099)).compareTo(b.dueDate ?? DateTime(2099));
+    });
+    return list;
+  }
+
+  List<DebtLoanModel> debts() => all().where((d) => !d.isLoan).toList();
+  List<DebtLoanModel> loans() => all().where((d) => d.isLoan).toList();
+  List<DebtLoanModel> active() => all().where((d) => !d.isSettled).toList();
+
+  DebtLoanModel? byId(String id) {
+    try {
+      return _box.values.firstWhere((d) => d.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> upsert(DebtLoanModel debt) async {
+    if (debt.remainingAmount <= 0) {
+      debt.isSettled = true;
+      debt.remainingAmount = 0;
+    }
+    final key = _keyFor(debt.id);
+    if (key != null) {
+      await _box.put(key, debt);
+    } else {
+      await _box.add(debt);
+    }
+  }
+
+  Future<void> recordPayment(String id, int amount) async {
+    final debt = byId(id);
+    if (debt == null || amount <= 0) return;
+    debt.remainingAmount = (debt.remainingAmount - amount).clamp(0, debt.totalAmount);
+    if (debt.remainingAmount <= 0) {
+      debt.isSettled = true;
+    }
+    await upsert(debt);
+  }
+
+  Future<void> delete(String id) async {
+    final key = _keyFor(id);
+    if (key != null) await _box.delete(key);
+  }
+
+  Future<void> clear() => _box.clear();
+
+  dynamic _keyFor(String id) {
+    for (final key in _box.keys) {
+      if (_box.get(key)?.id == id) return key;
+    }
+    return null;
+  }
+}

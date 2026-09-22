@@ -1,59 +1,13 @@
 /*
-We believe, the class name must be unique. 
+We believe, the class name must be unique.
 If there is a conflicting class name in this file,
 it means you have to rename it to something more unique.
-fileCount: 73
+
+Legacy barrel file — kept only for the reusable shared widgets/utils that
+survived the v2 rebuild. New (v2) code imports its own packages directly
+instead of adding to this barrel.
 */
 export 'package:financial_recording/config/app_config.dart';
-export 'package:financial_recording/core_package.dart';
-export 'package:financial_recording/data/repositories/i_transaction_repository.dart';
-export 'package:financial_recording/data/repositories/transaction_repository.dart';
-export 'package:financial_recording/data/repositories/i_wallet_repository.dart';
-export 'package:financial_recording/data/repositories/wallet_repository.dart';
-export 'package:financial_recording/data/repositories/i_category_repository.dart';
-export 'package:financial_recording/data/repositories/category_repository.dart';
-export 'package:financial_recording/models/category_model/category_model.dart';
-export 'package:financial_recording/models/transaction_model/transaction_model.dart';
-export 'package:financial_recording/models/user_model/user_model.dart';
-export 'package:financial_recording/models/wallet_model/wallet_model.dart';
-export 'package:financial_recording/presentation/analytics/controller/analytics_controller.dart';
-export 'package:financial_recording/presentation/analytics/view/analytics_view.dart';
-export 'package:financial_recording/util/budget_service/budget_service.dart';
-export 'package:financial_recording/presentation/category/controller/category_controller.dart';
-export 'package:financial_recording/presentation/category/view/category_view.dart';
-export 'package:financial_recording/presentation/category_expanses/controller/category_expanses_controller.dart';
-export 'package:financial_recording/presentation/category_expanses/view/category_expanses_view.dart';
-export 'package:financial_recording/presentation/category_income/controller/category_income_controller.dart';
-export 'package:financial_recording/presentation/category_income/view/category_income_view.dart';
-export 'package:financial_recording/presentation/dashboard/controller/dashboard_controller.dart';
-export 'package:financial_recording/presentation/dashboard/view/dashboard_view.dart';
-export 'package:financial_recording/presentation/dashboard/widget/button_transaction.dart';
-export 'package:financial_recording/presentation/dashboard/widget/card_wallet.dart';
-export 'package:financial_recording/presentation/form_category/controller/form_category_controller.dart';
-export 'package:financial_recording/presentation/form_category/view/form_category_view.dart';
-export 'package:financial_recording/presentation/form_expense/controller/form_expense_controller.dart';
-export 'package:financial_recording/presentation/form_expense/view/form_expense_view.dart';
-export 'package:financial_recording/presentation/form_income/controller/form_income_controller.dart';
-export 'package:financial_recording/presentation/form_income/view/form_income_view.dart';
-export 'package:financial_recording/presentation/form_transfer/controller/form_transfer_controller.dart';
-export 'package:financial_recording/presentation/form_transfer/view/form_transfer_view.dart';
-export 'package:financial_recording/presentation/form_wallet/controller/form_wallet_controller.dart';
-export 'package:financial_recording/presentation/form_wallet/view/form_wallet_view.dart';
-export 'package:financial_recording/presentation/history_transaction/controller/history_transaction_controller.dart';
-export 'package:financial_recording/presentation/history_transaction/view/history_transaction_view.dart';
-export 'package:financial_recording/presentation/login/controller/login_controller.dart';
-export 'package:financial_recording/presentation/login/view/login_view.dart';
-export 'package:financial_recording/presentation/menu_list/controller/menu_list_controller.dart';
-export 'package:financial_recording/presentation/menu_list/view/menu_list_view.dart';
-export 'package:financial_recording/presentation/profile/controller/profile_controller.dart';
-export 'package:financial_recording/presentation/profile/view/profile_view.dart';
-export 'package:financial_recording/presentation/register/controller/register_controller.dart';
-export 'package:financial_recording/presentation/register/view/register_view.dart';
-export 'package:financial_recording/presentation/wallet/controller/wallet_controller.dart';
-export 'package:financial_recording/presentation/wallet/view/wallet_view.dart';
-export 'package:financial_recording/presentation/wallet_detail/controller/wallet_detail_controller.dart';
-export 'package:financial_recording/presentation/wallet_detail/view/wallet_detail_view.dart';
-export 'package:financial_recording/shared/theme/theme.dart';
 export 'package:financial_recording/shared/theme/theme_config.dart';
 export 'package:financial_recording/shared/theme/theme_size.dart';
 export 'package:financial_recording/shared/widget/form/autocomplete/autocomplete.dart';
@@ -82,7 +36,6 @@ export 'package:financial_recording/shared/widget/icon_primary/income_icon.dart'
 export 'package:financial_recording/shared/widget/icon_primary/transfer_icon.dart';
 export 'package:financial_recording/state_util.dart';
 export 'package:financial_recording/util/db_service/db_service.dart';
-export 'package:financial_recording/util/dio_interceptors/dio_interceptors.dart';
 export 'package:financial_recording/util/tap_handler/tap_handler.dart';
 export 'package:financial_recording/util/thousands_formatter/thousands_formatter.dart';
 export 'package:financial_recording/util/type_extension/date_extension.dart';

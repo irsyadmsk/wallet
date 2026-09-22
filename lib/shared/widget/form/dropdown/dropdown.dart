@@ -63,11 +63,12 @@ class _QDropdownFieldState extends State<QDropdownField> {
       margin: widget.margin ?? const EdgeInsets.only(bottom: 20),
       child: DropdownButtonFormField2<Map<String, dynamic>>(
         isExpanded: true,
+        style: TextStyle(fontSize: 14, color: textColor),
         decoration: InputDecoration(
           labelText: widget.label,
           helperText: widget.helper,
           hintText: widget.hint,
-          fillColor: Colors.white,
+          fillColor: inputColor,
           filled: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 10,
@@ -96,7 +97,7 @@ class _QDropdownFieldState extends State<QDropdownField> {
                     setState(() {});
                     widget.onChanged(null, null);
                   },
-                  icon: const Icon(Icons.close, color: Colors.grey),
+                  icon: const Icon(Icons.close_rounded, color: Colors.grey),
                 )
               : null,
         ),
@@ -112,7 +113,7 @@ class _QDropdownFieldState extends State<QDropdownField> {
                   item['label'],
                   style: TextStyle(
                     fontSize: 14,
-                    color: item['disabled'] == true ? Colors.grey : null,
+                    color: item['disabled'] == true ? Colors.grey : textColor,
                   ),
                 ),
               ),
@@ -153,12 +154,15 @@ class _QDropdownFieldState extends State<QDropdownField> {
         buttonStyleData: const ButtonStyleData(
           padding: EdgeInsets.only(right: 8),
         ),
-        iconStyleData: const IconStyleData(
-          icon: Icon(Icons.arrow_drop_down, color: Colors.black45),
+        iconStyleData: IconStyleData(
+          icon: Icon(Icons.arrow_drop_down, color: textColor.withValues(alpha: 0.6)),
           iconSize: 24,
         ),
         dropdownStyleData: DropdownStyleData(
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
+          decoration: BoxDecoration(
+            color: inputColor,
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
         menuItemStyleData: const MenuItemStyleData(
           padding: EdgeInsets.symmetric(horizontal: 16),

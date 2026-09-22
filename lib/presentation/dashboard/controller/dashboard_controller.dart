@@ -1,88 +1,89 @@
-import 'package:financial_recording/config/app_config.dart';
-import 'package:financial_recording/models/transaction_model/transaction_model.dart';
-import 'package:financial_recording/models/wallet_model/wallet_model.dart';
-import 'package:financial_recording/util/budget_service/budget_service.dart';
 import 'package:get/get.dart';
-import 'package:hive/hive.dart';
+import 'package:financial_recording/data/models/tx_model/tx_model.dart';
+import 'package:financial_recording/data/repositories/account_repository.dart';
+import 'package:financial_recording/data/repositories/tx_category_repository.dart';
+import 'package:financial_recording/data/repositories/tx_query.dart';
+import 'package:financial_recording/data/repositories/tx_repository.dart';
+import 'package:financial_recording/data/models/account_model/account_model.dart';
+import 'package:financial_recording/data/models/template_model/template_model.dart';
+import 'package:financial_recording/data/repositories/template_repository.dart';
+import 'package:financial_recording/data/services/financial_health_service.dart';
+import 'package:financial_recording/data/services/budget_service_v2.dart';
+import 'package:financial_recording/data/services/recurring_service.dart';
+import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
+import 'package:financial_recording/data/repositories/debt_repository.dart';
+import 'package:financial_recording/domain/enums/hive_enums.dart';
 
 class DashboardController extends GetxController {
-  final RxInt balance = 0.obs;
-  final RxInt todayExpense = 0.obs;
-  final RxInt thisMonthIncome = 0.obs;
-  final RxInt thisMonthExpense = 0.obs;
-  final RxList<TransactionModel> transactions = <TransactionModel>[].obs;
-  final RxBool isObscured = false.obs;
-  final Rx<BudgetInfo?> budgetInfo = Rx<BudgetInfo?>(null);
+  final _accounts = AccountRepository();
+  final _txs = TxRepository();
+  final _categories = TxCategoryRepository();
+  final _budgets = BudgetServiceV2();
+  final _recurringService = RecurringService();
+  final _healthService = FinancialHealthService();
+  final _templates = QuickTemplateRepository();
+  final _debts = DebtRepository();
 
-  String get greeting {
-    final hour = DateTime.now().hour;
-    if (hour >= 4 && hour < 11) return "Selamat Pagi";
-    if (hour >= 11 && hour < 15) return "Selamat Siang";
-    if (hour >= 15 && hour < 18) return "Selamat Sore";
-    return "Selamat Malam";
-  }
-
-  String get authorName => AppConfig.appAuthor;
+  final RxInt netWorth = 0.obs;
+  final RxInt totalAssets = 0.obs;
+  final RxInt totalLiabilities = 0.obs;
+  final RxInt monthIncome = 0.obs;
+  final RxInt monthExpense = 0.obs;
+  final RxList<TxModel> recentTransactions = <TxModel>[].obs;
+  final RxList<BudgetProgress> topBudgets = <BudgetProgress>[].obs;
+  final RxList<RecurringRuleModel> upcomingRecurring = <RecurringRuleModel>[].obs;
+  final Rx<BudgetProgress?> overallBudget = Rx<BudgetProgress?>(null);
+  final Rx<FinancialHealthReport?> healthReport = Rx<FinancialHealthReport?>(null);
+  final RxList<QuickTemplateModel> templates = <QuickTemplateModel>[].obs;
+  final RxList<AccountModel> accountsList = <AccountModel>[].obs;
+  final RxInt activeDebtAmount = 0.obs;
+  final RxInt activeLoanAmount = 0.obs;
+  final RxInt activeDebtCount = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
-    initializeData();
+    refresh();
   }
 
-  Future<void> initializeData() async {
-    try {
-      final box = Hive.box<WalletModel>(AppConfig.walletBoxName);
-      final boxTransactions = Hive.box<TransactionModel>(AppConfig.transactionBoxName);
+  TxCategoryRepository get categories => _categories;
+  AccountRepository get accounts => _accounts;
 
-      // 1. Calculate balance
-      int totalBalance = 0;
-      for (var item in box.values) {
-        totalBalance += item.balance;
-      }
-      balance.value = totalBalance;
+  Future<void> confirmRecurring(String ruleId) async {
+    await _recurringService.confirmPost(ruleId);
+    refresh();
+  }
 
-      // 2. Process transactions
-      final now = DateTime.now();
-      int todayExp = 0;
-      int mIncome = 0;
-      int mExpense = 0;
+  @override
+  void refresh() {
+    netWorth.value = _accounts.netWorth;
+    totalAssets.value = _accounts.totalAssets;
+    totalLiabilities.value = _accounts.totalLiabilities;
 
-      final allTransactions = boxTransactions.values.toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final now = DateTime.now();
+    final from = DateTime(now.year, now.month, 1);
+    final to = DateTime(now.year, now.month + 1, 1);
 
-      transactions.assignAll(allTransactions);
+    final monthTxs = _txs.query(TxQuery(from: from, to: to));
+    monthIncome.value = monthTxs.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.amount);
+    monthExpense.value = monthTxs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.amount);
 
-      for (var item in allTransactions) {
-        final created = item.createdAt;
-        final isToday =
-            created.year == now.year &&
-            created.month == now.month &&
-            created.day == now.day;
-        final isThisMonth =
-            created.year == now.year && created.month == now.month;
+    recentTransactions.assignAll(_txs.query(TxQuery(limit: 6)));
 
-        if (isToday && item.type == "expense") {
-          todayExp += item.amount;
-        }
+    overallBudget.value = _budgets.overallProgress(now);
+    topBudgets.assignAll(_budgets.categoryProgress(now).take(3));
 
-        if (isThisMonth) {
-          if (item.type == "income") {
-            mIncome += item.amount;
-          } else if (item.type == "expense") {
-            mExpense += item.amount;
-          }
-        }
-      }
+    upcomingRecurring.assignAll(
+      _recurringService.dueForConfirmation(now, horizonDays: 7),
+    );
 
-      todayExpense.value = todayExp;
-      thisMonthIncome.value = mIncome;
-      thisMonthExpense.value = mExpense;
+    accountsList.assignAll(_accounts.all());
+    templates.assignAll(_templates.all());
+    healthReport.value = _healthService.calculateReport(now);
 
-      // 3. Calculate budget info
-      budgetInfo.value = BudgetService.calculateCurrentMonthBudget();
-    } catch (e) {
-      Get.snackbar("Error", "Gagal memuat data dashboard: $e");
-    }
+    final activeDebts = _debts.active();
+    activeDebtCount.value = activeDebts.length;
+    activeDebtAmount.value = activeDebts.where((d) => !d.isLoan).fold(0, (s, d) => s + d.remainingAmount);
+    activeLoanAmount.value = activeDebts.where((d) => d.isLoan).fold(0, (s, d) => s + d.remainingAmount);
   }
 }

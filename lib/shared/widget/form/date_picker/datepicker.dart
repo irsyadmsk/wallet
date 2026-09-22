@@ -74,6 +74,7 @@ class _QDatePickerState extends State<QDatePicker> {
           margin: const EdgeInsets.only(bottom: 12),
           child: TextFormField(
             controller: controller,
+            style: TextStyle(color: textColor),
             validator: (value) {
               if (widget.validator != null) {
                 return widget.validator!(selectedValue.toString());
@@ -83,11 +84,11 @@ class _QDatePickerState extends State<QDatePicker> {
             readOnly: true,
             decoration: InputDecoration(
               labelText: widget.label,
-              labelStyle: const TextStyle(color: Colors.blueGrey),
-              suffixIcon: const Icon(Icons.date_range),
+              labelStyle: TextStyle(color: secondaryTextColor),
+              suffixIcon: Icon(Icons.date_range, color: secondaryTextColor),
               helperText: widget.helper,
               hintText: widget.hint,
-              fillColor: Colors.white,
+              fillColor: inputColor,
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: primaryColor),
                 borderRadius: BorderRadius.all(Radius.circular(8)),

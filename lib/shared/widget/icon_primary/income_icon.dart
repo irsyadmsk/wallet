@@ -8,7 +8,7 @@ class IncomeIcon extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.green.withOpacity(0.12),
+        color: Colors.green.withValues(alpha: 0.12),
       ),
       padding: const EdgeInsets.all(10.0),
       child: Icon(Icons.arrow_downward, size: 22, color: Colors.green.shade700),

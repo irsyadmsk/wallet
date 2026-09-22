@@ -1,0 +1,4 @@
+This folder holds a locally-generated seed file (my_data.json) produced by
+`dart run tool/mmbak_to_json.dart <input.mmbak> assets/seed/my_data.json`.
+It is gitignored on purpose — it contains real personal financial data — and
+this placeholder just keeps the folder present for `flutter pub get`/build.

@@ -70,7 +70,6 @@ class _QTimePickerState extends State<QTimePicker> {
             );
           },
         );
-        print('pickedTime: $pickedTime');
         selectedValue = pickedTime;
         controller.text = getFormattedValue();
         setState(() {});

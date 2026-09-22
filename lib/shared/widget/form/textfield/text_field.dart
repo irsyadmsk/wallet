@@ -93,7 +93,7 @@ class _QTextFieldState extends State<QTextField> {
 
   @override
   Widget build(BuildContext context) {
-    Widget icon = Icon(widget.suffixIcon ?? null);
+    Widget icon = Icon(widget.suffixIcon, color: secondaryTextColor);
 
     if (widget.obscure) {
       if (visible) {
@@ -102,9 +102,9 @@ class _QTextFieldState extends State<QTextField> {
             visible = false;
             setState(() {});
           },
-          child: icon = const Icon(
+          child: icon = Icon(
             Icons.visibility_off_outlined,
-            color: Colors.black,
+            color: secondaryTextColor,
           ),
         );
       } else {
@@ -113,9 +113,9 @@ class _QTextFieldState extends State<QTextField> {
             visible = true;
             setState(() {});
           },
-          child: icon = const Icon(
+          child: icon = Icon(
             Icons.visibility_outlined,
-            color: Colors.black,
+            color: secondaryTextColor,
           ),
         );
       }
@@ -144,6 +144,7 @@ class _QTextFieldState extends State<QTextField> {
         maxLength: widget.maxLength,
         maxLines: widget.maxLines == null ? 1 : widget.maxLines,
         obscureText: visible == false && widget.obscure,
+        style: TextStyle(color: textColor),
         decoration: InputDecoration(
           contentPadding: !isPaddingNull
               ? EdgeInsets.symmetric(
@@ -155,7 +156,7 @@ class _QTextFieldState extends State<QTextField> {
           suffixIcon: icon,
           helperText: widget.helper,
           hintText: widget.hint,
-          fillColor: Colors.white,
+          fillColor: inputColor,
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: primaryColor),
             borderRadius: BorderRadius.all(Radius.circular(8)),

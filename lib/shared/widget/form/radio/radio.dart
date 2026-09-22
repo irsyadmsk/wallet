@@ -67,14 +67,17 @@ class _QRadioFieldState extends State<QRadioField> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
+                // ignore: deprecated_member_use
                 return RadioListTile(
                   contentPadding: const EdgeInsets.all(0),
                   title: Text("${item["label"]}"),
+                  // ignore: deprecated_member_use
                   groupValue: true,
                   value: item['checked'] ?? false,
+                  // ignore: deprecated_member_use
                   onChanged: (val) {
                     setAllItemsToFalse();
-                    final newValue = val ? false : true;
+                    final newValue = (val == true) ? false : true;
                     items[index]['checked'] = newValue;
                     field.didChange(true);
                     setState(() {});

@@ -33,7 +33,6 @@ class _QMemoFieldState extends State<QMemoField> {
   @override
   void initState() {
     focusNode.addListener(() {
-      print('focusNodeListener');
       if (focusNode.hasFocus) {
         Future.delayed(const Duration(milliseconds: 300), () {
           WidgetsBinding.instance.addPostFrameCallback(

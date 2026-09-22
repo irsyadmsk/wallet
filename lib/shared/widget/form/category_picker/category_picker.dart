@@ -184,7 +184,7 @@ class _QCategoryPickerState extends State<QCategoryPicker> {
                                             fontSize: selected ? 16 : 12,
                                             color: selected
                                                 ? textColor
-                                                : textColor.withOpacity(0.6),
+                                                : textColor.withValues(alpha: 0.6),
                                             fontWeight: selected
                                                 ? FontWeight.bold
                                                 : FontWeight.normal,
@@ -241,7 +241,7 @@ class _QCategoryPickerState extends State<QCategoryPicker> {
                                             fontSize: selected ? 14 : 14,
                                             color: selected
                                                 ? Colors.white
-                                                : textColor.withOpacity(0.6),
+                                                : textColor.withValues(alpha: 0.6),
                                             fontWeight: selected
                                                 ? FontWeight.bold
                                                 : FontWeight.normal,

@@ -8,7 +8,7 @@ class TransferIcon extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.blue.withOpacity(0.12),
+        color: Colors.blue.withValues(alpha: 0.12),
       ),
       padding: const EdgeInsets.all(10.0),
       child: Icon(Icons.sync_alt, size: 22, color: Colors.blue.shade700),

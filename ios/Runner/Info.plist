@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Dipakai untuk memotret struk/nota agar bisa dipindai otomatis (OCR).</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Dipakai untuk melampirkan foto struk/nota dari galeri Anda.</string>
 </dict>
 </plist>
