@@ -3,7 +3,10 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
+import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
+import 'package:financial_recording/presentation/auth/view/auth_sheet.dart';
 import 'package:financial_recording/presentation/import_mmbak/view/import_mmbak_view.dart';
+import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/presentation/settings/controller/settings_controller.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
@@ -33,6 +36,10 @@ class SettingsView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _SectionLabel('Akun & Sinkronisasi'),
+              const _AccountSyncCard(),
+              const SizedBox(height: AppSpacing.lg),
+
               _SectionLabel('Mode Tampilan'),
               Card(
                 child: Padding(
@@ -358,6 +365,130 @@ class SettingsView extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _AccountSyncCard extends StatelessWidget {
+  const _AccountSyncCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Get.find<AuthController>();
+    final colors = context.colors;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Obx(() {
+          if (!auth.isSignedIn) {
+            return Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.cloud_off_rounded, color: colors.primary),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Belum masuk', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text(
+                        'Masuk untuk menyinkronkan data ke perangkat lain.',
+                        style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () => showAdaptiveSheet(context, builder: (_) => const AuthSheet()),
+                  child: const Text('Masuk'),
+                ),
+              ],
+            );
+          }
+
+          final lastSync = auth.lastSyncAt.value;
+          final lastSyncText = lastSync == null
+              ? 'Belum pernah sinkron'
+              : 'Sinkron terakhir: ${_formatRelative(lastSync)}';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.cloud_done_rounded, color: colors.primary),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          auth.user.value?.email ?? '',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(lastSyncText, style: TextStyle(color: colors.textSecondary, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: auth.syncing.value ? null : auth.syncNow,
+                      icon: auth.syncing.value
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.sync_rounded, size: 18),
+                      label: Text(auth.syncing.value ? 'Menyinkronkan...' : 'Sinkronkan Sekarang'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  OutlinedButton(
+                    onPressed: auth.signOut,
+                    child: const Text('Keluar'),
+                  ),
+                ],
+              ),
+              if (auth.errorText.value != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  auth.errorText.value!,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                ),
+              ],
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  String _formatRelative(DateTime t) {
+    final diff = DateTime.now().difference(t);
+    if (diff.inMinutes < 1) return 'baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
   }
 }
 

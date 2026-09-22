@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/tx_query.dart';
+import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class TxRepository {
   Box<TxModel> get _box => Hive.box<TxModel>(AppBoxes.transactions);
@@ -79,6 +80,7 @@ class TxRepository {
   Future<void> remove(String id) async {
     final key = _keyFor(id);
     if (key != null) await _box.delete(key);
+    await TombstoneService().record('transactions', id);
   }
 
   Future<void> clear() => _box.clear();

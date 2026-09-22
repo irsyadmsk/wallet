@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
+import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class RecurringRepository {
   Box<RecurringRuleModel> get _box => Hive.box<RecurringRuleModel>(AppBoxes.recurring);
@@ -29,6 +30,7 @@ class RecurringRepository {
   Future<void> delete(String id) async {
     final key = _keyFor(id);
     if (key != null) await _box.delete(key);
+    await TombstoneService().record('recurring', id);
   }
 
   Future<void> clear() => _box.clear();

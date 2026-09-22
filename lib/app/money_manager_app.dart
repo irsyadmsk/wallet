@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
+import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
 import 'package:financial_recording/presentation/accounts/controller/accounts_controller.dart';
 import 'package:financial_recording/presentation/accounts/view/accounts_view.dart';
 import 'package:financial_recording/presentation/budgets/controller/budgets_controller.dart';
@@ -31,6 +32,7 @@ class MoneyManagerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Get.put(ThemeController(), permanent: true);
     Get.put(ShellController(), permanent: true);
+    Get.put(AuthController(), permanent: true);
 
     return Obx(() => GetMaterialApp(
           title: AppConfig.appName,

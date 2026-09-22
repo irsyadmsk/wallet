@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/tx_category_model/tx_category_model.dart';
+import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class TxCategoryRepository {
   Box<TxCategoryModel> get _box => Hive.box<TxCategoryModel>(AppBoxes.categories);
@@ -50,6 +51,7 @@ class TxCategoryRepository {
   Future<void> delete(String id) async {
     final key = _keyFor(id);
     if (key != null) await _box.delete(key);
+    await TombstoneService().record('categories', id);
   }
 
   Future<void> reorder(List<String> idsInOrder) async {

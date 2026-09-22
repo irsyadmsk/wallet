@@ -3,6 +3,7 @@ import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/template_model/template_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
+import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 
 class QuickTemplateRepository {
@@ -34,6 +35,7 @@ class QuickTemplateRepository {
   Future<void> delete(String id) async {
     final key = _keyFor(id);
     if (key != null) await _box.delete(key);
+    await TombstoneService().record('templates', id);
   }
 
   Future<void> seedDefaultsIfEmpty() async {

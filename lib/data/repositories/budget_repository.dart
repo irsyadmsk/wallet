@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/budget_model/budget_model.dart';
+import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class BudgetRepository {
   Box<BudgetModel> get _box => Hive.box<BudgetModel>(AppBoxes.budgets);
@@ -32,6 +33,7 @@ class BudgetRepository {
   Future<void> delete(String id) async {
     final key = _keyFor(id);
     if (key != null) await _box.delete(key);
+    await TombstoneService().record('budgets', id);
   }
 
   Future<void> clear() => _box.clear();

@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
+import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 import 'package:financial_recording/domain/enums/account_group_type.dart';
 
 class AccountRepository {
@@ -41,6 +42,7 @@ class AccountRepository {
   Future<void> delete(String id) async {
     final key = _keyFor(id);
     if (key != null) await _box.delete(key);
+    await TombstoneService().record('accounts', id);
   }
 
   Future<void> reorder(List<String> idsInOrder) async {

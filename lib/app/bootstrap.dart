@@ -19,6 +19,7 @@ import 'package:financial_recording/data/services/backup_service.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/recurring_service.dart';
 import 'package:financial_recording/data/services/seed_service.dart';
+import 'package:financial_recording/data/services/sync/sync_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 
 /// Registers Hive adapters, opens every v2 box, and seeds a fresh install —
@@ -53,6 +54,7 @@ Future<void> bootstrap() async {
   await Hive.openBox<FinancialGoalModel>(AppBoxes.goals);
   await Hive.openBox<QuickTemplateModel>(AppBoxes.templates);
   await Hive.openBox<DebtLoanModel>(AppBoxes.debts);
+  await SyncService.ensureOpen();
 
   if (AccountRepository().all(includeArchived: true).isEmpty) {
     final loadedFromSeed = await _tryLoadBundledSeed();
