@@ -10,62 +10,130 @@ class MenuListView extends StatelessWidget {
     final controller = Get.put(MenuListController());
 
     return Obx(() {
-      return DefaultTabController(
-        length: 5,
-        initialIndex: controller.selectedIndex.value,
-        child: Scaffold(
-          body: IndexedStack(
-            index: controller.selectedIndex.value,
-            children: const [
-              DashboardView(),
-              HistoryTransactionView(),
-              AnalyticsView(),
-              CategoryView(),
-              WalletView(),
+      return Scaffold(
+        backgroundColor: scaffoldBackgroundColor,
+        body: IndexedStack(
+          index: controller.selectedIndex.value,
+          children: const [
+            DashboardView(),
+            HistoryTransactionView(),
+            AnalyticsView(),
+            CategoryView(),
+            WalletView(),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 16,
+                offset: const Offset(0, -4),
+              ),
             ],
+            border: const Border(
+              top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            ),
           ),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: controller.selectedIndex.value,
-            selectedItemColor: primaryColor,
-            unselectedItemColor: Colors.grey[500],
-            showUnselectedLabels: true,
-            type: BottomNavigationBarType.fixed,
-            onTap: (index) {
-              controller.selectedIndex.value = index;
-              if (index == 2 && Get.isRegistered<AnalyticsController>()) {
-                Get.find<AnalyticsController>().loadAnalytics();
-              }
-            },
-            items: const [
-              BottomNavigationBarItem(
-                label: "Dashboard",
-                icon: Icon(Icons.dashboard_outlined),
-                activeIcon: Icon(Icons.dashboard),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    index: 0,
+                    icon: Icons.dashboard_outlined,
+                    activeIcon: Icons.dashboard_rounded,
+                    label: "Dashboard",
+                    controller: controller,
+                  ),
+                  _buildNavItem(
+                    index: 1,
+                    icon: Icons.receipt_long_outlined,
+                    activeIcon: Icons.receipt_long_rounded,
+                    label: "Riwayat",
+                    controller: controller,
+                  ),
+                  _buildNavItem(
+                    index: 2,
+                    icon: Icons.pie_chart_outline_rounded,
+                    activeIcon: Icons.pie_chart_rounded,
+                    label: "Laporan",
+                    controller: controller,
+                  ),
+                  _buildNavItem(
+                    index: 3,
+                    icon: Icons.grid_view_outlined,
+                    activeIcon: Icons.grid_view_rounded,
+                    label: "Kategori",
+                    controller: controller,
+                  ),
+                  _buildNavItem(
+                    index: 4,
+                    icon: Icons.account_balance_wallet_outlined,
+                    activeIcon: Icons.account_balance_wallet_rounded,
+                    label: "Dompet",
+                    controller: controller,
+                  ),
+                ],
               ),
-              BottomNavigationBarItem(
-                label: "Riwayat",
-                icon: Icon(Icons.history_outlined),
-                activeIcon: Icon(Icons.history),
-              ),
-              BottomNavigationBarItem(
-                label: "Laporan",
-                icon: Icon(Icons.pie_chart_outline),
-                activeIcon: Icon(Icons.pie_chart),
-              ),
-              BottomNavigationBarItem(
-                label: "Kategori",
-                icon: Icon(Icons.category_outlined),
-                activeIcon: Icon(Icons.category),
-              ),
-              BottomNavigationBarItem(
-                label: "Dompet",
-                icon: Icon(Icons.account_balance_wallet_outlined),
-                activeIcon: Icon(Icons.account_balance_wallet),
-              ),
-            ],
+            ),
           ),
         ),
       );
     });
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required MenuListController controller,
+  }) {
+    final isSelected = controller.selectedIndex.value == index;
+
+    return InkWell(
+      onTap: () {
+        controller.selectedIndex.value = index;
+        if (index == 0 && Get.isRegistered<DashboardController>()) {
+          Get.find<DashboardController>().initializeData();
+        } else if (index == 2 && Get.isRegistered<AnalyticsController>()) {
+          Get.find<AnalyticsController>().loadAnalytics();
+        } else if (index == 1 && Get.isRegistered<HistoryTransactionController>()) {
+          Get.find<HistoryTransactionController>().initializeData();
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? activeIcon : icon,
+              size: 22,
+              color: isSelected ? primaryColor : const Color(0xFF64748B),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? primaryColor : const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

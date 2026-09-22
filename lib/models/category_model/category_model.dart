@@ -27,4 +27,22 @@ class CategoryModel extends HiveObject {
   String toString() {
     return 'CategoryModel(name: $name, iconPath: $iconPath, type: $type, color: $color)';
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'iconPath': iconPath,
+      'type': type,
+      'color': color,
+    };
+  }
+
+  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    return CategoryModel(
+      name: json['name']?.toString() ?? '',
+      iconPath: json['iconPath']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'expense',
+      color: json['color']?.toString(),
+    );
+  }
 }

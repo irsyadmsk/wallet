@@ -1,118 +1,148 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core.dart';
+import 'theme_config.dart';
 
 ThemeData getDefaultTheme() {
-  return ThemeData().copyWith(
+  final baseTextTheme = GoogleFonts.interTextTheme();
+
+  return ThemeData(
+    useMaterial3: true,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: scaffoldBackgroundColor,
-    colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      primary: primaryColor,
+      secondary: secondaryColor,
+      surface: Colors.white,
+      background: scaffoldBackgroundColor,
+    ),
     appBarTheme: AppBarTheme(
-      toolbarHeight: 80,
+      toolbarHeight: 64,
       centerTitle: false,
-      elevation: 0.0,
-      titleTextStyle: GoogleFonts.roboto(
-        fontSize: 14,
-        color: const Color.fromARGB(255, 255, 255, 255),
+      elevation: 0,
+      backgroundColor: primaryColor,
+      foregroundColor: Colors.white,
+      titleTextStyle: GoogleFonts.inter(
+        fontSize: 18,
+        color: Colors.white,
         fontWeight: FontWeight.bold,
       ),
-      backgroundColor: scaffoldBackgroundColor,
-      iconTheme: const IconThemeData(color: Color.fromARGB(255, 255, 255, 255)),
-      actionsIconTheme: const IconThemeData(color: Colors.black),
+      iconTheme: const IconThemeData(color: Colors.white),
+      actionsIconTheme: const IconThemeData(color: Colors.white),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      unselectedItemColor: Colors.grey,
-      selectedItemColor: Colors.blueGrey[900],
-      selectedLabelStyle: TextStyle(fontSize: 10),
-      unselectedLabelStyle: TextStyle(fontSize: 10),
+      backgroundColor: Colors.white,
+      elevation: 12,
+      selectedItemColor: primaryColor,
+      unselectedItemColor: const Color(0xFF94A3B8),
+      selectedLabelStyle: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedLabelStyle: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+      ),
+      type: BottomNavigationBarType.fixed,
     ),
     tabBarTheme: TabBarThemeData(
-      unselectedLabelColor: Colors.grey,
-      labelColor: Colors.blueGrey[900],
-    ),
-    iconTheme: IconThemeData(color: primaryColor),
-    textTheme: TextTheme(
-      titleSmall: GoogleFonts.roboto(color: textColor),
-      titleMedium: GoogleFonts.roboto(color: textColor),
-      titleLarge: GoogleFonts.roboto(
-        color: textColor,
-        fontWeight: FontWeight.bold,
-      ),
-      bodyLarge: GoogleFonts.roboto(color: textColor),
-      bodySmall: GoogleFonts.roboto(color: textColor),
-      bodyMedium: GoogleFonts.roboto(color: textColor),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      contentPadding: EdgeInsets.symmetric(vertical: 0),
-      hintStyle: TextStyle(
-        color: Color(0xffd8d4d4),
-        fontSize: 12,
-        fontWeight: FontWeight.normal,
-        letterSpacing: 0,
-      ),
-      hoverColor: Colors.transparent,
-      errorMaxLines: 1,
-      // border: OutlineInputBorder(
-      //   borderRadius: BorderRadius.circular(8),
-      //   borderSide: BorderSide(color: Colors.grey[300]!),
-      // ),
-      // enabledBorder: OutlineInputBorder(
-      //   borderSide: BorderSide(color: Color(0xffd8d4d4), width: 1.4),
-      // ),
-      // errorBorder: OutlineInputBorder(
-      //   borderSide: BorderSide(color: primaryColor, width: 1.4),
-      // ),
-      // focusedErrorBorder: OutlineInputBorder(
-      //   borderSide: BorderSide(color: primaryColor, width: 1.4),
-      // ),
-      // disabledBorder: OutlineInputBorder(
-      //   borderSide: BorderSide(color: Colors.grey[300]!),
-      // ),
-      // focusedBorder: OutlineInputBorder(
-      //   borderSide: BorderSide(color: primaryColor, width: 1.4),
-      // ),
-      filled: true,
-      fillColor: scaffoldBackgroundColor,
+      unselectedLabelColor: const Color(0xFF64748B),
+      labelColor: primaryColor,
+      labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+      unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.normal, fontSize: 13),
+      indicatorColor: primaryColor,
     ),
     cardTheme: CardThemeData(
-      elevation: 0.6,
+      elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(width: 0.4, color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(cardBorderRadius),
+        side: const BorderSide(width: 1, color: Color(0xFFE2E8F0)),
       ),
+      margin: EdgeInsets.zero,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-        backgroundColor: Colors.blueGrey,
+        elevation: 0,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        textStyle: GoogleFonts.inter(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primaryColor,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        side: BorderSide(color: primaryColor, width: 1.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        textStyle: GoogleFonts.inter(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     ),
-    dataTableTheme: DataTableThemeData(
-      dataTextStyle: TextStyle(color: textColor),
-      headingRowColor: WidgetStateProperty.resolveWith<Color>((
-        Set<WidgetState> states,
-      ) {
-        if (states.contains(WidgetState.selected)) {
-          return Colors.grey[200]!;
-        }
-        return Colors.grey[300]!;
-      }),
-      headingTextStyle: const TextStyle(),
-      dataRowColor: WidgetStateProperty.resolveWith<Color>((
-        Set<WidgetState> states,
-      ) {
-        if (states.contains(WidgetState.selected)) {
-          return Colors.grey[200]!;
-        }
-        return Colors.white;
-      }),
-      dataRowMinHeight: 48,
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFFF1F5F9),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      hintStyle: GoogleFonts.inter(
+        color: const Color(0xFF94A3B8),
+        fontSize: 13,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: primaryColor, width: 1.8),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: dangerColor, width: 1.5),
+      ),
+    ),
+    textTheme: baseTextTheme.copyWith(
+      headlineMedium: GoogleFonts.inter(
+        color: textColor,
+        fontWeight: FontWeight.bold,
+        fontSize: 24,
+      ),
+      titleLarge: GoogleFonts.inter(
+        color: textColor,
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
+      ),
+      titleMedium: GoogleFonts.inter(
+        color: textColor,
+        fontWeight: FontWeight.w600,
+        fontSize: 15,
+      ),
+      bodyLarge: GoogleFonts.inter(
+        color: textColor,
+        fontSize: 14,
+      ),
+      bodyMedium: GoogleFonts.inter(
+        color: textColor,
+        fontSize: 13,
+      ),
+      bodySmall: GoogleFonts.inter(
+        color: secondaryTextColor,
+        fontSize: 12,
+      ),
     ),
   );
 }

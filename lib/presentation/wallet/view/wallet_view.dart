@@ -12,14 +12,16 @@ class WalletView extends StatelessWidget {
 
     return Obx(() {
       return Scaffold(
-        backgroundColor: primaryColor,
+        backgroundColor: scaffoldBackgroundColor,
         appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
           title: const Text(
-            "Dompet",
+            "Daftar Dompet",
             style: TextStyle(
               fontSize: 18.0,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Color(0xFF0F172A),
             ),
           ),
           actions: [
@@ -27,29 +29,34 @@ class WalletView extends StatelessWidget {
               onPressed: () {
                 Get.to(() => const ProfileView());
               },
-              icon: const Icon(Icons.settings, color: Colors.white, size: 32.0),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.settings_outlined,
+                  color: Color(0xFF334155),
+                  size: 20,
+                ),
+              ),
             ),
+            const SizedBox(width: 12),
           ],
-          backgroundColor: primaryColor,
         ),
-        body: Container(
-          height: MediaQuery.of(context).size.height - appBarHeight,
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(44.0),
-              topRight: Radius.circular(44.0),
-            ),
-            color: Colors.white,
-          ),
-          child: _buildWalletList(controller),
-        ),
-        floatingActionButton: FloatingActionButton(
+        body: _buildWalletList(controller),
+        floatingActionButton: FloatingActionButton.extended(
           heroTag: "btn_add_wallet",
           onPressed: () {
             Get.to(() => const FormWalletView());
           },
           backgroundColor: primaryColor,
-          child: const Icon(Icons.add, color: Colors.white),
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: const Text(
+            "Tambah Dompet",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
         ),
       );
     });

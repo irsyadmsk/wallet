@@ -4,13 +4,21 @@ If there is a conflicting class name in this file,
 it means you have to rename it to something more unique.
 fileCount: 73
 */
+export 'package:financial_recording/config/app_config.dart';
 export 'package:financial_recording/core_package.dart';
+export 'package:financial_recording/data/repositories/i_transaction_repository.dart';
+export 'package:financial_recording/data/repositories/transaction_repository.dart';
+export 'package:financial_recording/data/repositories/i_wallet_repository.dart';
+export 'package:financial_recording/data/repositories/wallet_repository.dart';
+export 'package:financial_recording/data/repositories/i_category_repository.dart';
+export 'package:financial_recording/data/repositories/category_repository.dart';
 export 'package:financial_recording/models/category_model/category_model.dart';
 export 'package:financial_recording/models/transaction_model/transaction_model.dart';
 export 'package:financial_recording/models/user_model/user_model.dart';
 export 'package:financial_recording/models/wallet_model/wallet_model.dart';
 export 'package:financial_recording/presentation/analytics/controller/analytics_controller.dart';
 export 'package:financial_recording/presentation/analytics/view/analytics_view.dart';
+export 'package:financial_recording/util/budget_service/budget_service.dart';
 export 'package:financial_recording/presentation/category/controller/category_controller.dart';
 export 'package:financial_recording/presentation/category/view/category_view.dart';
 export 'package:financial_recording/presentation/category_expanses/controller/category_expanses_controller.dart';

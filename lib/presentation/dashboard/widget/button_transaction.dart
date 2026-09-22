@@ -1,125 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../../../core.dart';
+import 'package:financial_recording/presentation/form_expense/view/form_expense_view.dart';
+import 'package:financial_recording/presentation/form_income/view/form_income_view.dart';
+import 'package:financial_recording/presentation/form_transfer/view/form_transfer_view.dart';
 
 class ButtonTransaction extends StatelessWidget {
   const ButtonTransaction({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => Get.to(() => FormExpenseView()),
-                  tooltip: "Tambah Pengeluaran",
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                      Colors.red.withOpacity(0.12),
-                    ),
-                    foregroundColor: WidgetStateProperty.all(
-                      Colors.red.shade700,
-                    ),
-                    shape: WidgetStateProperty.all(const CircleBorder()),
-                  ),
-                  icon: const Icon(Icons.arrow_upward, size: 22),
-                ),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  "Tambah Pengeluaran",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors
-                        .red
-                        .shade700, // samakan dengan icon biar harmonis
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => Get.to(() => FormIncomeView()),
-                  tooltip: "Tambah Pemasukan",
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                      Colors.green.withOpacity(0.12), // soft green background
-                    ),
-                    foregroundColor: WidgetStateProperty.all(
-                      Colors.green.shade700, // warna ikon hijau soft
-                    ),
-                    shape: WidgetStateProperty.all(const CircleBorder()),
-                  ),
-                  icon: const Icon(Icons.arrow_downward, size: 22),
-                ),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  "Tambah Pemasukan",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green.shade700, // samakan dengan icon
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildActionButton(
+            label: "Pengeluaran",
+            icon: Icons.arrow_upward_rounded,
+            color: const Color(0xFFEF4444),
+            bgColor: const Color(0xFFFEE2E2),
+            onTap: () => Get.to(() => const FormExpenseView()),
           ),
-        ),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => Get.to(() => FormTransferView()),
-                  tooltip: "Transfer",
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                      Colors.blue.withOpacity(0.12), // soft blue background
-                    ),
-                    foregroundColor: WidgetStateProperty.all(
-                      Colors.blue.shade700, // warna ikon biru soft
-                    ),
-                    shape: WidgetStateProperty.all(const CircleBorder()),
-                  ),
-                  icon: const Icon(Icons.sync_alt, size: 22), // ikon transfer
-                ),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  "Transfer",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+          Container(width: 1, height: 36, color: const Color(0xFFF1F5F9)),
+          _buildActionButton(
+            label: "Pemasukan",
+            icon: Icons.arrow_downward_rounded,
+            color: const Color(0xFF10B981),
+            bgColor: const Color(0xFFD1FAE5),
+            onTap: () => Get.to(() => const FormIncomeView()),
           ),
+          Container(width: 1, height: 36, color: const Color(0xFFF1F5F9)),
+          _buildActionButton(
+            label: "Transfer",
+            icon: Icons.swap_horiz_rounded,
+            color: const Color(0xFF0EA5E9),
+            bgColor: const Color(0xFFE0F2FE),
+            onTap: () => Get.to(() => const FormTransferView()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: bgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

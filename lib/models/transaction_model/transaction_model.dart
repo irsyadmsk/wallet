@@ -30,4 +30,42 @@ class TransactionModel extends HiveObject {
     required this.createdAt,
     required this.type,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'walletName': walletName,
+      'categoryName': categoryName,
+      'amount': amount,
+      'items': items,
+      'createdAt': createdAt.toIso8601String(),
+      'type': type,
+    };
+  }
+
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
+    DateTime parsedDate;
+    if (json['createdAt'] is int) {
+      parsedDate = DateTime.fromMillisecondsSinceEpoch(json['createdAt']);
+    } else if (json['createdAt'] is String) {
+      parsedDate = DateTime.tryParse(json['createdAt']) ?? DateTime.now();
+    } else {
+      parsedDate = DateTime.now();
+    }
+
+    List<Map<String, dynamic>> parsedItems = [];
+    if (json['items'] is List) {
+      parsedItems = (json['items'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    }
+
+    return TransactionModel(
+      walletName: json['walletName']?.toString() ?? '',
+      categoryName: json['categoryName']?.toString() ?? '',
+      amount: int.tryParse(json['amount']?.toString() ?? '0') ?? 0,
+      items: parsedItems,
+      createdAt: parsedDate,
+      type: json['type']?.toString() ?? 'expense',
+    );
+  }
 }

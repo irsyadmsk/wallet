@@ -113,7 +113,7 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Financial Recording',
+      title: AppConfig.appName,
       navigatorKey: Get.key,
       locale: Locale('id', 'ID'),
       fallbackLocale: Locale('en', 'US'),

@@ -14,14 +14,16 @@ class AnalyticsView extends StatelessWidget {
     final double appBarHeight = AppBar().preferredSize.height;
 
     return Scaffold(
-      backgroundColor: primaryColor,
+      backgroundColor: scaffoldBackgroundColor,
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
         title: const Text(
           "Laporan Keuangan",
           style: TextStyle(
             fontSize: 18.0,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Color(0xFF0F172A),
           ),
         ),
         actions: [
@@ -29,23 +31,24 @@ class AnalyticsView extends StatelessWidget {
             onPressed: () {
               controller.loadAnalytics();
             },
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            tooltip: "Segarkan",
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.refresh_rounded,
+                color: Color(0xFF334155),
+                size: 20,
+              ),
+            ),
+            tooltip: "Segarkan Data",
           ),
+          const SizedBox(width: 12),
         ],
-        backgroundColor: primaryColor,
-        elevation: 0,
       ),
-      body: Container(
-        height: MediaQuery.of(context).size.height - appBarHeight,
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(44.0),
-            topRight: Radius.circular(44.0),
-          ),
-          color: Colors.white,
-        ),
-        child: Obx(() {
+      body: Obx(() {
           if (controller.isLoading.value) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -110,7 +113,6 @@ class AnalyticsView extends StatelessWidget {
             ),
           );
         }),
-      ),
     );
   }
 

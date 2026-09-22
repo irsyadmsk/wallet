@@ -23,14 +23,16 @@ class HistoryTransactionView extends StatelessWidget {
       }
 
       return Scaffold(
-        backgroundColor: primaryColor,
+        backgroundColor: scaffoldBackgroundColor,
         appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
           title: const Text(
-            "Histori Transaksi",
+            "Riwayat Transaksi",
             style: TextStyle(
               fontSize: 18.0,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Color(0xFF0F172A),
             ),
           ),
           actions: [
@@ -38,21 +40,24 @@ class HistoryTransactionView extends StatelessWidget {
               onPressed: () {
                 Get.to(() => const ProfileView());
               },
-              icon: const Icon(Icons.settings, color: Colors.white, size: 32.0),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.settings_outlined,
+                  color: Color(0xFF334155),
+                  size: 20,
+                ),
+              ),
             ),
+            const SizedBox(width: 12),
           ],
-          backgroundColor: primaryColor,
         ),
-        body: Container(
-          padding: const EdgeInsets.only(left: 20.0, top: 30.0, right: 20.0),
-          height: MediaQuery.of(context).size.height - appBarHeight,
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(44.0),
-              topRight: Radius.circular(44.0),
-            ),
-            color: Colors.white,
-          ),
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:financial_recording/core.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:financial_recording/core.dart';
+import 'package:financial_recording/presentation/profile/controller/profile_controller.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -9,368 +11,419 @@ class ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ProfileController());
-    final double appBarHeight = AppBar().preferredSize.height;
 
-    return Obx(() {
-      return Scaffold(
-        backgroundColor: primaryColor,
-        appBar: AppBar(
-          title: const Text(
-            "Pengaturan",
-            style: TextStyle(
-              fontSize: 18.0,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          elevation: 0,
-          backgroundColor: primaryColor,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Get.back(),
-          ),
-        ),
-        body: Container(
-          height: MediaQuery.of(context).size.height - appBarHeight,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30.0),
-              topRight: Radius.circular(30.0),
-            ),
+    return Scaffold(
+      backgroundColor: scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text(
+          "Profil & Pengaturan",
+          style: TextStyle(
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // _buildProfileHeader(controller),
-                const SizedBox(height: 30),
+        ),
+        elevation: 0,
+        backgroundColor: primaryColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Author Profile Card
+            _buildAuthorCard(controller),
+            const SizedBox(height: 24),
 
-                // Section Title: Tampilan
-                const Text(
-                  "Tampilan Aplikasi",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildSettingCard(
-                  icon: Icons.palette,
-                  iconColor: Colors.purple,
-                  title: "Warna Tema",
-                  subtitle: "Ubah warna utama aplikasi",
-                  trailing: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  onTap: () => _showColorPicker(context, controller),
-                ),
+            // 2. Section: Target Anggaran Bulanan
+            _buildSectionHeader("Target Anggaran (Budgeting)"),
+            const SizedBox(height: 10),
+            Obx(
+              () => _buildSettingTile(
+                icon: Icons.track_changes_rounded,
+                iconColor: const Color(0xFF10B981),
+                title: "Batas Anggaran Bulanan",
+                subtitle:
+                    "Rp ${NumberFormat.decimalPattern('id').format(controller.monthlyBudget.value)} / bulan",
+                trailing: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF64748B)),
+                onTap: () => _showBudgetDialog(context, controller),
+              ),
+            ),
+            const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
+            // 3. Section: Tampilan Aplikasi
+            _buildSectionHeader("Tampilan Aplikasi"),
+            const SizedBox(height: 10),
+            _buildSettingTile(
+              icon: Icons.palette_outlined,
+              iconColor: const Color(0xFF6366F1),
+              title: "Warna Tema Aplikasi",
+              subtitle: "Sesuaikan warna primer antarmuka",
+              trailing: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+                ),
+              ),
+              onTap: () => _showColorPicker(context, controller),
+            ),
+            const SizedBox(height: 24),
 
-                // Section Title: Manajemen Data
-                const Text(
-                  "Manajemen Data",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildSettingCard(
-                  icon: Icons.cloud_upload,
-                  iconColor: Colors.blue,
-                  title: "Backup Data",
-                  subtitle: "Simpan data ke file (JSON/Backup)",
-                  onTap: () => controller.backupData(),
-                ),
-                const SizedBox(height: 12),
-                _buildSettingCard(
-                  icon: Icons.cloud_download,
-                  iconColor: Colors.green,
-                  title: "Restore Data",
-                  subtitle: "Pulihkan data dari file backup",
-                  onTap: () => controller.restoreData(),
-                ),
-                const SizedBox(height: 12),
-                _buildSettingCard(
-                  icon: Icons.table_chart,
-                  iconColor: Colors.teal,
-                  title: "Ekspor ke CSV (Excel)",
-                  subtitle: "Unduh rekap transaksi untuk spreadsheet",
-                  onTap: () => controller.exportToCsv(),
-                ),
+            // 4. Section: Manajemen Data
+            _buildSectionHeader("Manajemen Data"),
+            const SizedBox(height: 10),
+            _buildSettingTile(
+              icon: Icons.table_chart_outlined,
+              iconColor: const Color(0xFF0EA5E9),
+              title: "Ekspor ke CSV (Excel)",
+              subtitle: "Unduh rekap transaksi untuk spreadsheet",
+              onTap: () => controller.exportToCsv(),
+            ),
+            const SizedBox(height: 10),
+            _buildSettingTile(
+              icon: Icons.cloud_upload_outlined,
+              iconColor: const Color(0xFF3B82F6),
+              title: "Backup Data",
+              subtitle: "Cadangkan seluruh database ke file JSON",
+              onTap: () => controller.backupData(),
+            ),
+            const SizedBox(height: 10),
+            _buildSettingTile(
+              icon: Icons.cloud_download_outlined,
+              iconColor: const Color(0xFF10B981),
+              title: "Restore Data",
+              subtitle: "Pulihkan data transaksi dari file cadangan",
+              onTap: () => controller.restoreData(),
+            ),
+            const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
-                // Section Title: Dukungan
-                const Text(
-                  "Dukungan",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildSettingCard(
-                  icon: Icons.coffee,
-                  iconColor: Colors.orange,
-                  title: "Buy me a coffee",
-                  subtitle: "Dukung pengembang aplikasi",
-                  onTap: () => controller.openBuyMeCoffee(),
-                ),
-
-                const SizedBox(height: 24),
-                // Section Title: Tentang
-                const Text(
-                  "Tentang Program",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+            // 5. Section: Informasi Aplikasi
+            _buildSectionHeader("Tentang Aplikasi"),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.monetization_on_rounded, color: primaryColor, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.info_outline,
-                              color: Colors.blue,
+                          const Text(
+                            "Money Manager",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Financial Recording App",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Version ${controller.appVersion} (${controller.buildNumber})",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
+                          Obx(
+                            () => Text(
+                              "Versi ${controller.appVersion.value}",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Dibuat dengan ❤️ oleh Ripaldiansyah untuk membantu pencatatan keuangan Anda menjadi lebih mudah.",
-                        style: TextStyle(color: Colors.black54, height: 1.5),
-                      ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 40),
-                _buildLogoutButton(controller),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildProfileHeader(ProfileController controller) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 35,
-          backgroundColor: primaryColor.withOpacity(0.1),
-          child: Text(
-            controller.userName.value[0],
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: primaryColor,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              controller.userName.value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              controller.userEmail.value,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 14),
+                  _buildInfoRow("Pemilik Lisensi", "Muhammad Irsyad Sirojul Khoeir"),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Lisensi", "MIT License"),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Arsitektur", "Flutter • GetX • Hive • Repository"),
+                ],
+              ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildSettingCard({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    Widget? trailing,
-  }) {
+  Widget _buildAuthorCard(ProfileController controller) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 0),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4F46E5), Color(0xFF818CF8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF4F46E5).withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Text(
+                "MI",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Obx(
+                  () => Text(
+                    controller.userName.value,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Obx(
+                  () => Text(
+                    controller.userEmail.value,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(icon, color: iconColor, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
+                  child: const Text(
+                    "Pemilik Lisensi Resmi",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4F46E5),
+                    ),
                   ),
                 ),
-                if (trailing != null)
-                  trailing
-                else
-                  Icon(Icons.chevron_right, color: Colors.grey.shade300),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  void _showColorPicker(BuildContext context, ProfileController controller) {
-    Color selectedColor = primaryColor;
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Pilih Warna Tema'),
-          content: SingleChildScrollView(
-            child: HueRingPicker(
-              pickerColor: selectedColor,
-              onColorChanged: (color) {
-                selectedColor = color;
-              },
-              enableAlpha: false,
-              displayThumbColor: true,
-            ),
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF64748B),
+        letterSpacing: 0.3,
+      ),
+    );
+  }
+
+  Widget _buildSettingTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.015),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
-            TextButton(
-              onPressed: () {
-                controller.updatePrimaryColor(selectedColor);
-              },
-              child: const Text('Simpan'),
+        ],
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF64748B),
+          ),
+        ),
+        trailing: trailing ?? const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF94A3B8)),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showBudgetDialog(BuildContext context, ProfileController controller) {
+    final textController = TextEditingController(
+      text: NumberFormat.decimalPattern('id').format(controller.monthlyBudget.value),
+    );
+
+    Get.defaultDialog(
+      title: "Atur Target Anggaran",
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      content: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          children: [
+            const Text(
+              "Tentukan batas maksimal pengeluaran Anda dalam sebulan (Rp):",
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: textController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                prefixText: "Rp ",
+                hintText: "5.000.000",
+              ),
             ),
           ],
-        );
+        ),
+      ),
+      textCancel: "Batal",
+      textConfirm: "Simpan",
+      confirmTextColor: Colors.white,
+      buttonColor: primaryColor,
+      onConfirm: () {
+        final cleaned = textController.text.replaceAll(".", "").replaceAll(",", "").trim();
+        final newLimit = int.tryParse(cleaned);
+        if (newLimit != null && newLimit > 0) {
+          controller.setBudget(newLimit);
+          Get.back();
+        } else {
+          Get.snackbar("Peringatan", "Masukkan nominal angka yang valid");
+        }
       },
     );
   }
 
-  Widget _buildLogoutButton(ProfileController controller) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade50,
-          foregroundColor: Colors.red,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+  void _showColorPicker(BuildContext context, ProfileController controller) {
+    Color pickerColor = primaryColor;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Pilih Warna Tema", style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: BlockPicker(
+              pickerColor: pickerColor,
+              onColorChanged: (color) {
+                pickerColor = color;
+              },
+            ),
           ),
-        ),
-        onPressed: controller.logout,
-        child: const Text(
-          "Keluar Aplikasi",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                controller.updatePrimaryColor(pickerColor);
+                Navigator.pop(context);
+              },
+              child: const Text("Terapkan"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
