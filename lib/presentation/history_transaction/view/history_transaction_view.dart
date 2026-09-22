@@ -72,7 +72,7 @@ class HistoryTransactionView extends StatelessWidget {
                   }
                 }
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.only(bottom: 12.0),
                   child: Text(
                     dateText,
                     style: const TextStyle(
@@ -83,6 +83,38 @@ class HistoryTransactionView extends StatelessWidget {
                   ),
                 );
               }),
+
+              // Search Bar
+              Container(
+                margin: const EdgeInsets.only(bottom: 14.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: TextField(
+                  onChanged: (val) {
+                    controller.searchQuery.value = val;
+                    controller.applyFilters();
+                  },
+                  decoration: InputDecoration(
+                    hintText: "Cari kategori, wallet, atau item...",
+                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                    suffixIcon: Obx(() => controller.searchQuery.value.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              controller.searchQuery.value = "";
+                              controller.applyFilters();
+                            },
+                          )
+                        : const SizedBox.shrink()),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
 
               // Summaries
               Row(

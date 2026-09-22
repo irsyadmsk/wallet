@@ -127,11 +127,17 @@ class FormIncomeController extends GetxController {
       // Update wallet balance (increase for income)
       wallet.balance += totalIncome;
       await box.put(walletKey, wallet);
-      final controller = Get.find<WalletController>();
-      final controllerDashboard = Get.find<DashboardController>();
 
-      controllerDashboard.initializeData();
-      controller.refresh();
+      if (Get.isRegistered<WalletController>()) {
+        Get.find<WalletController>().refresh();
+      }
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().initializeData();
+      }
+      if (Get.isRegistered<HistoryTransactionController>()) {
+        Get.find<HistoryTransactionController>().initializeData();
+      }
+
       Get.back();
       Get.snackbar("Sukses", "Pemasukan berhasil disimpan");
     } catch (e) {

@@ -130,6 +130,68 @@ class ProfileController extends GetxController {
     }
   }
 
+  Future<void> exportToCsv() async {
+    try {
+      final transactionBox = Hive.box<TransactionModel>('transactions');
+      final transactions = transactionBox.values.toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      if (transactions.isEmpty) {
+        Get.snackbar("Informasi", "Belum ada data transaksi untuk diekspor");
+        return;
+      }
+
+      final StringBuffer csv = StringBuffer();
+      // CSV Header
+      csv.writeln("Tanggal,Waktu,Jenis,Kategori,Wallet,Nominal,Rincian Item");
+
+      for (var t in transactions) {
+        final date =
+            "${t.createdAt.year}-${t.createdAt.month.toString().padLeft(2, '0')}-${t.createdAt.day.toString().padLeft(2, '0')}";
+        final time =
+            "${t.createdAt.hour.toString().padLeft(2, '0')}:${t.createdAt.minute.toString().padLeft(2, '0')}";
+        final type = t.type == 'income'
+            ? 'Pemasukan'
+            : t.type == 'expense'
+                ? 'Pengeluaran'
+                : 'Transfer';
+        final itemsSummary = t.items
+            .map((item) => "${item['name'] ?? ''}: Rp ${item['nominal'] ?? ''}")
+            .join('; ')
+            .replaceAll('"', '""');
+
+        csv.writeln(
+          '"$date","$time","$type","${t.categoryName}","${t.walletName}",${t.amount},"$itemsSummary"',
+        );
+      }
+
+      String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Simpan Laporan CSV',
+        fileName: 'laporan_keuangan_${DateTime.now().millisecondsSinceEpoch}.csv',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+
+      if (outputFile != null) {
+        final File file = File(outputFile);
+        await file.writeAsString(csv.toString());
+        Get.snackbar(
+          "Ekspor Berhasil",
+          "File CSV berhasil disimpan",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Ekspor Gagal",
+        "Terjadi kesalahan: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   Future<void> restoreData() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(

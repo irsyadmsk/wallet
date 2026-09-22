@@ -123,6 +123,13 @@ class FormExpenseController extends GetxController {
         type: 'expense',
       );
 
+      // Check if wallet balance is sufficient
+      if (wallet.balance < totalIncome) {
+        Get.snackbar("Peringatan", "Saldo dompet tidak mencukupi untuk pengeluaran ini");
+        isLoading.value = false;
+        return;
+      }
+
       // Save transaction
       final transactionBox = Hive.box<TransactionModel>('transactions');
       await transactionBox.add(transaction);
@@ -131,11 +138,17 @@ class FormExpenseController extends GetxController {
       wallet.balance -= totalIncome;
       wallet.todayExpense = (wallet.todayExpense ?? 0) + totalIncome;
       await box.put(walletKey, wallet);
-      final controller = Get.find<WalletController>();
-      final controllerDashboard = Get.find<DashboardController>();
 
-      controllerDashboard.initializeData();
-      controller.refresh();
+      if (Get.isRegistered<WalletController>()) {
+        Get.find<WalletController>().refresh();
+      }
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().initializeData();
+      }
+      if (Get.isRegistered<HistoryTransactionController>()) {
+        Get.find<HistoryTransactionController>().initializeData();
+      }
+
       Get.back();
       Get.snackbar("Sukses", "Pengeluaran berhasil disimpan");
     } catch (e) {

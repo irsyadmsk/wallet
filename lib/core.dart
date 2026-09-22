@@ -9,6 +9,8 @@ export 'package:financial_recording/models/category_model/category_model.dart';
 export 'package:financial_recording/models/transaction_model/transaction_model.dart';
 export 'package:financial_recording/models/user_model/user_model.dart';
 export 'package:financial_recording/models/wallet_model/wallet_model.dart';
+export 'package:financial_recording/presentation/analytics/controller/analytics_controller.dart';
+export 'package:financial_recording/presentation/analytics/view/analytics_view.dart';
 export 'package:financial_recording/presentation/category/controller/category_controller.dart';
 export 'package:financial_recording/presentation/category/view/category_view.dart';
 export 'package:financial_recording/presentation/category_expanses/controller/category_expanses_controller.dart';

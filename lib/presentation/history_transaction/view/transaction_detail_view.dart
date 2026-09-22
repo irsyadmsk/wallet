@@ -46,6 +46,32 @@ class TransactionDetailView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.white),
+            tooltip: "Hapus Transaksi",
+            onPressed: () {
+              Get.defaultDialog(
+                title: "Hapus Transaksi?",
+                titleStyle: const TextStyle(fontWeight: FontWeight.bold),
+                middleText:
+                    "Transaksi ini akan dihapus permanen dan saldo dompet terkait akan disesuaikan kembali.",
+                textCancel: "Batal",
+                textConfirm: "Hapus",
+                confirmTextColor: Colors.white,
+                buttonColor: Colors.red,
+                onConfirm: () {
+                  Get.back(); // close dialog
+                  final historyController =
+                      Get.isRegistered<HistoryTransactionController>()
+                          ? Get.find<HistoryTransactionController>()
+                          : Get.put(HistoryTransactionController());
+                  historyController.deleteTransaction(transaction);
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

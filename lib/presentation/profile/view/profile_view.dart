@@ -101,6 +101,14 @@ class ProfileView extends StatelessWidget {
                   subtitle: "Pulihkan data dari file backup",
                   onTap: () => controller.restoreData(),
                 ),
+                const SizedBox(height: 12),
+                _buildSettingCard(
+                  icon: Icons.table_chart,
+                  iconColor: Colors.teal,
+                  title: "Ekspor ke CSV (Excel)",
+                  subtitle: "Unduh rekap transaksi untuk spreadsheet",
+                  onTap: () => controller.exportToCsv(),
+                ),
 
                 const SizedBox(height: 24),
                 // Section Title: Dukungan

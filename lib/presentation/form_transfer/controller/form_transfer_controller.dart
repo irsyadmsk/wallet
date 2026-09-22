@@ -149,6 +149,9 @@ class FormTransferController extends GetxController {
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().initializeData();
       }
+      if (Get.isRegistered<HistoryTransactionController>()) {
+        Get.find<HistoryTransactionController>().initializeData();
+      }
 
       Get.back();
       Get.snackbar("Sukses", "Transfer berhasil");

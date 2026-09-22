@@ -19,6 +19,7 @@ class HistoryTransactionController extends GetxController {
   final RxString selectedWallet = "".obs; // Store wallet name
   final RxString selectedCategory = "".obs;
   final RxString selectedType = "Semua".obs; // Semua, Income, Expense, Transfer
+  final RxString searchQuery = "".obs;
 
   // Options for Dropdowns
   final RxList<String> walletOptions = <String>[].obs;
@@ -88,6 +89,18 @@ class HistoryTransactionController extends GetxController {
   void applyFilters() {
     List<TransactionModel> temp = List.from(histories);
 
+    // 0. Search Query
+    if (searchQuery.value.trim().isNotEmpty) {
+      final query = searchQuery.value.trim().toLowerCase();
+      temp = temp.where((t) {
+        final inCategory = t.categoryName.toLowerCase().contains(query);
+        final inWallet = t.walletName.toLowerCase().contains(query);
+        final inItems = t.items.any((item) =>
+            (item['name'] ?? '').toString().toLowerCase().contains(query));
+        return inCategory || inWallet || inItems;
+      }).toList();
+    }
+
     // 1. Date Range
     if (selectedDateRange.value != null) {
       temp = temp.where((t) {
@@ -103,8 +116,6 @@ class HistoryTransactionController extends GetxController {
     // 2. Wallet
     if (selectedWallet.value.isNotEmpty) {
       temp = temp.where((t) {
-        // Simple string match. For transfers it might be "A -> B", so check contains if needed
-        // But for strict filter, maybe exact match for Income/Expense
         if (t.type == 'transfer') {
           return t.walletName.contains(selectedWallet.value);
         }
@@ -121,7 +132,6 @@ class HistoryTransactionController extends GetxController {
 
     // 4. Type
     if (selectedType.value != "Semua") {
-      // Map dropdown values to model types
       String typeKey = "";
       if (selectedType.value == "Pemasukan") typeKey = "income";
       if (selectedType.value == "Pengeluaran") typeKey = "expense";
@@ -134,6 +144,67 @@ class HistoryTransactionController extends GetxController {
 
     filteredHistories.assignAll(temp);
     calculateTotals();
+  }
+
+  Future<void> deleteTransaction(TransactionModel transaction) async {
+    try {
+      final walletBox = Hive.box<WalletModel>('walletBox');
+
+      if (transaction.type == 'expense') {
+        // Refund expense back to wallet
+        for (var key in walletBox.keys) {
+          final w = walletBox.get(key);
+          if (w != null && w.name == transaction.walletName) {
+            w.balance += transaction.amount;
+            await walletBox.put(key, w);
+            break;
+          }
+        }
+      } else if (transaction.type == 'income') {
+        // Deduct income from wallet
+        for (var key in walletBox.keys) {
+          final w = walletBox.get(key);
+          if (w != null && w.name == transaction.walletName) {
+            w.balance -= transaction.amount;
+            await walletBox.put(key, w);
+            break;
+          }
+        }
+      } else if (transaction.type == 'transfer') {
+        // Transfer was "Source -> Dest", reverse it
+        final parts = transaction.walletName.split(" -> ");
+        if (parts.length == 2) {
+          final sourceName = parts[0].trim();
+          final destName = parts[1].trim();
+
+          for (var key in walletBox.keys) {
+            final w = walletBox.get(key);
+            if (w != null && w.name == sourceName) {
+              w.balance += transaction.amount;
+              await walletBox.put(key, w);
+            } else if (w != null && w.name == destName) {
+              w.balance -= transaction.amount;
+              await walletBox.put(key, w);
+            }
+          }
+        }
+      }
+
+      await transaction.delete();
+      await initializeData();
+
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().initializeData();
+      }
+      if (Get.isRegistered<WalletController>()) {
+        Get.find<WalletController>().refresh();
+      }
+
+      Get.back();
+      Get.snackbar("Sukses", "Transaksi berhasil dihapus");
+    } catch (e) {
+      Get.snackbar("Error", "Gagal menghapus transaksi: $e");
+    }
   }
 
   void calculateTotals() {

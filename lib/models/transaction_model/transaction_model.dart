@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 part 'transaction_model.g.dart';
 
 @HiveType(typeId: 3)
-class TransactionModel {
+class TransactionModel extends HiveObject {
   @HiveField(0)
   String walletName;
 

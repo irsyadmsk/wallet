@@ -63,7 +63,11 @@ class DashboardView extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: () {
-                    Get.to(() => const HistoryTransactionView());
+                    if (Get.isRegistered<MenuListController>()) {
+                      Get.find<MenuListController>().selectedIndex.value = 1;
+                    } else {
+                      Get.to(() => const HistoryTransactionView());
+                    }
                   },
                   child: Text(
                     "Lihat Semua",

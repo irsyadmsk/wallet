@@ -11,16 +11,16 @@ class MenuListView extends StatelessWidget {
 
     return Obx(() {
       return DefaultTabController(
-        length: 4,
+        length: 5,
         initialIndex: controller.selectedIndex.value,
         child: Scaffold(
           body: IndexedStack(
             index: controller.selectedIndex.value,
-            children: [
+            children: const [
               DashboardView(),
               HistoryTransactionView(),
+              AnalyticsView(),
               CategoryView(),
-              // ProfileView(),
               WalletView(),
             ],
           ),
@@ -29,29 +29,38 @@ class MenuListView extends StatelessWidget {
             selectedItemColor: primaryColor,
             unselectedItemColor: Colors.grey[500],
             showUnselectedLabels: true,
-
             type: BottomNavigationBarType.fixed,
             onTap: (index) {
               controller.selectedIndex.value = index;
+              if (index == 2 && Get.isRegistered<AnalyticsController>()) {
+                Get.find<AnalyticsController>().loadAnalytics();
+              }
             },
             items: const [
               BottomNavigationBarItem(
                 label: "Dashboard",
-                icon: Icon(Icons.dashboard),
+                icon: Icon(Icons.dashboard_outlined),
+                activeIcon: Icon(Icons.dashboard),
               ),
               BottomNavigationBarItem(
-                label: "History",
-                icon: Icon(Icons.history),
+                label: "Riwayat",
+                icon: Icon(Icons.history_outlined),
+                activeIcon: Icon(Icons.history),
               ),
-
+              BottomNavigationBarItem(
+                label: "Laporan",
+                icon: Icon(Icons.pie_chart_outline),
+                activeIcon: Icon(Icons.pie_chart),
+              ),
               BottomNavigationBarItem(
                 label: "Kategori",
-                icon: Icon(Icons.category),
+                icon: Icon(Icons.category_outlined),
+                activeIcon: Icon(Icons.category),
               ),
-
               BottomNavigationBarItem(
-                label: "Wallet",
-                icon: Icon(Icons.wallet),
+                label: "Dompet",
+                icon: Icon(Icons.account_balance_wallet_outlined),
+                activeIcon: Icon(Icons.account_balance_wallet),
               ),
             ],
           ),
