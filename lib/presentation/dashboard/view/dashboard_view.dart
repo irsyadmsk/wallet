@@ -6,6 +6,8 @@ import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/account_detail/view/account_detail_view.dart';
 import 'package:financial_recording/presentation/accounts/widget/account_editor_sheet.dart';
+import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
+import 'package:financial_recording/presentation/auth/view/auth_sheet.dart';
 import 'package:financial_recording/presentation/dashboard/controller/dashboard_controller.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/presentation/goals/view/goals_view.dart';
@@ -37,6 +39,23 @@ class DashboardView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         title: Text(AppConfig.appName),
         actions: [
+          Obx(() {
+            final auth = Get.find<AuthController>();
+            return IconButton(
+              tooltip: auth.isSignedIn ? (auth.user.value?.email ?? 'Akun') : 'Masuk / Daftar untuk sinkronisasi',
+              icon: Icon(
+                auth.isSignedIn ? Icons.cloud_done_rounded : Icons.account_circle_outlined,
+                color: auth.isSignedIn ? colors.primary : null,
+              ),
+              onPressed: () {
+                if (auth.isSignedIn) {
+                  Get.find<ShellController>().goTo(8);
+                } else {
+                  showAdaptiveSheet<bool>(context, builder: (_) => const AuthSheet());
+                }
+              },
+            );
+          }),
           IconButton(
             tooltip: 'Target Finansial',
             icon: const Icon(Icons.flag_rounded),
