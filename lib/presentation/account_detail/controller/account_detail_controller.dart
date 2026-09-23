@@ -53,6 +53,33 @@ class AccountDetailController extends GetxController {
     _refreshBalanceHistory(list, now);
   }
 
+  /// For a liability account with a billing [AccountModel.dueDay] set:
+  /// splits what's currently owed into "jatuh tempo bulan ini" (everything
+  /// posted before the cycle that's still open) and "bulan depan"
+  /// (transactions in the cycle now accumulating toward the next due date).
+  /// Null when the account isn't a card/liability with a due day.
+  (int dueThisCycle, int dueNextCycle)? get billSplit {
+    final acc = account.value;
+    if (acc == null || !acc.isLiability || acc.dueDay == null) return null;
+    final now = DateTime.now();
+    final day = acc.dueDay!.clamp(1, 28);
+    final cycleStart = now.day >= day ? DateTime(now.year, now.month, day) : DateTime(now.year, now.month - 1, day);
+
+    final openCycleSpend = transactions
+        .where((t) => !t.date.isBefore(cycleStart))
+        .where((t) => t.type == TxType.expense || (t.type == TxType.transfer && t.accountId == accountId))
+        .fold(0, (s, t) => s + t.amount);
+    final openCyclePayments = transactions
+        .where((t) => !t.date.isBefore(cycleStart))
+        .where((t) => t.type == TxType.transfer && t.toAccountId == accountId)
+        .fold(0, (s, t) => s + t.amount);
+    final dueNextCycle = (openCycleSpend - openCyclePayments).clamp(0, 1 << 62);
+
+    final totalOwed = -(acc.cachedBalance < 0 ? acc.cachedBalance : 0);
+    final dueThisCycle = (totalOwed - dueNextCycle).clamp(0, 1 << 62);
+    return (dueThisCycle, dueNextCycle);
+  }
+
   /// Month-end balance for the last 6 months, replayed from this account's
   /// own ledger entries (both legs of a transfer count).
   void _refreshBalanceHistory(List<TxModel> accountTxs, DateTime now) {

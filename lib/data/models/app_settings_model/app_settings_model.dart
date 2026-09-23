@@ -31,6 +31,14 @@ class AppSettingsModel extends HiveObject {
   @HiveField(8)
   int iconShapeIndex; // 0: squircle, 1: circle, 2: hexagon, 3: roundedSquare, 4: stadium
 
+  /// Salted hash of the app-lock PIN — see [PinLockService]. Never the raw
+  /// PIN itself, and this is device-local UI security, not synced.
+  @HiveField(9)
+  String? pinHash;
+
+  @HiveField(10)
+  bool pinEnabled;
+
   AppSettingsModel({
     this.themeModeIndex = 0,
     this.seedColorValue = 0xFF0D9488,
@@ -41,5 +49,7 @@ class AppSettingsModel extends HiveObject {
     this.legacyDataPurged = false,
     this.lastRecurringRunAt,
     this.iconShapeIndex = 0,
+    this.pinHash,
+    this.pinEnabled = false,
   });
 }

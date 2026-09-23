@@ -78,6 +78,7 @@ class LedgerService {
     required DateTime date,
     String? memo,
     String? imagePath,
+    int? fee,
   }) =>
       _write(TxModel(
         id: _uuid.v4(),
@@ -88,6 +89,7 @@ class LedgerService {
         date: date,
         memo: memo,
         imagePath: imagePath,
+        transferFee: fee,
       ));
 
   Future<void> update(TxModel updated) async {
@@ -149,7 +151,7 @@ class LedgerService {
   /// restore, or from the Settings "Hitung ulang saldo" action.
   Future<void> recomputeAllBalances() async {
     final balances = <String, int>{};
-    for (final acc in _accounts.all(includeArchived: true)) {
+    for (final acc in _accounts.all(includeArchived: true, includeDeleted: true)) {
       balances[acc.id] = acc.openingBalance;
     }
     for (final tx in _txs.all()) {
@@ -158,7 +160,7 @@ class LedgerService {
         balances[tx.toAccountId!] = (balances[tx.toAccountId!] ?? 0) + tx.amount;
       }
     }
-    for (final acc in _accounts.all(includeArchived: true)) {
+    for (final acc in _accounts.all(includeArchived: true, includeDeleted: true)) {
       acc.cachedBalance = balances[acc.id] ?? acc.openingBalance;
       await acc.save();
     }

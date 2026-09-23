@@ -6,6 +6,10 @@ import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
 import 'package:financial_recording/presentation/auth/view/auth_sheet.dart';
 import 'package:financial_recording/presentation/import_mmbak/view/import_mmbak_view.dart';
+import 'package:financial_recording/presentation/memo/view/memo_view.dart';
+import 'package:financial_recording/presentation/pin_lock/view/pin_setup_sheet.dart';
+import 'package:financial_recording/presentation/trash/view/trash_accounts_view.dart';
+import 'package:financial_recording/data/services/pin_lock_service.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/presentation/settings/controller/settings_controller.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
@@ -244,7 +248,55 @@ class SettingsView extends StatelessWidget {
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () => shell.goTo(8),
                     ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.sticky_note_2_outlined),
+                      title: const Text('Memo'),
+                      subtitle: const Text('Catatan bebas, terpisah dari transaksi'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Get.to(() => const MemoView()),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.delete_outline_rounded),
+                      title: const Text('Akun Terhapus'),
+                      subtitle: const Text('Pulihkan akun yang tidak sengaja dihapus'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Get.to(() => const TrashAccountsView()),
+                    ),
                   ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              _SectionLabel('Keamanan'),
+              Card(
+                child: StatefulBuilder(
+                  builder: (context, setLocalState) {
+                    final pinService = PinLockService();
+                    return SwitchListTile(
+                      secondary: const Icon(Icons.lock_outline_rounded),
+                      title: const Text('Kunci PIN Aplikasi'),
+                      subtitle: Text(
+                        pinService.isEnabled
+                            ? 'Aktif — diminta setiap aplikasi dibuka'
+                            : 'Nonaktif — siapa saja bisa membuka aplikasi ini',
+                      ),
+                      value: pinService.isEnabled,
+                      onChanged: (v) async {
+                        if (v) {
+                          final saved = await showAdaptiveSheet<bool>(
+                            context,
+                            builder: (_) => const PinSetupSheet(),
+                          );
+                          if (saved == true) setLocalState(() {});
+                        } else {
+                          await pinService.disable();
+                          setLocalState(() {});
+                        }
+                      },
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),

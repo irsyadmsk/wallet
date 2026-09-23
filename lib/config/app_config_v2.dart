@@ -12,4 +12,5 @@ abstract class AppBoxes {
   static const goals = 'goals_v2';
   static const templates = 'templates_v2';
   static const debts = 'debts_v2';
+  static const memos = 'memos_v2';
 }

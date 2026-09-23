@@ -87,6 +87,30 @@ class AccountDetailView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                if (c.billSplit != null) ...[
+                  SectionCard(
+                    title: 'Tagihan Kartu',
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _Stat(
+                            label: 'Jatuh tempo bulan ini',
+                            value: c.billSplit!.$1.rupiah,
+                            color: colors.expense,
+                          ),
+                        ),
+                        Expanded(
+                          child: _Stat(
+                            label: 'Menumpuk bulan depan',
+                            value: c.billSplit!.$2.rupiah,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
                 if (c.balanceHistory.length > 1) ...[
                   SectionCard(
                     title: 'Riwayat saldo',

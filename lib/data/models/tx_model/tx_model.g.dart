@@ -32,6 +32,7 @@ class TxModelAdapter extends TypeAdapter<TxModel> {
       externalId: fields[12] as String?,
       externalPairId: fields[13] as String?,
       imagePath: fields[16] as String?,
+      transferFee: fields[17] as int?,
       createdAt: fields[14] as DateTime?,
       updatedAt: fields[15] as DateTime?,
     );
@@ -40,7 +41,7 @@ class TxModelAdapter extends TypeAdapter<TxModel> {
   @override
   void write(BinaryWriter writer, TxModel obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class TxModelAdapter extends TypeAdapter<TxModel> {
       ..writeByte(15)
       ..write(obj.updatedAt)
       ..writeByte(16)
-      ..write(obj.imagePath);
+      ..write(obj.imagePath)
+      ..writeByte(17)
+      ..write(obj.transferFee);
   }
 
   @override

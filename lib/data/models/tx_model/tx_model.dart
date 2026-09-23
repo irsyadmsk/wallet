@@ -57,6 +57,13 @@ class TxModel extends HiveObject {
   @HiveField(16)
   String? imagePath; // Local path to attached receipt or bill photo
 
+  /// Extra amount deducted from [accountId] on top of [amount] for a
+  /// transfer — the source account loses `amount + transferFee`, but the
+  /// destination still only receives `amount`. Null/zero for every other
+  /// transaction type.
+  @HiveField(17)
+  int? transferFee;
+
   TxModel({
     required this.id,
     required this.type,
@@ -73,6 +80,7 @@ class TxModel extends HiveObject {
     this.externalId,
     this.externalPairId,
     this.imagePath,
+    this.transferFee,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : items = items ?? [],
@@ -90,8 +98,9 @@ class TxModel extends HiveObject {
       case TxType.income:
         return amount;
       case TxType.expense:
-      case TxType.transfer:
         return -amount;
+      case TxType.transfer:
+        return -(amount + (transferFee ?? 0));
     }
   }
 
@@ -111,6 +120,7 @@ class TxModel extends HiveObject {
         'externalId': externalId,
         'externalPairId': externalPairId,
         'imagePath': imagePath,
+        'transferFee': transferFee,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
       };
@@ -133,6 +143,7 @@ class TxModel extends HiveObject {
         externalId: json['externalId'] as String?,
         externalPairId: json['externalPairId'] as String?,
         imagePath: json['imagePath'] as String?,
+        transferFee: json['transferFee'] == null ? null : int.tryParse(json['transferFee'].toString()),
         createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
         updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
       );

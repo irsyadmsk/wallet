@@ -49,6 +49,20 @@ class _QNumberFieldState extends State<QNumberField> {
     controller.text = formattedValue?.toString() ?? '';
   }
 
+  @override
+  void didUpdateWidget(QNumberField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Lets a caller push a new value in from outside (OCR scan result, the
+    // calculator dialog, ...) — without this the field silently ignored it
+    // after first build, since it never re-read widget.value.
+    final incoming = widget.value?.replaceAll(RegExp('[^0-9.]'), '');
+    if (incoming != value && incoming != controller.text) {
+      value = incoming;
+      controller.text = formattedValue ?? '';
+      controller.selection = TextSelection.collapsed(offset: controller.text.length);
+    }
+  }
+
   String? get formattedValue {
     if (widget.pattern != null) {
       final currencyFormat = NumberFormat(widget.pattern, widget.locale);

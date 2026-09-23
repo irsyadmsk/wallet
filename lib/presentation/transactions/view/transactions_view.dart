@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/presentation/transactions/controller/transactions_controller.dart';
+import 'package:financial_recording/presentation/transactions/widget/tx_calendar_view.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
+import 'package:financial_recording/shared/widget/section_card.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
@@ -24,6 +26,11 @@ class TransactionsView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         title: const Text('Transaksi'),
         actions: [
+          Obx(() => IconButton(
+                tooltip: c.calendarMode.value ? 'Tampilan daftar' : 'Tampilan kalender',
+                icon: Icon(c.calendarMode.value ? Icons.view_list_rounded : Icons.calendar_month_rounded),
+                onPressed: c.toggleCalendarMode,
+              )),
           Obx(() => IconButton(
                 tooltip: 'Ekspor CSV (Excel)',
                 icon: c.exporting.value
@@ -91,6 +98,12 @@ class TransactionsView extends StatelessWidget {
                     ),
                   )),
               const SizedBox(height: AppSpacing.sm),
+              Obx(() => c.calendarMode.value
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: SectionCard(child: TxCalendarView(controller: c)),
+                    )
+                  : const SizedBox.shrink()),
               Obx(() => SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(

@@ -40,6 +40,36 @@ class TransactionsController extends GetxController {
   final Rx<DateTime?> from = Rx<DateTime?>(null);
   final Rx<DateTime?> to = Rx<DateTime?>(null);
   final Rx<TxGroupMode> groupMode = TxGroupMode.date.obs;
+  final RxBool calendarMode = false.obs;
+  final Rx<DateTime> calendarMonth = Rx(DateTime(DateTime.now().year, DateTime.now().month, 1));
+
+  void toggleCalendarMode() => calendarMode.value = !calendarMode.value;
+
+  void shiftCalendarMonth(int delta) {
+    final m = calendarMonth.value;
+    calendarMonth.value = DateTime(m.year, m.month + delta, 1);
+  }
+
+  /// Income/expense totals per day-of-month for [calendarMonth], ignoring
+  /// the active search/type filters — the calendar is a whole-month
+  /// overview; tapping a day narrows the list below via [setDateRange].
+  Map<int, (int income, int expense)> get calendarDayTotals {
+    final m = calendarMonth.value;
+    final from = DateTime(m.year, m.month, 1);
+    final to = DateTime(m.year, m.month + 1, 1);
+    final txs = _txs.query(TxQuery(from: from, to: to));
+    final totals = <int, (int, int)>{};
+    for (final t in txs) {
+      final day = t.date.day;
+      final (inc, exp) = totals[day] ?? (0, 0);
+      totals[day] = t.type == TxType.income
+          ? (inc + t.amount, exp)
+          : t.type == TxType.expense
+              ? (inc, exp + t.amount)
+              : (inc, exp);
+    }
+    return totals;
+  }
 
   @override
   void onInit() {

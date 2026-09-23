@@ -7,9 +7,20 @@ import 'package:financial_recording/domain/enums/account_group_type.dart';
 class AccountRepository {
   Box<AccountModel> get _box => Hive.box<AccountModel>(AppBoxes.accounts);
 
-  List<AccountModel> all({bool includeArchived = false}) {
-    final list = _box.values.where((a) => includeArchived || !a.isArchived).toList();
+  List<AccountModel> all({bool includeArchived = false, bool includeDeleted = false}) {
+    final list = _box.values
+        .where((a) => includeDeleted || a.deletedAt == null)
+        .where((a) => includeArchived || !a.isArchived)
+        .toList();
     list.sort((a, b) => a.orderSeq.compareTo(b.orderSeq));
+    return list;
+  }
+
+  /// Soft-deleted accounts, newest-deleted first — see Settings > Akun
+  /// Terhapus.
+  List<AccountModel> deletedAccounts() {
+    final list = _box.values.where((a) => a.deletedAt != null).toList();
+    list.sort((a, b) => b.deletedAt!.compareTo(a.deletedAt!));
     return list;
   }
 
@@ -39,7 +50,28 @@ class AccountRepository {
     }
   }
 
+  /// Soft-delete: the row stays (with its transaction history intact) but
+  /// disappears from every normal list until restored or purged from
+  /// Settings > Akun Terhapus.
   Future<void> delete(String id) async {
+    final acc = byId(id);
+    if (acc == null) return;
+    acc.deletedAt = DateTime.now();
+    await acc.save();
+    await TombstoneService().record('accounts', id);
+  }
+
+  Future<void> restore(String id) async {
+    final acc = byId(id);
+    if (acc == null) return;
+    acc.deletedAt = null;
+    await acc.save();
+  }
+
+  /// Permanently removes an already soft-deleted account. Existing
+  /// transactions that reference it are left as-is (same as the old
+  /// hard-delete behavior) — only the account row itself goes away.
+  Future<void> purge(String id) async {
     final key = _keyFor(id);
     if (key != null) await _box.delete(key);
     await TombstoneService().record('accounts', id);

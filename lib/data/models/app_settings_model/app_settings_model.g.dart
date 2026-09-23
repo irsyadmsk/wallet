@@ -26,13 +26,15 @@ class AppSettingsModelAdapter extends TypeAdapter<AppSettingsModel> {
       legacyDataPurged: fields[6] as bool,
       lastRecurringRunAt: fields[7] as DateTime?,
       iconShapeIndex: fields[8] as int,
+      pinHash: fields[9] as String?,
+      pinEnabled: fields[10] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettingsModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.themeModeIndex)
       ..writeByte(1)
@@ -50,7 +52,11 @@ class AppSettingsModelAdapter extends TypeAdapter<AppSettingsModel> {
       ..writeByte(7)
       ..write(obj.lastRecurringRunAt)
       ..writeByte(8)
-      ..write(obj.iconShapeIndex);
+      ..write(obj.iconShapeIndex)
+      ..writeByte(9)
+      ..write(obj.pinHash)
+      ..writeByte(10)
+      ..write(obj.pinEnabled);
   }
 
   @override

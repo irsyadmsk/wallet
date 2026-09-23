@@ -11,6 +11,19 @@ import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/shared/widget/section_card.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 
+String _periodLabel(CategoryPeriod p) {
+  switch (p) {
+    case CategoryPeriod.week:
+      return 'Minggu ini';
+    case CategoryPeriod.month:
+      return 'Bulan ini';
+    case CategoryPeriod.year:
+      return 'Tahun ini';
+    case CategoryPeriod.custom:
+      return 'Rentang custom';
+  }
+}
+
 class ReportsView extends StatelessWidget {
   const ReportsView({super.key});
 
@@ -68,12 +81,56 @@ class ReportsView extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                   SectionCard(
                     title: 'Pengeluaran per kategori',
-                    child: c.expenseByCategory.isEmpty
-                        ? const Padding(
-                            padding: EdgeInsets.all(AppSpacing.lg),
-                            child: Text('Belum ada pengeluaran pada periode ini.'),
-                          )
-                        : _CategoryBreakdown(slices: c.expenseByCategory),
+                    trailing: PopupMenuButton<CategoryPeriod>(
+                      tooltip: 'Pilih periode',
+                      initialValue: c.categoryPeriod.value,
+                      onSelected: (p) async {
+                        if (p == CategoryPeriod.custom) {
+                          final range = await showDateRangePicker(
+                            context: context,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                            initialDateRange: DateTimeRange(
+                              start: c.categoryCustomFrom.value,
+                              end: c.categoryCustomTo.value,
+                            ),
+                          );
+                          if (range != null) {
+                            c.setCategoryCustomRange(range.start, range.end);
+                          }
+                        } else {
+                          c.setCategoryPeriod(p);
+                        }
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: CategoryPeriod.week, child: Text('Minggu ini')),
+                        PopupMenuItem(value: CategoryPeriod.month, child: Text('Bulan ini')),
+                        PopupMenuItem(value: CategoryPeriod.year, child: Text('Tahun ini')),
+                        PopupMenuItem(value: CategoryPeriod.custom, child: Text('Pilih rentang...')),
+                      ],
+                      child: Chip(
+                        label: Text(_periodLabel(c.categoryPeriod.value)),
+                        avatar: const Icon(Icons.expand_more_rounded, size: 16),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: Text(
+                            'Total: ${c.categoryPeriodTotal.value.rupiah}',
+                            style: TextStyle(color: colors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        c.expenseByCategory.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(AppSpacing.lg),
+                                child: Text('Belum ada pengeluaran pada periode ini.'),
+                              )
+                            : _CategoryBreakdown(slices: c.expenseByCategory),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AdaptiveGrid(

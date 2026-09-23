@@ -5,12 +5,14 @@ import 'package:financial_recording/core.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
+import 'package:financial_recording/data/repositories/tx_repository.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/receipt_ocr_service.dart';
 import 'package:financial_recording/data/services/receipt_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
+import 'package:financial_recording/shared/widget/calculator_dialog.dart';
 import 'package:financial_recording/shared/widget/receipt_preview_dialog.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 
@@ -43,10 +45,12 @@ class FormTxView extends StatefulWidget {
 class _FormTxViewState extends State<FormTxView> {
   final _accounts = AccountRepository();
   final _categories = TxCategoryRepository();
+  final _txs = TxRepository();
   final _ledger = LedgerService();
   final _receipts = ReceiptService();
   final _ocr = ReceiptOcrService();
   bool scanning = false;
+  List<TxModel> _memoSuggestions = [];
 
   late TxType type = widget.existing?.type ?? widget.initialType;
   late String? accountId =
@@ -58,6 +62,8 @@ class _FormTxViewState extends State<FormTxView> {
   late TimeOfDay time = TimeOfDay.fromDateTime(widget.existing?.date ?? DateTime.now());
   late String memo = widget.existing?.memo ?? widget.initialMemo ?? '';
   late String? imagePath = widget.existing?.imagePath;
+  late int transferFee = widget.existing?.transferFee ?? 0;
+  int installments = 1;
   bool isNewImagePicked = false;
   bool saving = false;
 
@@ -135,11 +141,37 @@ class _FormTxViewState extends State<FormTxView> {
             const SizedBox(height: AppSpacing.lg),
 
             // Number field
-            QNumberField(
-              label: 'Jumlah (Rp)',
-              value: amount == 0 ? '' : amount.toString(),
-              locale: 'id_ID',
-              onChanged: (v) => amount = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: QNumberField(
+                    label: 'Jumlah (Rp)',
+                    value: amount == 0 ? '' : amount.toString(),
+                    locale: 'id_ID',
+                    hideSuffix: true,
+                    onChanged: (v) => amount = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IconButton(
+                    tooltip: 'Kalkulator',
+                    icon: Icon(Icons.calculate_outlined, color: colors.primary),
+                    onPressed: () async {
+                      final result = await CalculatorDialog.show(context, initial: amount);
+                      if (result != null && result >= 0) {
+                        setState(() => amount = result);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
 
             // Account picker
@@ -168,6 +200,26 @@ class _FormTxViewState extends State<FormTxView> {
                 onChanged: (v, _) => setState(() => categoryId = v as String?),
               ),
 
+            if (type == TxType.transfer)
+              QNumberField(
+                label: 'Biaya transfer (opsional)',
+                value: transferFee == 0 ? '' : transferFee.toString(),
+                locale: 'id_ID',
+                helper: 'Potongan biaya admin — akun tujuan tetap menerima jumlah penuh',
+                onChanged: (v) => transferFee = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+              ),
+
+            if (type == TxType.expense && !isEditing)
+              QDropdownField(
+                label: 'Jumlah cicilan',
+                value: installments,
+                items: [
+                  {'value': 1, 'label': 'Tidak dicicil'},
+                  for (final n in [2, 3, 6, 9, 12]) {'value': n, 'label': '$n bulan'},
+                ],
+                onChanged: (v, _) => setState(() => installments = v as int? ?? 1),
+              ),
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -194,9 +246,24 @@ class _FormTxViewState extends State<FormTxView> {
             QMemoField(
               label: 'Catatan (opsional)',
               value: memo,
-              onChanged: (v) => memo = v,
+              onChanged: _onMemoChanged,
               maxLines: 2,
             ),
+            if (!isEditing && _memoSuggestions.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  for (final s in _memoSuggestions)
+                    ActionChip(
+                      avatar: const Icon(Icons.history_rounded, size: 16),
+                      label: Text(s.memo ?? ''),
+                      onPressed: () => _applyMemoSuggestion(s),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: AppSpacing.sm),
 
             // Receipt attachment section
@@ -437,6 +504,42 @@ class _FormTxViewState extends State<FormTxView> {
     );
   }
 
+  /// Suggests up to 3 past transactions whose memo contains what's typed so
+  /// far — tapping one refills memo + category + amount + account, matching
+  /// the "autofill riwayat" convenience from Money Manager. Only offered
+  /// while adding a new transaction, never while editing an existing one.
+  void _onMemoChanged(String v) {
+    memo = v;
+    final query = v.trim().toLowerCase();
+    if (isEditing || query.length < 2) {
+      if (_memoSuggestions.isNotEmpty) setState(() => _memoSuggestions = []);
+      return;
+    }
+    final seen = <String>{};
+    final matches = <TxModel>[];
+    final all = _txs.all()..sort((a, b) => b.date.compareTo(a.date));
+    for (final t in all) {
+      final m = t.memo;
+      if (m == null || m.isEmpty || t.type != type) continue;
+      final key = m.toLowerCase();
+      if (!key.contains(query) || seen.contains(key)) continue;
+      seen.add(key);
+      matches.add(t);
+      if (matches.length >= 3) break;
+    }
+    setState(() => _memoSuggestions = matches);
+  }
+
+  void _applyMemoSuggestion(TxModel s) {
+    setState(() {
+      memo = s.memo ?? '';
+      amount = s.amount;
+      accountId = s.accountId;
+      categoryId = s.categoryId;
+      _memoSuggestions = [];
+    });
+  }
+
   Future<void> _pickImage() async {
     final picked = await _receipts.pickReceiptImage();
     if (picked != null) {
@@ -542,7 +645,8 @@ class _FormTxViewState extends State<FormTxView> {
         ..categoryId = type == TxType.transfer ? null : categoryId
         ..date = _combinedDateTime
         ..memo = memo.trim().isEmpty ? null : memo.trim()
-        ..imagePath = finalImagePath;
+        ..imagePath = finalImagePath
+        ..transferFee = type == TxType.transfer && transferFee > 0 ? transferFee : null;
       await _ledger.update(updated);
     } else if (type == TxType.income) {
       await _ledger.addIncome(
@@ -554,14 +658,18 @@ class _FormTxViewState extends State<FormTxView> {
         imagePath: finalImagePath,
       );
     } else if (type == TxType.expense) {
-      await _ledger.addExpense(
-        accountId: accountId!,
-        categoryId: categoryId ?? '',
-        amount: amount,
-        date: _combinedDateTime,
-        memo: memo.trim().isEmpty ? null : memo.trim(),
-        imagePath: finalImagePath,
-      );
+      if (installments > 1) {
+        await _addInstallments(finalImagePath);
+      } else {
+        await _ledger.addExpense(
+          accountId: accountId!,
+          categoryId: categoryId ?? '',
+          amount: amount,
+          date: _combinedDateTime,
+          memo: memo.trim().isEmpty ? null : memo.trim(),
+          imagePath: finalImagePath,
+        );
+      }
     } else {
       await _ledger.addTransfer(
         fromAccountId: accountId!,
@@ -570,10 +678,40 @@ class _FormTxViewState extends State<FormTxView> {
         date: _combinedDateTime,
         memo: memo.trim().isEmpty ? null : memo.trim(),
         imagePath: finalImagePath,
+        fee: transferFee > 0 ? transferFee : null,
       );
     }
 
     if (mounted) Navigator.of(context).pop(true);
+  }
+
+  /// Splits a purchase into [installments] monthly expenses of amount ÷ n
+  /// each (remainder folded into the first one), same day-of-month going
+  /// forward — a lightweight "cicilan" without needing the recurring-rule
+  /// machinery, since the count is fixed and known up front.
+  Future<void> _addInstallments(String? imagePath) async {
+    final base = amount ~/ installments;
+    final remainder = amount - base * installments;
+    final baseMemo = memo.trim();
+    for (var i = 0; i < installments; i++) {
+      final installmentAmount = base + (i == 0 ? remainder : 0);
+      final installmentDate = DateTime(
+        _combinedDateTime.year,
+        _combinedDateTime.month + i,
+        _combinedDateTime.day,
+        _combinedDateTime.hour,
+        _combinedDateTime.minute,
+      );
+      final suffix = '(${i + 1}/$installments)';
+      await _ledger.addExpense(
+        accountId: accountId!,
+        categoryId: categoryId ?? '',
+        amount: installmentAmount,
+        date: installmentDate,
+        memo: baseMemo.isEmpty ? suffix : '$baseMemo $suffix',
+        imagePath: i == 0 ? imagePath : null,
+      );
+    }
   }
 }
 

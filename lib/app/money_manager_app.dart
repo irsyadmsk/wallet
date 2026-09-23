@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
+import 'package:financial_recording/data/services/pin_lock_service.dart';
+import 'package:financial_recording/presentation/pin_lock/view/pin_lock_view.dart';
 import 'package:financial_recording/presentation/accounts/controller/accounts_controller.dart';
 import 'package:financial_recording/presentation/accounts/view/accounts_view.dart';
 import 'package:financial_recording/presentation/budgets/controller/budgets_controller.dart';
@@ -43,8 +45,27 @@ class MoneyManagerApp extends StatelessWidget {
           theme: AppTheme.light(theme.seedColor.value),
           darkTheme: AppTheme.dark(theme.seedColor.value),
           themeMode: theme.themeMode.value,
-          home: const HomeShell(),
+          home: const _AppLockGate(),
         ));
+  }
+}
+
+/// Shows [PinLockView] once per app launch when the user has enabled a PIN,
+/// then hands off to [HomeShell] for the rest of the session.
+class _AppLockGate extends StatefulWidget {
+  const _AppLockGate();
+
+  @override
+  State<_AppLockGate> createState() => _AppLockGateState();
+}
+
+class _AppLockGateState extends State<_AppLockGate> {
+  late bool _unlocked = !PinLockService().isEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_unlocked) return const HomeShell();
+    return PinLockView(onUnlocked: () => setState(() => _unlocked = true));
   }
 }
 

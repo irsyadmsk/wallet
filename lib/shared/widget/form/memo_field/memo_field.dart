@@ -29,6 +29,7 @@ class QMemoField extends StatefulWidget {
 class _QMemoFieldState extends State<QMemoField> {
   FocusNode focusNode = FocusNode();
   GlobalKey key = GlobalKey();
+  late final TextEditingController controller = TextEditingController(text: widget.value);
 
   @override
   void initState() {
@@ -45,6 +46,23 @@ class _QMemoFieldState extends State<QMemoField> {
       }
     });
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(QMemoField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Lets a caller push text in from outside (e.g. an autofill-from-history
+    // suggestion) — initialValue alone only applies on first build.
+    if (widget.value != null && widget.value != controller.text) {
+      controller.text = widget.value!;
+      controller.selection = TextSelection.collapsed(offset: controller.text.length);
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,7 +83,7 @@ class _QMemoFieldState extends State<QMemoField> {
       ),
       child: TextFormField(
         key: key,
-        initialValue: widget.value,
+        controller: controller,
         focusNode: focusNode,
         validator: widget.validator,
         maxLength: widget.maxLength,

@@ -55,6 +55,11 @@ class AccountModel extends HiveObject {
   @HiveField(15)
   int? dueDay;
 
+  /// Soft-delete timestamp — set instead of physically removing the row, so
+  /// an accidental delete can be undone from Settings > Akun Terhapus.
+  @HiveField(16)
+  DateTime? deletedAt;
+
   AccountModel({
     required this.id,
     required this.name,
@@ -72,6 +77,7 @@ class AccountModel extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.dueDay,
+    this.deletedAt,
   })  : isLiability = isLiability ?? AccountGroupType.fromCode(groupCode).isLiabilityDefault,
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
@@ -95,6 +101,7 @@ class AccountModel extends HiveObject {
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
         'dueDay': dueDay,
+        'deletedAt': deletedAt?.toIso8601String(),
       };
 
   factory AccountModel.fromJson(Map<String, dynamic> json) => AccountModel(
@@ -114,5 +121,6 @@ class AccountModel extends HiveObject {
         createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
         updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
         dueDay: json['dueDay'] == null ? null : int.tryParse(json['dueDay'].toString()),
+        deletedAt: json['deletedAt'] == null ? null : DateTime.tryParse(json['deletedAt'].toString()),
       );
 }

@@ -4,6 +4,7 @@ import 'package:financial_recording/data/models/account_model/account_model.dart
 import 'package:financial_recording/data/models/budget_model/budget_model.dart';
 import 'package:financial_recording/data/models/debt_model/debt_model.dart';
 import 'package:financial_recording/data/models/goal_model/goal_model.dart';
+import 'package:financial_recording/data/models/memo_model/memo_model.dart';
 import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
 import 'package:financial_recording/data/models/tag_model/tag_model.dart';
 import 'package:financial_recording/data/models/template_model/template_model.dart';
@@ -115,6 +116,13 @@ final List<SyncEntity> syncEntities = [
     boxName: AppBoxes.debts,
     toJson: (m) => m.toJson(),
     fromJson: DebtLoanModel.fromJson,
+    idOf: (m) => m.id,
+  ),
+  _syncEntityFor<MemoModel>(
+    table: 'memos',
+    boxName: AppBoxes.memos,
+    toJson: (m) => m.toJson(),
+    fromJson: MemoModel.fromJson,
     idOf: (m) => m.id,
   ),
 ];

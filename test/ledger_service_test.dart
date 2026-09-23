@@ -72,6 +72,58 @@ void main() {
     expect(accounts.byId('a')!.cachedBalance, 0);
   });
 
+  test('transfer fee is deducted from source but never credited to destination', () async {
+    await accounts.upsert(AccountModel(id: 'a', name: 'A', groupCode: 1));
+    await accounts.upsert(AccountModel(id: 'b', name: 'B', groupCode: 1));
+
+    await ledger.addTransfer(
+      fromAccountId: 'a',
+      toAccountId: 'b',
+      amount: 100000,
+      date: DateTime.now(),
+      fee: 5000,
+    );
+
+    expect(accounts.byId('a')!.cachedBalance, -105000);
+    expect(accounts.byId('b')!.cachedBalance, 100000);
+  });
+
+  test('deleting a transfer with a fee fully reverses both legs', () async {
+    await accounts.upsert(AccountModel(id: 'a', name: 'A', groupCode: 1));
+    await accounts.upsert(AccountModel(id: 'b', name: 'B', groupCode: 1));
+    final tx = await ledger.addTransfer(
+      fromAccountId: 'a',
+      toAccountId: 'b',
+      amount: 100000,
+      date: DateTime.now(),
+      fee: 5000,
+    );
+
+    await ledger.delete(tx.id);
+
+    expect(accounts.byId('a')!.cachedBalance, 0);
+    expect(accounts.byId('b')!.cachedBalance, 0);
+  });
+
+  test('soft-deleting an account hides it, restore brings it back, purge removes it', () async {
+    await accounts.upsert(AccountModel(id: 'a', name: 'A', groupCode: 1));
+    expect(accounts.all().map((a) => a.id), contains('a'));
+
+    await accounts.delete('a');
+    expect(accounts.all().map((a) => a.id), isNot(contains('a')));
+    expect(accounts.byId('a'), isNotNull, reason: 'soft-deleted account row must still exist');
+    expect(accounts.deletedAccounts().map((a) => a.id), contains('a'));
+
+    await accounts.restore('a');
+    expect(accounts.all().map((a) => a.id), contains('a'));
+    expect(accounts.deletedAccounts(), isEmpty);
+
+    await accounts.delete('a');
+    await accounts.purge('a');
+    expect(accounts.byId('a'), isNull);
+    expect(accounts.deletedAccounts(), isEmpty);
+  });
+
   test('recomputeAllBalances matches manual ledger sum', () async {
     await accounts.upsert(AccountModel(id: 'a', name: 'A', groupCode: 1));
     await accounts.upsert(AccountModel(id: 'b', name: 'B', groupCode: 2));

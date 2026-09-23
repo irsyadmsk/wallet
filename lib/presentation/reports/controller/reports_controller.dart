@@ -36,6 +36,8 @@ const _palette = [
   0xFF64748B,
 ];
 
+enum CategoryPeriod { week, month, year, custom }
+
 class ReportsController extends GetxController {
   final _txs = TxRepository();
   final _categories = TxCategoryRepository();
@@ -49,6 +51,40 @@ class ReportsController extends GetxController {
   final RxList<CategorySlice> liabilityComposition = <CategorySlice>[].obs;
   final RxInt periodIncome = 0.obs;
   final RxInt periodExpense = 0.obs;
+
+  final Rx<CategoryPeriod> categoryPeriod = CategoryPeriod.month.obs;
+  final Rx<DateTime> categoryCustomFrom = DateTime(DateTime.now().year, DateTime.now().month, 1).obs;
+  final Rx<DateTime> categoryCustomTo = DateTime.now().obs;
+  final RxInt categoryPeriodTotal = 0.obs;
+
+  void setCategoryPeriod(CategoryPeriod p) {
+    categoryPeriod.value = p;
+    refresh();
+  }
+
+  void setCategoryCustomRange(DateTime from, DateTime to) {
+    categoryCustomFrom.value = from;
+    categoryCustomTo.value = to;
+    categoryPeriod.value = CategoryPeriod.custom;
+    refresh();
+  }
+
+  (DateTime, DateTime) get _categoryRange {
+    final now = DateTime.now();
+    switch (categoryPeriod.value) {
+      case CategoryPeriod.week:
+        final start = now.subtract(Duration(days: now.weekday % 7));
+        final from = DateTime(start.year, start.month, start.day);
+        return (from, from.add(const Duration(days: 7)));
+      case CategoryPeriod.month:
+        final from = DateTime(now.year, now.month, 1);
+        return (from, DateTime(now.year, now.month + 1, 1));
+      case CategoryPeriod.year:
+        return (DateTime(now.year, 1, 1), DateTime(now.year + 1, 1, 1));
+      case CategoryPeriod.custom:
+        return (categoryCustomFrom.value, categoryCustomTo.value.add(const Duration(days: 1)));
+    }
+  }
 
   @override
   void onInit() {
@@ -77,8 +113,9 @@ class ReportsController extends GetxController {
     periodIncome.value = points.fold(0, (s, p) => s + p.income);
     periodExpense.value = points.fold(0, (s, p) => s + p.expense);
 
-    final from = DateTime(now.year, now.month - (monthsBack.value - 1), 1);
-    final expenseTxs = _txs.query(TxQuery(from: from, types: {TxType.expense}));
+    final (catFrom, catTo) = _categoryRange;
+    final expenseTxs = _txs.query(TxQuery(from: catFrom, to: catTo, types: {TxType.expense}));
+    categoryPeriodTotal.value = expenseTxs.fold(0, (s, t) => s + t.amount);
     final byCategory = <String, int>{};
     for (final t in expenseTxs) {
       final cat = t.categoryId == null ? null : _categories.byId(t.categoryId!);
