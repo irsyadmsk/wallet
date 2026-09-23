@@ -40,9 +40,15 @@ class BankLogoPicker extends StatelessWidget {
             _LogoTile(
               selected: selected == bankLogoPath(key),
               onTap: () => onSelected(bankLogoPath(key)),
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Image.asset(bankLogoPath(key), fit: BoxFit.contain),
+              // Cover, no padding: these assets are pre-rendered little
+              // cards with their own flat background, so let each one fill
+              // the tile edge to edge instead of floating inside a second,
+              // differently-colored frame.
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadii.md - 1),
+                child: SizedBox.expand(
+                  child: Image.asset(bankLogoPath(key), fit: BoxFit.cover),
+                ),
               ),
             ),
         ],

@@ -5,6 +5,8 @@ import 'package:financial_recording/domain/enums/account_group_type.dart';
 import 'package:financial_recording/presentation/account_detail/view/account_detail_view.dart';
 import 'package:financial_recording/presentation/accounts/controller/accounts_controller.dart';
 import 'package:financial_recording/presentation/accounts/widget/account_editor_sheet.dart';
+import 'package:financial_recording/data/services/emoney_nfc_service.dart';
+import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
@@ -30,6 +32,18 @@ class AccountsView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         title: const Text('Akun'),
         actions: [
+          if (EmoneyNfcService.isSupported)
+            IconButton(
+              tooltip: 'Pindai Kartu E-Money (NFC)',
+              icon: const Icon(Icons.nfc_rounded),
+              onPressed: () async {
+                final created = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EmoneyNfcView()),
+                );
+                if (created == true) c.refresh();
+              },
+            ),
           IconButton(
             tooltip: 'Hitung ulang saldo',
             icon: const Icon(Icons.refresh_rounded),

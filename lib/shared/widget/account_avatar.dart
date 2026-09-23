@@ -23,17 +23,31 @@ class AccountAvatar extends StatelessWidget {
     final size = radius * 2;
 
     if (account.iconPath != null && account.iconPath!.isNotEmpty) {
-      // A soft off-white (not pure #fff) plus a gentle shadow so the logo
-      // reads as a raised badge rather than a sticker cut out of the card.
+      // Bank-logo assets already ship as a finished little card (their own
+      // flat-color background baked in, corners barely rounded). Framing
+      // that inside another padded, differently-colored badge produced a
+      // sticker-on-a-sticker look — instead let the asset fill the shape
+      // edge to edge so it reads as one surface, with just a hairline
+      // border and soft aura to lift it off the page.
       return ArtIcon(
         size: size,
         shapeOverride: shapeOverride,
         backgroundColor: const Color(0xFFF6F7F9),
-        borderColor: Colors.black.withValues(alpha: 0.06),
+        borderColor: Colors.black.withValues(alpha: 0.08),
         borderWidth: 0.8,
-        imagePath: account.iconPath,
-        padding: EdgeInsets.all(radius * 0.34),
+        padding: EdgeInsets.zero,
         showAura: true,
+        child: SizedBox.expand(
+          child: Image.asset(
+            account.iconPath!,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Icon(
+              Icons.account_balance_rounded,
+              color: color,
+              size: radius,
+            ),
+          ),
+        ),
       );
     }
 

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/account_detail/view/account_detail_view.dart';
+import 'package:financial_recording/presentation/accounts/widget/account_editor_sheet.dart';
 import 'package:financial_recording/presentation/dashboard/controller/dashboard_controller.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/presentation/goals/view/goals_view.dart';
@@ -14,8 +15,8 @@ import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
+import 'package:financial_recording/shared/widget/account_card_stack.dart';
 import 'package:financial_recording/shared/widget/art_icon.dart';
-import 'package:financial_recording/shared/widget/bank_card_tile.dart';
 import 'package:financial_recording/shared/widget/health_score_card.dart';
 import 'package:financial_recording/shared/widget/quick_template_bar.dart';
 import 'package:financial_recording/shared/widget/section_card.dart';
@@ -61,10 +62,8 @@ class DashboardView extends StatelessWidget {
                   children: [
                     _NetWorthCard(controller: c),
                     const SizedBox(height: AppSpacing.lg),
-                    if (c.accountsList.isNotEmpty) ...[
-                      _BankCardsCarousel(controller: c),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
+                    _BankCardsCarousel(controller: c),
+                    const SizedBox(height: AppSpacing.lg),
                     if (c.templates.isNotEmpty) ...[
                       QuickTemplateBar(
                         templates: c.templates,
@@ -400,7 +399,6 @@ class _BankCardsCarousel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final accounts = controller.accountsList.where((a) => !a.isArchived).toList();
-    if (accounts.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,33 +420,33 @@ class _BankCardsCarousel extends StatelessWidget {
                 ),
               ],
             ),
-            TextButton(
-              onPressed: () => Get.find<ShellController>().goTo(2),
-              child: const Text('Lihat semua'),
-            ),
+            if (accounts.isNotEmpty)
+              TextButton(
+                onPressed: () => Get.find<ShellController>().goTo(2),
+                child: const Text('Lihat semua'),
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        SizedBox(
-          height: 124,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: accounts.length,
-            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-            itemBuilder: (context, index) {
-              final acc = accounts[index];
-              return BankCardTile(
-                account: acc,
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => AccountDetailView(accountId: acc.id)),
-                  );
-                  controller.refresh();
-                },
-              );
-            },
-          ),
+        AccountCardStack(
+          accounts: accounts,
+          onTapAccount: (acc) async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AccountDetailView(accountId: acc.id)),
+            );
+            controller.refresh();
+          },
+          onAddAccount: () async {
+            final result = await showAdaptiveSheet<AccountEditorResult>(
+              context,
+              builder: (_) => const AccountEditorSheet(),
+            );
+            if (result?.saved != null) {
+              await controller.accounts.upsert(result!.saved!);
+              controller.refresh();
+            }
+          },
         ),
       ],
     );

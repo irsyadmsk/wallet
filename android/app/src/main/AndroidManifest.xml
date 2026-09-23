@@ -58,4 +58,7 @@
     <!-- Needed to capture receipt photos for the OCR "Pindai Struk" feature. -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- Needed for the "Pindai Kartu E-Money" NFC feature. -->
+    <uses-permission android:name="android.permission.NFC"/>
+    <uses-feature android:name="android.hardware.nfc" android:required="false"/>
 </manifest>
