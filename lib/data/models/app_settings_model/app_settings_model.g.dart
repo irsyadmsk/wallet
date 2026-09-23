@@ -25,9 +25,9 @@ class AppSettingsModelAdapter extends TypeAdapter<AppSettingsModel> {
       defaultAccountId: fields[5] as String?,
       legacyDataPurged: fields[6] as bool,
       lastRecurringRunAt: fields[7] as DateTime?,
-      iconShapeIndex: fields[8] as int,
+      iconShapeIndex: fields[8] == null ? 0 : fields[8] as int,
       pinHash: fields[9] as String?,
-      pinEnabled: fields[10] as bool,
+      pinEnabled: fields[10] == null ? false : fields[10] as bool,
     );
   }
 

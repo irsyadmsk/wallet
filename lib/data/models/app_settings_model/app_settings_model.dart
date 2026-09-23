@@ -28,7 +28,13 @@ class AppSettingsModel extends HiveObject {
   @HiveField(7)
   DateTime? lastRecurringRunAt;
 
-  @HiveField(8)
+  // `defaultValue:` matters on every non-nullable field added after first
+  // release: without it, Hive casts a missing key straight to the type
+  // (`null as bool`) and throws for every browser/device whose stored
+  // record predates the field, instead of falling back — which is exactly
+  // what broke the app for every returning visitor when pinEnabled shipped
+  // with a bare `as bool`.
+  @HiveField(8, defaultValue: 0)
   int iconShapeIndex; // 0: squircle, 1: circle, 2: hexagon, 3: roundedSquare, 4: stadium
 
   /// Salted hash of the app-lock PIN — see [PinLockService]. Never the raw
@@ -36,7 +42,7 @@ class AppSettingsModel extends HiveObject {
   @HiveField(9)
   String? pinHash;
 
-  @HiveField(10)
+  @HiveField(10, defaultValue: false)
   bool pinEnabled;
 
   AppSettingsModel({
