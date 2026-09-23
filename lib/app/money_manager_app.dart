@@ -87,6 +87,7 @@ const _destinations = [
     icon: Icons.account_balance_wallet_outlined,
     selectedIcon: Icons.account_balance_wallet_rounded,
     label: 'Akun & Saldo',
+    shortLabel: 'Akun',
     group: NavGroup.main,
   ),
   AdaptiveDestination(
@@ -99,6 +100,7 @@ const _destinations = [
     icon: Icons.insights_outlined,
     selectedIcon: Icons.insights_rounded,
     label: 'Laporan Analisis',
+    shortLabel: 'Laporan',
     group: NavGroup.main,
   ),
 

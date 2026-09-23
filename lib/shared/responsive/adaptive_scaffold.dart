@@ -21,6 +21,12 @@ class AdaptiveDestination {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+
+  /// Shorter label for the bottom nav bar, where 5 items share one row and
+  /// a long label wraps to two lines — throwing off vertical alignment
+  /// between items ("ga rapih"). Falls back to [label] when unset.
+  final String? shortLabel;
+
   final bool showInBottomBar;
   final NavGroup group;
 
@@ -28,9 +34,12 @@ class AdaptiveDestination {
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    this.shortLabel,
     this.showInBottomBar = true,
     this.group = NavGroup.main,
   });
+
+  String get bottomBarLabel => shortLabel ?? label;
 }
 
 /// Responsive scaffold providing:
@@ -100,7 +109,7 @@ class AdaptiveScaffold extends StatelessWidget {
                     NavigationDestination(
                       icon: Icon(d.icon),
                       selectedIcon: Icon(d.selectedIcon),
-                      label: d.label,
+                      label: d.bottomBarLabel,
                     ),
                 ],
               ),
