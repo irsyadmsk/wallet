@@ -86,8 +86,7 @@ flutter:
     - assets/visual/phone.png
     - assets/icon_pack/
     - assets/icon_pack/bank_logo/
-    - assets/seed/
-    
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

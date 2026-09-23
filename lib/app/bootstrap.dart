@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -67,7 +68,12 @@ Future<void> bootstrap() async {
   await RecurringService().catchUp(DateTime.now());
 }
 
+/// Never runs on web: a bundled seed asset is a public, unauthenticated file
+/// in the deployed build, so real personal data must never be shipped this
+/// way there. Fresh web visitors get the harmless [SeedService] starter data
+/// instead — real data only arrives after signing in via Supabase sync.
 Future<bool> _tryLoadBundledSeed() async {
+  if (kIsWeb) return false;
   try {
     final jsonStr = await rootBundle.loadString('assets/seed/my_data.json');
     await BackupService().restoreJson(jsonStr, replaceAll: true);

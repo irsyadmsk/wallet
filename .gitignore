@@ -50,3 +50,4 @@ app.*.map.json
 # never commit this, it's the user's private financial history.
 assets/seed/*.json
 *.mmbak
+.wrangler/
