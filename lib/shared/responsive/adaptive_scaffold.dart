@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/art_icon_theme.dart';
@@ -86,17 +87,23 @@ class AdaptiveScaffold extends StatelessWidget {
               color: colors.surface.withValues(alpha: 0.92),
               border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.6))),
             ),
-            child: NavigationBar(
-              selectedIndex: bottomBarIndex < 0 ? 0 : bottomBarIndex,
-              onDestinationSelected: (i) => onSelect(destinations.indexOf(bottomBarDestinations[i])),
-              destinations: [
-                for (final d in bottomBarDestinations)
-                  NavigationDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon),
-                    label: d.label,
-                  ),
-              ],
+            // Keeps the bar's icons/labels clear of the home-indicator area
+            // on iOS and the gesture bar on Android instead of letting them
+            // sit right at (or under) the very edge of the screen.
+            child: SafeArea(
+              top: false,
+              child: NavigationBar(
+                selectedIndex: bottomBarIndex < 0 ? 0 : bottomBarIndex,
+                onDestinationSelected: (i) => onSelect(destinations.indexOf(bottomBarDestinations[i])),
+                destinations: [
+                  for (final d in bottomBarDestinations)
+                    NavigationDestination(
+                      icon: Icon(d.icon),
+                      selectedIcon: Icon(d.selectedIcon),
+                      label: d.label,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -196,7 +203,7 @@ class _DesktopSidebar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Money Manager',
+                        AppConfig.appName,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,

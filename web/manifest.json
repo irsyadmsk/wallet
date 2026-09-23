@@ -1,11 +1,11 @@
 {
-    "name": "financial_recording",
-    "short_name": "financial_recording",
+    "name": "Wallet",
+    "short_name": "Wallet",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0b1120",
+    "theme_color": "#0b1120",
+    "description": "Wallet — pencatat keuangan pribadi oleh Muhammad Irsyad Sirojul Khoeir.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

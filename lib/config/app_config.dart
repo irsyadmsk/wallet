@@ -1,10 +1,10 @@
 /// Konfigurasi Utama Aplikasi Money Manager
 /// Dikelola dan Dimiliki oleh Muhammad Irsyad Sirojul Khoeir
 class AppConfig {
-  static const String appName = "Money Manager";
+  static const String appName = "Wallet";
   static const String appVersion = "1.2.0";
   static const String appAuthor = "Muhammad Irsyad Sirojul Khoeir";
-  static const String appAuthorEmail = "irsyad.khoeir@gmail.com";
+  static const String appAuthorEmail = "irsyad.msk@gmail.com";
 
   // Mata Uang & Lokalisasi
   static const String defaultCurrency = "IDR";

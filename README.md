@@ -1,4 +1,4 @@
-# 💰 Money Manager - Aplikasi Pencatat Keuangan Modern
+# 💰 Wallet - Aplikasi Pencatat Keuangan Modern
 
 Aplikasi pencatat keuangan (*Personal Finance & Money Management*) lintas platform yang dirancang dengan antarmuka modern, intuitif, dan arsitektur kode terstruktur berbasis **Flutter**, **GetX**, dan **Repository Pattern**.
 
