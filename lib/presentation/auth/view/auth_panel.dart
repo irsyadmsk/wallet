@@ -165,7 +165,7 @@ class _AuthFormState extends State<AuthForm> {
                 switchInCurve: AppMotion.emphasized,
                 layoutBuilder: (current, previous) => Stack(
                   alignment: Alignment.topLeft,
-                  children: [...previous, ?current],
+                  children: [...previous, if (current != null) current],
                 ),
                 transitionBuilder: (child, a) => FadeTransition(
                   opacity: a,
