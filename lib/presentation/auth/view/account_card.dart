@@ -243,7 +243,7 @@ class _StatusRow extends StatelessWidget {
         i,
         const SizedBox(width: 10),
         Expanded(child: Text(text, style: TextStyle(fontSize: 13.5, color: context.colors.textSecondary))),
-        ?action,
+        if (action != null) action!,
       ],
     );
   }
