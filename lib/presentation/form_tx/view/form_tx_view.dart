@@ -6,6 +6,7 @@ import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/data/repositories/tx_repository.dart';
+import 'package:financial_recording/data/services/category_suggester.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/receipt_ocr_service.dart';
 import 'package:financial_recording/data/services/receipt_service.dart';
@@ -25,6 +26,8 @@ class FormTxView extends StatefulWidget {
     this.initialAccountId,
     this.initialToAccountId,
     this.initialMemo,
+    this.initialAmount,
+    this.initialCategoryId,
   });
 
   final TxModel? existing;
@@ -37,6 +40,10 @@ class FormTxView extends StatefulWidget {
   /// Pre-fills the destination account of a new transfer.
   final String? initialToAccountId;
   final String? initialMemo;
+
+  /// Pre-fills a new transaction, e.g. "Catat zakat" from the zakat tool.
+  final int? initialAmount;
+  final String? initialCategoryId;
 
   @override
   State<FormTxView> createState() => _FormTxViewState();
@@ -56,8 +63,12 @@ class _FormTxViewState extends State<FormTxView> {
   late String? accountId =
       widget.existing?.accountId ?? widget.initialAccountId ?? _accounts.all().firstOrNull?.id;
   late String? toAccountId = widget.existing?.toAccountId ?? widget.initialToAccountId;
-  late String? categoryId = widget.existing?.categoryId;
-  late int amount = widget.existing?.amount ?? 0;
+  late String? categoryId = widget.existing?.categoryId ?? widget.initialCategoryId;
+  late int amount = widget.existing?.amount ?? widget.initialAmount ?? 0;
+
+  /// Once the user picks a category by hand, stop auto-suggesting one.
+  bool _categoryTouched = false;
+  bool _categoryAuto = false;
   late DateTime date = widget.existing?.date ?? DateTime.now();
   late TimeOfDay time = TimeOfDay.fromDateTime(widget.existing?.date ?? DateTime.now());
   late String memo = widget.existing?.memo ?? widget.initialMemo ?? '';
@@ -123,20 +134,16 @@ class _FormTxViewState extends State<FormTxView> {
             // Segmented Type Selector
             SegmentedButton<TxType>(
               segments: const [
-                ButtonSegment(value: TxType.expense, label: Text('Pengeluaran'), icon: Icon(Icons.north_east_rounded)),
-                ButtonSegment(value: TxType.income, label: Text('Pemasukan'), icon: Icon(Icons.south_west_rounded)),
-                ButtonSegment(value: TxType.transfer, label: Text('Transfer'), icon: Icon(Icons.swap_horiz_rounded)),
+                ButtonSegment(value: TxType.expense, label: Text('Pengeluaran', maxLines: 1, softWrap: false)),
+                ButtonSegment(value: TxType.income, label: Text('Pemasukan', maxLines: 1, softWrap: false)),
+                ButtonSegment(value: TxType.transfer, label: Text('Transfer', maxLines: 1, softWrap: false)),
               ],
               selected: {type},
               onSelectionChanged: (s) => setState(() {
                 type = s.first;
                 categoryId = null;
               }),
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.resolveWith(
-                  (states) => states.contains(WidgetState.selected) ? colors.primaryContainer : null,
-                ),
-              ),
+              showSelectedIcon: false,
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -197,7 +204,11 @@ class _FormTxViewState extends State<FormTxView> {
                 label: 'Kategori',
                 value: categoryId,
                 items: _categoryItems,
-                onChanged: (v, _) => setState(() => categoryId = v as String?),
+                onChanged: (v, _) => setState(() {
+                  categoryId = v as String?;
+                  _categoryTouched = true;
+                  _categoryAuto = false;
+                }),
               ),
 
             if (type == TxType.transfer)
@@ -249,6 +260,22 @@ class _FormTxViewState extends State<FormTxView> {
               onChanged: _onMemoChanged,
               maxLines: 2,
             ),
+            if (_categoryAuto && categoryId != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, size: 14, color: colors.primary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Kategori dipilih otomatis dari riwayat: ${_categories.pathName(categoryId!)}',
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (!isEditing && _memoSuggestions.isNotEmpty) ...[
               const SizedBox(height: 4),
               Wrap(
@@ -287,7 +314,7 @@ class _FormTxViewState extends State<FormTxView> {
                 Expanded(
                   flex: isEditing ? 2 : 1,
                   child: QButton(
-                    label: saving ? 'Menyimpan...' : 'Simpan',
+                    label: saving ? 'Menyimpan…' : 'Simpan',
                     enabled: !saving,
                     onPressed: _submit,
                   ),
@@ -349,7 +376,7 @@ class _FormTxViewState extends State<FormTxView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          scanning ? 'Memindai struk...' : 'Pindai Struk (OCR)',
+                          scanning ? 'Memindai struk…' : 'Pindai Struk (OCR)',
                           style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
                         ),
                         Text(
@@ -510,6 +537,15 @@ class _FormTxViewState extends State<FormTxView> {
   /// while adding a new transaction, never while editing an existing one.
   void _onMemoChanged(String v) {
     memo = v;
+    if (!isEditing && !_categoryTouched && type != TxType.transfer) {
+      final guess = CategorySuggester.suggest(v, type, _txs.all());
+      if (guess != null && guess != categoryId && _categories.byId(guess) != null) {
+        setState(() {
+          categoryId = guess;
+          _categoryAuto = true;
+        });
+      }
+    }
     final query = v.trim().toLowerCase();
     if (isEditing || query.length < 2) {
       if (_memoSuggestions.isNotEmpty) setState(() => _memoSuggestions = []);

@@ -7,7 +7,6 @@ import 'package:financial_recording/presentation/goals/controller/goals_controll
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
-import 'package:financial_recording/shared/widget/zen_background.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 
 class GoalsView extends StatelessWidget {
@@ -18,102 +17,103 @@ class GoalsView extends StatelessWidget {
     final c = Get.put(GoalsController());
     final colors = context.colors;
 
-    return ZenBackground(
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: const Text('Target Finansial & Impian'),
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _showGoalEditor(context, c),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Tambah Target'),
-        ),
-        body: RefreshIndicator(
-          onRefresh: () async => c.refresh(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ContentShell(
-              child: Obx(() {
-                final active = c.activeGoals;
-                final completed = c.completedGoals;
+        title: const Text('Target Finansial & Impian'),
+      ),
+      // The empty state has its own button; show this one once goals exist.
+      floatingActionButton: Obx(() => c.activeGoals.isEmpty && c.completedGoals.isEmpty
+          ? const SizedBox.shrink()
+          : FloatingActionButton.extended(
+              onPressed: () => _showGoalEditor(context, c),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Tambah Target'),
+            )),
+      body: RefreshIndicator(
+        onRefresh: () async => c.refresh(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ContentShell(
+            child: Obx(() {
+              final active = c.activeGoals;
+              final completed = c.completedGoals;
 
-                if (active.isEmpty && completed.isEmpty) {
-                  return _EmptyGoalsState(onAdd: () => _showGoalEditor(context, c));
-                }
+              if (active.isEmpty && completed.isEmpty) {
+                return _EmptyGoalsState(onAdd: () => _showGoalEditor(context, c));
+              }
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Summary Banner
-                    _GoalsSummaryBanner(controller: c),
-                    const SizedBox(height: AppSpacing.lg),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Summary Banner
+                  _GoalsSummaryBanner(controller: c),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Active Goals Section
-                    if (active.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          Icon(Icons.flag_rounded, size: 18, color: colors.primary),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Target Berjalan (${active.length})',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      for (final goal in active)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                          child: _GoalCard(
-                            goal: goal,
-                            onDeposit: () => _showDepositModal(context, c, goal),
-                            onDelete: () => c.deleteGoal(goal.id),
-                            onEdit: () => _showGoalEditor(context, c, existing: goal),
+                  // Active Goals Section
+                  if (active.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(Icons.flag_rounded, size: 18, color: colors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Target Berjalan (${active.length})',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
                           ),
                         ),
-                    ],
-
-                    // Completed Goals Section
-                    if (completed.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.md),
-                      Row(
-                        children: [
-                          Icon(Icons.celebration_rounded, size: 18, color: colors.income),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Target Tercapai 🎉 (${completed.length})',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: colors.income,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      for (final goal in completed)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                          child: _GoalCard(
-                            goal: goal,
-                            onDeposit: null,
-                            onDelete: () => c.deleteGoal(goal.id),
-                            onEdit: () => _showGoalEditor(context, c, existing: goal),
-                          ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    for (final goal in active)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: _GoalCard(
+                          goal: goal,
+                          onDeposit: () => _showDepositModal(context, c, goal),
+                          onDelete: () => c.deleteGoal(goal.id),
+                          onEdit: () => _showGoalEditor(context, c, existing: goal),
                         ),
-                    ],
-
-                    const SizedBox(height: AppSpacing.xxxl + 20),
+                      ),
                   ],
-                );
-              }),
-            ),
+
+                  // Completed Goals Section
+                  if (completed.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Icon(Icons.celebration_rounded, size: 18, color: colors.income),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Target Tercapai 🎉 (${completed.length})',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: colors.income,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    for (final goal in completed)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: _GoalCard(
+                          goal: goal,
+                          onDeposit: null,
+                          onDelete: () => c.deleteGoal(goal.id),
+                          onEdit: () => _showGoalEditor(context, c, existing: goal),
+                        ),
+                      ),
+                  ],
+
+                  const SizedBox(height: AppSpacing.xxxl + 20),
+                ],
+              );
+            }),
           ),
         ),
       ),
@@ -476,7 +476,7 @@ class _GoalCard extends StatelessWidget {
         color: colors.surfaceAlt,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDone ? colors.income.withValues(alpha: 0.4) : colors.border.withValues(alpha: 0.7),
+          color: isDone ? colors.income.withValues(alpha: 0.4) : colors.border.withValues(alpha: colors.border.a * 0.7),
           width: 1,
         ),
         boxShadow: [
@@ -562,7 +562,7 @@ class _GoalCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(5),
             child: LinearProgressIndicator(
               value: goal.progress,
-              backgroundColor: colors.border.withValues(alpha: 0.4),
+              backgroundColor: colors.border.withValues(alpha: colors.border.a * 0.4),
               valueColor: AlwaysStoppedAnimation(isDone ? colors.income : color),
               minHeight: 8,
             ),

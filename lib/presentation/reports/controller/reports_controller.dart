@@ -21,20 +21,23 @@ class NetWorthPoint {
 class CategorySlice {
   final String label;
   final int amount;
-  final int colorValue;
-  CategorySlice(this.label, this.amount, this.colorValue);
+
+  /// Index into `ChartPalette`; 7 is the last slot and doubles as "Lainnya".
+  final int slot;
+  CategorySlice(this.label, this.amount, this.slot);
 }
 
-const _palette = [
-  0xFF126A5A,
-  0xFF66D6BF,
-  0xFFF6C76B,
-  0xFFB7A4E5,
-  0xFF0EA5E9,
-  0xFFEF4444,
-  0xFF8B5CF6,
-  0xFF64748B,
-];
+/// Keeps at most 8 slices: the top 7 by amount plus a folded "Lainnya".
+List<CategorySlice> _fold(List<(String, int)> sorted) {
+  if (sorted.length <= 8) {
+    return [for (var i = 0; i < sorted.length; i++) CategorySlice(sorted[i].$1, sorted[i].$2, i)];
+  }
+  final rest = sorted.skip(7).fold(0, (s, e) => s + e.$2);
+  return [
+    for (var i = 0; i < 7; i++) CategorySlice(sorted[i].$1, sorted[i].$2, i),
+    CategorySlice('Lainnya', rest, 7),
+  ];
+}
 
 enum CategoryPeriod { week, month, year, custom }
 
@@ -124,12 +127,9 @@ class ReportsController extends GetxController {
       byCategory[key] = (byCategory[key] ?? 0) + t.amount;
     }
     final entries = byCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final slices = <CategorySlice>[];
-    for (var i = 0; i < entries.length; i++) {
-      final cat = _categories.byId(entries[i].key);
-      slices.add(CategorySlice(cat?.displayName ?? 'Lainnya', entries[i].value, _palette[i % _palette.length]));
-    }
-    expenseByCategory.assignAll(slices);
+    expenseByCategory.assignAll(_fold([
+      for (final e in entries) (_categories.byId(e.key)?.displayName ?? 'Tanpa kategori', e.value),
+    ]));
 
     _refreshNetWorthHistory(now);
     _refreshComposition();
@@ -169,13 +169,7 @@ class ReportsController extends GetxController {
     final liabilities = accounts.where((a) => a.isLiability && a.cachedBalance < 0).toList()
       ..sort((a, b) => a.cachedBalance.compareTo(b.cachedBalance));
 
-    assetComposition.assignAll([
-      for (var i = 0; i < assets.length; i++)
-        CategorySlice(assets[i].name, assets[i].cachedBalance, _palette[i % _palette.length]),
-    ]);
-    liabilityComposition.assignAll([
-      for (var i = 0; i < liabilities.length; i++)
-        CategorySlice(liabilities[i].name, -liabilities[i].cachedBalance, _palette[i % _palette.length]),
-    ]);
+    assetComposition.assignAll(_fold([for (final a in assets) (a.name, a.cachedBalance)]));
+    liabilityComposition.assignAll(_fold([for (final l in liabilities) (l.name, -l.cachedBalance)]));
   }
 }

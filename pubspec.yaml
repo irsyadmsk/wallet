@@ -56,6 +56,7 @@ dependencies:
   connectivity_plus: ^6.1.3
   prepaidcard_reader: ^0.0.4
   crypto: ^3.0.3
+  video_player: ^2.14.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0
@@ -88,6 +89,8 @@ flutter:
     - assets/visual/phone.png
     - assets/icon_pack/
     - assets/icon_pack/bank_logo/
+    # Self-hosted typography (see assets/google_fonts/LICENSE-OFL.txt).
+    - assets/google_fonts/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

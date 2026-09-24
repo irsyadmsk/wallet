@@ -58,7 +58,7 @@ class ReceiptPreviewDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
                 decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: 0.6))),
+                  border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: colors.border.a * 0.6))),
                 ),
                 child: Row(
                   children: [
@@ -136,7 +136,7 @@ class ReceiptPreviewDialog extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: colors.surfaceAlt,
-                  border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.5))),
+                  border: Border(top: BorderSide(color: colors.border.withValues(alpha: colors.border.a * 0.5))),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,

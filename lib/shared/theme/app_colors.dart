@@ -46,65 +46,82 @@ class AppColors extends ThemeExtension<AppColors> {
   Color get budgetWarn => warning;
   Color get budgetOver => danger;
 
-  /// Irsyads brand palette (design-system/irsyads/MASTER.md): mist #f7f8fa,
-  /// ink #192a40, mint #66d6bf, honey #f6c76b, wisteria #b7a4e5, and a deep
-  /// teal #126a5a for accent text — used as this app's default identity
-  /// since it ships under the irsyads.com ecosystem.
-  static const Color irsyadsInk = Color(0xFF192A40);
-  static const Color irsyadsMist = Color(0xFFF7F8FA);
-  static const Color irsyadsMint = Color(0xFF66D6BF);
-  static const Color irsyadsHoney = Color(0xFFF6C76B);
-  static const Color irsyadsWisteria = Color(0xFFB7A4E5);
+  /// Editorial palette — warm paper, charcoal-green ink, one quiet green
+  /// accent, and earthy signal colors (forest income, clay expense, ochre
+  /// warning). Documented in DESIGN.md at the repo root.
+  static const Color paper = Color(0xFFF6F8F5);
+  static const Color ink = Color(0xFF17272B);
+  static const Color forest = Color(0xFF19363B);
+  static const Color sage = Color(0xFF4F8B70);
+  static const Color clay = Color(0xFFC2502F);
+  static const Color ochre = Color(0xFFD9A441);
+  static const Color bone = Color(0xFFE9E3D6);
+  static const Color cream = Color(0xFFE1E0CC);
+
+  /// Legacy names kept so older call sites keep compiling.
+  static const Color irsyadsInk = ink;
+  static const Color irsyadsMist = paper;
+  static const Color irsyadsMint = sage;
+  static const Color irsyadsHoney = ochre;
+  static const Color irsyadsWisteria = Color(0xFF6E7FAE);
   static const Color irsyadsTeal = Color(0xFF126A5A);
 
   /// Preset palettes offered in Settings.
-  static const Color defaultSeed = irsyadsTeal;
-  static const Color presetIrsyads = irsyadsTeal;
-  static const Color presetSage = Color(0xFF0D9488);
-  static const Color presetOcean = Color(0xFF0284C7);
-  static const Color presetSand = Color(0xFFD97706);
-  static const Color presetLavender = Color(0xFF7C3AED);
-  static const Color presetForest = Color(0xFF059669);
+  static const Color defaultSeed = forest;
+  static const Color presetIrsyads = forest;
+  static const Color presetSage = sage;
+  static const Color presetOcean = Color(0xFF2E5A7A);
+  static const Color presetSand = Color(0xFF9A5B1E);
+  static const Color presetLavender = Color(0xFF5B4E8C);
+  static const Color presetForest = Color(0xFF2F6B4F);
 
   static AppColors light(Color seed) => AppColors(
         primary: seed,
-        onPrimary: Colors.white,
-        primaryContainer: seed.withValues(alpha: 0.12),
-        surface: const Color(0xFFFFFFFF),
-        surfaceAlt: irsyadsMist,
+        onPrimary: const Color(0xFFF6F8F5),
+        primaryContainer: Color.alphaBlend(seed.withValues(alpha: 0.10), paper),
+        surface: const Color(0xFFFCFDFB),
+        surfaceAlt: paper,
         surfaceRaised: const Color(0xFFFFFFFF),
-        border: const Color(0xFFE4E7EC),
-        textPrimary: irsyadsInk,
-        textSecondary: const Color(0xFF56657D),
-        textTertiary: const Color(0xFF8D99AD),
-        success: const Color(0xFF10B981),
-        danger: const Color(0xFFF43F5E),
-        warning: irsyadsHoney,
-        info: const Color(0xFF0EA5E9),
-        income: const Color(0xFF10B981),
-        expense: const Color(0xFFF43F5E),
-        transfer: irsyadsWisteria,
+        border: const Color(0x1C17272B),
+        textPrimary: ink,
+        textSecondary: const Color(0xFF55615F),
+        textTertiary: const Color(0xFF7B8482),
+        success: const Color(0xFF2F7A5B),
+        danger: const Color(0xFFB4452A),
+        warning: const Color(0xFF9C6F1C),
+        info: const Color(0xFF3F6E8C),
+        income: const Color(0xFF2F7A5B),
+        expense: const Color(0xFFB4452A),
+        transfer: const Color(0xFF53679A),
       );
 
-  static AppColors dark(Color seed) => AppColors(
-        primary: Color.lerp(seed, Colors.white, 0.22)!,
-        onPrimary: const Color(0xFF0B1420),
-        primaryContainer: seed.withValues(alpha: 0.24),
-        surface: const Color(0xFF16212F),
-        surfaceAlt: const Color(0xFF0F1826),
-        surfaceRaised: const Color(0xFF1E2C3D),
-        border: const Color(0xFF283A4E),
-        textPrimary: const Color(0xFFEEF2F7),
-        textSecondary: const Color(0xFFA3B0C4),
-        textTertiary: const Color(0xFF6B7A92),
-        success: const Color(0xFF34D399),
-        danger: const Color(0xFFFB7185),
-        warning: const Color(0xFFFBBF24),
-        info: const Color(0xFF38BDF8),
-        income: const Color(0xFF34D399),
-        expense: const Color(0xFFFB7185),
-        transfer: const Color(0xFFC4B5F2),
-      );
+  static AppColors dark(Color seed) {
+    // Dark seeds would disappear on a dark ground, so lift them until they
+    // read as an accent (≥ ~0.45 luminance) while keeping their hue.
+    var primary = seed;
+    for (var i = 0; i < 8 && primary.computeLuminance() < 0.42; i++) {
+      primary = Color.lerp(primary, const Color(0xFFE8F2EC), 0.22)!;
+    }
+    return AppColors(
+      primary: primary,
+      onPrimary: const Color(0xFF0D1614),
+      primaryContainer: Color.alphaBlend(primary.withValues(alpha: 0.14), const Color(0xFF111B19)),
+      surface: const Color(0xFF141E1C),
+      surfaceAlt: const Color(0xFF0D1614),
+      surfaceRaised: const Color(0xFF1A2623),
+      border: const Color(0x24E1E0CC),
+      textPrimary: const Color(0xFFECEBDD),
+      textSecondary: const Color(0xFFAFB6AE),
+      textTertiary: const Color(0xFF808A84),
+      success: const Color(0xFF7FC8A2),
+      danger: const Color(0xFFEE9274),
+      warning: const Color(0xFFE5B85C),
+      info: const Color(0xFF8DB8D6),
+      income: const Color(0xFF7FC8A2),
+      expense: const Color(0xFFEE9274),
+      transfer: const Color(0xFFA9B6DC),
+    );
+  }
 
   @override
   AppColors copyWith({

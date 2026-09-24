@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
+import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
+import 'package:financial_recording/shared/ecosystem.dart';
 import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
-import 'package:financial_recording/shared/theme/art_icon_theme.dart';
+import 'package:financial_recording/shared/theme/app_motion.dart';
+import 'package:financial_recording/shared/theme/app_typography.dart';
 import 'package:financial_recording/shared/theme/theme_controller.dart';
-import 'package:financial_recording/shared/widget/art_icon.dart';
-import 'package:financial_recording/shared/widget/zen_background.dart';
+import 'package:financial_recording/shared/widget/motion/motion.dart';
 
 enum NavGroup {
-  main('UTAMA'),
-  plans('ASET & RENCANA'),
-  system('PENGATURAN');
+  main('Utama'),
+  plans('Rencana & ibadah'),
+  system('Keluarga & pengaturan');
 
   final String title;
   const NavGroup(this.title);
@@ -22,11 +25,11 @@ class AdaptiveDestination {
   final IconData selectedIcon;
   final String label;
 
-  /// Shorter label for the bottom nav bar, where 5 items share one row and
-  /// a long label wraps to two lines — throwing off vertical alignment
-  /// between items ("ga rapih"). Falls back to [label] when unset.
+  /// Shorter label for the bottom bar and the "Lainnya" tiles.
   final String? shortLabel;
 
+  /// One line shown under the label on the "Lainnya" tiles.
+  final String? hint;
   final bool showInBottomBar;
   final NavGroup group;
 
@@ -35,6 +38,7 @@ class AdaptiveDestination {
     required this.selectedIcon,
     required this.label,
     this.shortLabel,
+    this.hint,
     this.showInBottomBar = true,
     this.group = NavGroup.main,
   });
@@ -42,11 +46,11 @@ class AdaptiveDestination {
   String get bottomBarLabel => shortLabel ?? label;
 }
 
-/// Responsive scaffold providing:
-/// - Bottom navigation bar on mobile (width < 600)
-/// - Compact icon sidebar on tablet (600 <= width < 860)
-/// - Modern Desktop Sidebar (260px) on PC/desktop with grouped sections,
-///   quick action "+ Catat Transaksi", and live theme switcher.
+/// Responsive shell:
+/// - phone: floating bottom bar (bottom-bar pages + centre "+" + "Lainnya");
+/// - tablet: 76px icon rail;
+/// - desktop (≥ 1024): 264px sidebar with grouped sections, the primary
+///   "Catat transaksi" action, and sync/account status in the footer.
 class AdaptiveScaffold extends StatelessWidget {
   const AdaptiveScaffold({
     super.key,
@@ -71,296 +75,90 @@ class AdaptiveScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isCompact = context.isCompact;
-    final colors = context.colors;
+    final c = context.colors;
+    final width = MediaQuery.sizeOf(context).width;
 
-    if (isCompact) {
-      final bottomBarDestinations = destinations.where((d) => d.showInBottomBar).toList();
-      final bottomBarIndex = bottomBarDestinations.indexWhere(
-        (d) => destinations.indexOf(d) == index,
-      );
-      return ZenBackground(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: appBarTitle == null
-              ? null
-              : AppBar(
-                  backgroundColor: Colors.transparent,
-                  title: Text(appBarTitle!),
-                  actions: appBarActions,
-                ),
-          body: body,
-          floatingActionButton: floatingActionButton,
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: colors.surface.withValues(alpha: 0.92),
-              border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.6))),
-            ),
-            // Keeps the bar's icons/labels clear of the home-indicator area
-            // on iOS and the gesture bar on Android instead of letting them
-            // sit right at (or under) the very edge of the screen.
-            child: SafeArea(
-              top: false,
-              child: NavigationBar(
-                selectedIndex: bottomBarIndex < 0 ? 0 : bottomBarIndex,
-                onDestinationSelected: (i) => onSelect(destinations.indexOf(bottomBarDestinations[i])),
-                destinations: [
-                  for (final d in bottomBarDestinations)
-                    NavigationDestination(
-                      icon: Icon(d.icon),
-                      selectedIcon: Icon(d.selectedIcon),
-                      label: d.bottomBarLabel,
-                    ),
-                ],
-              ),
-            ),
-          ),
+    if (context.isCompact) {
+      return Scaffold(
+        backgroundColor: c.surfaceAlt,
+        extendBody: true,
+        body: body,
+        bottomNavigationBar: _PhoneBar(
+          destinations: destinations,
+          index: index,
+          onSelect: onSelect,
+          onQuickAction: onQuickAction,
         ),
       );
     }
 
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isWideDesktop = screenWidth >= 860;
-
-    return ZenBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: appBarTitle == null
-            ? null
-            : AppBar(
-                backgroundColor: Colors.transparent,
-                title: Text(appBarTitle!),
-                actions: appBarActions,
-              ),
-        body: Row(
-          children: [
-            if (isWideDesktop)
-              _DesktopSidebar(
-                destinations: destinations,
-                selectedIndex: index,
-                onSelect: onSelect,
-                onQuickAction: onQuickAction ?? _extractFabCallback(floatingActionButton),
-              )
-            else
-              _CompactSidebar(
-                destinations: destinations,
-                selectedIndex: index,
-                onSelect: onSelect,
-                onQuickAction: onQuickAction ?? _extractFabCallback(floatingActionButton),
-              ),
-            Expanded(
-              child: ClipRect(child: body),
-            ),
-          ],
-        ),
+    return Scaffold(
+      backgroundColor: c.surfaceAlt,
+      body: Row(
+        children: [
+          if (width >= 1024)
+            _Sidebar(destinations: destinations, index: index, onSelect: onSelect, onQuickAction: onQuickAction)
+          else
+            _Rail(destinations: destinations, index: index, onSelect: onSelect, onQuickAction: onQuickAction),
+          Expanded(child: ClipRect(child: body)),
+        ],
       ),
     );
   }
-
-  static VoidCallback? _extractFabCallback(Widget? fab) {
-    if (fab is FloatingActionButton) {
-      return fab.onPressed;
-    }
-    return null;
-  }
 }
 
-/// 260px wide modern desktop sidebar inspired by Linear & Notion.
-class _DesktopSidebar extends StatelessWidget {
-  const _DesktopSidebar({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onSelect,
-    this.onQuickAction,
-  });
+// ------------------------------------------------------------------ phone
 
+class _PhoneBar extends StatelessWidget {
+  const _PhoneBar({required this.destinations, required this.index, required this.onSelect, this.onQuickAction});
   final List<AdaptiveDestination> destinations;
-  final int selectedIndex;
+  final int index;
   final ValueChanged<int> onSelect;
   final VoidCallback? onQuickAction;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    final c = context.colors;
+    final bar = destinations.where((d) => d.showInBottomBar).toList();
+    final half = (bar.length / 2).ceil();
+    final inMore = !destinations[index].showInBottomBar;
 
-    return Container(
-      width: 260,
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.85),
-        border: Border(
-          right: BorderSide(color: colors.border.withValues(alpha: 0.55), width: 1),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Brand Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Row(
-              children: [
-                const ArtIcon(
-                  size: 38,
-                  icon: Icons.account_balance_wallet_rounded,
-                  shapeOverride: ArtShape.squircle,
-                  showAura: true,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    AppConfig.appName,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    Widget item(AdaptiveDestination d) {
+      final i = destinations.indexOf(d);
+      return Expanded(child: _BarItem(d: d, selected: i == index, onTap: () => onSelect(i)));
+    }
 
-          // Quick "+ Catat Transaksi" Action Button
-          if (onQuickAction != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Material(
-                color: colors.primary,
-                borderRadius: BorderRadius.circular(12),
-                elevation: 0,
-                child: InkWell(
-                  onTap: onQuickAction,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Catat Transaksi',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          const SizedBox(height: 6),
-
-          // Grouped Navigation List
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              children: [
-                for (final group in NavGroup.values) ...[
-                  if (_hasItemsInGroup(group)) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 14, 10, 6),
-                      child: Text(
-                        group.title,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          color: colors.textTertiary,
-                          letterSpacing: 0.9,
-                        ),
-                      ),
-                    ),
-                    for (int i = 0; i < destinations.length; i++)
-                      if (destinations[i].group == group)
-                        _buildNavItem(
-                          context,
-                          destinations[i],
-                          isSelected: selectedIndex == i,
-                          onTap: () => onSelect(i),
-                        ),
-                  ],
-                ],
-              ],
-            ),
-          ),
-
-          // Sidebar Footer (Theme switcher & status)
-          _buildFooter(context),
-        ],
-      ),
-    );
-  }
-
-  bool _hasItemsInGroup(NavGroup group) {
-    return destinations.any((d) => d.group == group);
-  }
-
-  Widget _buildNavItem(
-    BuildContext context,
-    AdaptiveDestination item, {
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final colors = context.colors;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: _HoverNavItem(
-        isSelected: isSelected,
-        onTap: onTap,
-        builder: (hovering) => AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        child: Container(
+          height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
-            color: isSelected
-                ? colors.primaryContainer.withValues(alpha: 0.5)
-                : hovering
-                    ? colors.primary.withValues(alpha: 0.06)
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            color: c.surfaceRaised,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: c.border),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8))],
           ),
           child: Row(
             children: [
-              // Active indicator pill on left edge
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                width: 3,
-                height: isSelected ? 18 : 0,
-                decoration: BoxDecoration(
-                  color: colors.primary,
-                  borderRadius: BorderRadius.circular(2),
+              for (final d in bar.take(half)) item(d),
+              if (onQuickAction != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _AddButton(onTap: onQuickAction!),
                 ),
-              ),
-              const SizedBox(width: 8),
-
-              AnimatedScale(
-                duration: const Duration(milliseconds: 180),
-                scale: hovering && !isSelected ? 1.08 : 1.0,
-                child: Icon(
-                  isSelected ? item.selectedIcon : item.icon,
-                  size: 20,
-                  color: isSelected ? colors.primary : colors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 12),
-
+              for (final d in bar.skip(half)) item(d),
               Expanded(
-                child: Text(
-                  item.label,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? colors.primary : colors.textPrimary,
+                child: _BarItem(
+                  d: const AdaptiveDestination(
+                    icon: Icons.grid_view_outlined,
+                    selectedIcon: Icons.grid_view_rounded,
+                    label: 'Lainnya',
                   ),
+                  selected: inMore,
+                  onTap: () => _showMore(context),
                 ),
               ),
             ],
@@ -370,217 +168,508 @@ class _DesktopSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
-    final colors = context.colors;
+  void _showMore(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (ctx) => _MoreSheet(
+        destinations: destinations,
+        index: index,
+        onSelect: (i) {
+          Navigator.pop(ctx);
+          onSelect(i);
+        },
+      ),
+    );
+  }
+}
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: colors.border.withValues(alpha: 0.5), width: 1),
+class _BarItem extends StatelessWidget {
+  const _BarItem({required this.d, required this.selected, required this.onTap});
+  final AdaptiveDestination d;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Semantics(
+      selected: selected,
+      child: Pressable(
+        onTap: onTap,
+        semanticLabel: d.bottomBarLabel,
+        hoverLift: 0,
+        pressedScale: 0.9,
+        borderRadius: BorderRadius.circular(16),
+        builder: (context, s, _) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: AppMotion.base,
+              curve: AppMotion.standard,
+              width: selected ? 48 : 36,
+              height: 30,
+              decoration: BoxDecoration(
+                color: selected ? c.textPrimary : Colors.transparent,
+                borderRadius: BorderRadius.circular(99),
+              ),
+              child: AnimatedSwitcher(
+                duration: AppMotion.hover,
+                child: Icon(
+                  selected ? d.selectedIcon : d.icon,
+                  key: ValueKey(selected),
+                  size: 21,
+                  color: selected ? c.surfaceAlt : c.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: AppMotion.hover,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? c.textPrimary : c.textSecondary,
+              ),
+              child: Text(d.bottomBarLabel, maxLines: 1, overflow: TextOverflow.clip),
+            ),
+          ],
+        ),
+        child: const SizedBox.shrink(),
+      ),
+    );
+  }
+}
+
+/// Centre "+" — spins a quarter turn while pressed.
+class _AddButton extends StatelessWidget {
+  const _AddButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: 'Catat transaksi',
+      tooltip: 'Catat transaksi',
+      hoverLift: 0,
+      pressedScale: 0.88,
+      borderRadius: BorderRadius.circular(99),
+      builder: (context, s, _) => AnimatedContainer(
+        duration: AppMotion.hover,
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: s.active ? c.primary : c.textPrimary,
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: c.textPrimary.withValues(alpha: 0.28), blurRadius: 14, offset: const Offset(0, 6))],
+        ),
+        child: AnimatedRotation(
+          turns: s.pressed ? 0.25 : 0,
+          duration: AppMotion.base,
+          curve: AppMotion.emphasized,
+          child: Icon(Icons.add_rounded, color: c.surfaceAlt, size: 28),
         ),
       ),
-      child: Row(
+      child: const SizedBox.shrink(),
+    );
+  }
+}
+
+/// "Lainnya": every page not in the bottom bar as a bento of tiles you can
+/// nudge around — they drift back with inertia.
+class _MoreSheet extends StatelessWidget {
+  const _MoreSheet({required this.destinations, required this.index, required this.onSelect});
+  final List<AdaptiveDestination> destinations;
+  final int index;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final more = [for (var i = 0; i < destinations.length; i++) if (!destinations[i].showInBottomBar) i];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: colors.surfaceAlt,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: colors.border.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: colors.success,
-                    shape: BoxShape.circle,
+          Center(
+            child: Container(width: 36, height: 4, decoration: BoxDecoration(color: c.border, borderRadius: BorderRadius.circular(4))),
+          ),
+          const SizedBox(height: 16),
+          Text('Semua menu', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 16),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.92,
+            children: [
+              for (var k = 0; k < more.length; k++)
+                Reveal(
+                  index: k,
+                  dy: 12,
+                  child: InertiaTile(
+                    child: _Tile(d: destinations[more[k]], selected: more[k] == index, onTap: () => onSelect(more[k])),
                   ),
                 ),
-                const SizedBox(width: 5),
-                Text(
-                  'Offline Ready',
-                  style: TextStyle(fontSize: 10.5, color: colors.textSecondary, fontWeight: FontWeight.w600),
+              Reveal(
+                index: more.length,
+                dy: 12,
+                child: InertiaTile(
+                  child: _Tile(
+                    d: const AdaptiveDestination(
+                      icon: Icons.north_east_rounded,
+                      selectedIcon: Icons.north_east_rounded,
+                      label: 'irsyads.com',
+                      hint: 'Situs utama',
+                    ),
+                    selected: false,
+                    onTap: Ecosystem.openHome,
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const Spacer(),
-          if (Get.isRegistered<ThemeController>())
-            _ThemeToggleCompactButton(theme: Get.find<ThemeController>()),
         ],
       ),
     );
   }
 }
 
-/// Tracks hover state for a nav item so its background/icon can respond
-/// with a short, deliberate transition (see design-system/irsyads/MASTER.md
-/// motion principles: short directional transitions, deliberate hover
-/// feedback).
-class _HoverNavItem extends StatefulWidget {
-  const _HoverNavItem({required this.isSelected, required this.onTap, required this.builder});
-
-  final bool isSelected;
+class _Tile extends StatelessWidget {
+  const _Tile({required this.d, required this.selected, required this.onTap});
+  final AdaptiveDestination d;
+  final bool selected;
   final VoidCallback onTap;
-  final Widget Function(bool hovering) builder;
-
-  @override
-  State<_HoverNavItem> createState() => _HoverNavItemState();
-}
-
-class _HoverNavItemState extends State<_HoverNavItem> {
-  bool _hovering = false;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      cursor: SystemMouseCursors.click,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(10),
-          hoverColor: Colors.transparent,
-          child: widget.builder(_hovering),
+    final c = context.colors;
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: d.label,
+      borderRadius: BorderRadius.circular(16),
+      builder: (context, s, _) => AnimatedContainer(
+        duration: AppMotion.hover,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected ? c.textPrimary : (s.active ? c.primaryContainer : c.surfaceAlt),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: selected ? Colors.transparent : c.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(selected ? d.selectedIcon : d.icon, color: selected ? c.surfaceAlt : c.textPrimary, size: 24),
+            const Spacer(),
+            Text(
+              d.bottomBarLabel,
+              maxLines: 2,
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, height: 1.2, color: selected ? c.surfaceAlt : c.textPrimary),
+            ),
+            if (d.hint != null)
+              Text(
+                d.hint!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11, color: selected ? c.surfaceAlt.withValues(alpha: 0.7) : c.textTertiary),
+              ),
+          ],
         ),
       ),
+      child: const SizedBox.shrink(),
     );
   }
 }
 
-/// Sleek 72px sidebar for tablet/medium window sizes.
-class _CompactSidebar extends StatelessWidget {
-  const _CompactSidebar({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onSelect,
-    this.onQuickAction,
-  });
+// ---------------------------------------------------------------- desktop
 
+class _Sidebar extends StatelessWidget {
+  const _Sidebar({required this.destinations, required this.index, required this.onSelect, this.onQuickAction});
   final List<AdaptiveDestination> destinations;
-  final int selectedIndex;
+  final int index;
   final ValueChanged<int> onSelect;
   final VoidCallback? onQuickAction;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-
+    final c = context.colors;
     return Container(
-      width: 72,
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.85),
-        border: Border(
-          right: BorderSide(color: colors.border.withValues(alpha: 0.55), width: 1),
-        ),
-      ),
+      width: 264,
+      decoration: BoxDecoration(color: c.surface, border: Border(right: BorderSide(color: c.border))),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 16),
-          const ArtIcon(
-            size: 36,
-            icon: Icons.account_balance_wallet_rounded,
-            shapeOverride: ArtShape.squircle,
-            showAura: true,
-          ),
-          const SizedBox(height: 16),
-
-          if (onQuickAction != null) ...[
-            IconButton(
-              onPressed: onQuickAction,
-              icon: const Icon(Icons.add_circle_rounded),
-              color: colors.primary,
-              iconSize: 32,
-              tooltip: 'Catat Transaksi',
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 26, 24, 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppConfig.appName, style: AppTypography.display(size: 30, weight: FontWeight.w500, color: c.textPrimary)),
+                Text('*', style: TextStyle(fontSize: 14, color: c.textPrimary, height: 1)),
+              ],
             ),
-            const SizedBox(height: 8),
-          ],
-
-          const Divider(height: 1, indent: 14, endIndent: 14),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: _IrsyadsLink(),
+          ),
+          if (onQuickAction != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: WButton(label: 'Catat transaksi', icon: Icons.add_rounded, expand: true, onPressed: onQuickAction),
+            ),
           const SizedBox(height: 8),
-
           Expanded(
-            child: ListView.builder(
-              itemCount: destinations.length,
-              itemBuilder: (context, i) {
-                final d = destinations[i];
-                final isSelected = selectedIndex == i;
-                return Tooltip(
-                  message: d.label,
-                  preferBelow: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-                    child: _HoverNavItem(
-                      isSelected: isSelected,
-                      onTap: () => onSelect(i),
-                      builder: (hovering) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        curve: Curves.easeOut,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? colors.primaryContainer
-                              : hovering
-                                  ? colors.primary.withValues(alpha: 0.06)
-                                  : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: AnimatedScale(
-                          duration: const Duration(milliseconds: 180),
-                          scale: hovering && !isSelected ? 1.1 : 1.0,
-                          child: Icon(
-                            isSelected ? d.selectedIcon : d.icon,
-                            color: isSelected ? colors.primary : colors.textSecondary,
-                            size: 22,
-                          ),
-                        ),
-                      ),
-                    ),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              children: [
+                for (final g in NavGroup.values) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 18, 12, 6),
+                    child: Text(g.title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.textTertiary)),
                   ),
-                );
-              },
+                  for (var i = 0; i < destinations.length; i++)
+                    if (destinations[i].group == g)
+                      _SideItem(d: destinations[i], selected: i == index, onTap: () => onSelect(i)),
+                ],
+              ],
             ),
           ),
-
-          if (Get.isRegistered<ThemeController>()) ...[
-            _ThemeToggleCompactButton(theme: Get.find<ThemeController>()),
-            const SizedBox(height: 12),
-          ],
+          const _SidebarFooter(),
         ],
       ),
     );
   }
 }
 
-class _ThemeToggleCompactButton extends StatelessWidget {
-  const _ThemeToggleCompactButton({required this.theme});
+class _SideItem extends StatelessWidget {
+  const _SideItem({required this.d, required this.selected, required this.onTap});
+  final AdaptiveDestination d;
+  final bool selected;
+  final VoidCallback onTap;
 
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Semantics(
+        selected: selected,
+        child: Pressable(
+          onTap: onTap,
+          semanticLabel: d.label,
+          hoverLift: 0,
+          pressedScale: 0.98,
+          borderRadius: BorderRadius.circular(12),
+          builder: (context, s, _) => AnimatedContainer(
+            duration: AppMotion.hover,
+            curve: AppMotion.standard,
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: selected ? c.textPrimary : (s.hovered ? c.textPrimary.withValues(alpha: 0.05) : Colors.transparent),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                AnimatedSlide(
+                  offset: Offset(s.hovered && !selected ? 0.12 : 0, 0),
+                  duration: AppMotion.hover,
+                  child: Icon(selected ? d.selectedIcon : d.icon, size: 20, color: selected ? c.surfaceAlt : c.textSecondary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    d.label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? c.surfaceAlt : c.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          child: const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
+}
+
+class _SidebarFooter extends StatelessWidget {
+  const _SidebarFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final auth = Get.find<AuthController>();
+    final sync = Get.find<SyncController>();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 14),
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: c.border))),
+      child: Obx(() {
+        final name = auth.displayName;
+        final family = sync.household.value;
+        final ok = sync.errorText.value == null;
+        return Row(
+          children: [
+            CircleAvatar(
+              radius: 17,
+              backgroundColor: c.textPrimary,
+              child: Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+                  style: TextStyle(color: c.surfaceAlt, fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(color: sync.syncing.value ? c.info : (ok ? c.success : c.warning), shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          sync.syncing.value ? 'Menyinkronkan…' : (ok ? (family == null ? 'Tersinkron' : family.name) : 'Offline'),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 11.5, color: c.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (Get.isRegistered<ThemeController>()) _ThemeToggle(theme: Get.find<ThemeController>()),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+// ----------------------------------------------------------------- tablet
+
+class _Rail extends StatelessWidget {
+  const _Rail({required this.destinations, required this.index, required this.onSelect, this.onQuickAction});
+  final List<AdaptiveDestination> destinations;
+  final int index;
+  final ValueChanged<int> onSelect;
+  final VoidCallback? onQuickAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      width: 76,
+      decoration: BoxDecoration(color: c.surface, border: Border(right: BorderSide(color: c.border))),
+      child: SafeArea(
+        right: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 18),
+            Text('W*', style: AppTypography.display(size: 22, weight: FontWeight.w600, color: c.textPrimary)),
+            const SizedBox(height: 16),
+            if (onQuickAction != null) _AddButton(onTap: onQuickAction!),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Semantics(
+                        selected: i == index,
+                        child: WIconButton(
+                          icon: i == index ? destinations[i].selectedIcon : destinations[i].icon,
+                          tooltip: destinations[i].label,
+                          size: 48,
+                          filled: i == index,
+                          color: i == index ? c.primary : c.textSecondary,
+                          onPressed: () => onSelect(i),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (Get.isRegistered<ThemeController>()) _ThemeToggle(theme: Get.find<ThemeController>()),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeToggle extends StatelessWidget {
+  const _ThemeToggle({required this.theme});
   final ThemeController theme;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     return Obx(() {
-      final mode = theme.themeMode.value;
-      final isDark = mode == ThemeMode.dark;
-      return IconButton(
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-          size: 18,
-          color: colors.textSecondary,
-        ),
-        tooltip: isDark ? 'Mode Terang' : 'Mode Gelap',
-        onPressed: () {
-          theme.setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark);
-        },
+      final dark = theme.themeMode.value == ThemeMode.dark ||
+          (theme.themeMode.value == ThemeMode.system && MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+      return WIconButton(
+        icon: dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+        tooltip: dark ? 'Mode terang' : 'Mode gelap',
+        size: 40,
+        onPressed: () => theme.setThemeMode(dark ? ThemeMode.light : ThemeMode.dark),
       );
     });
+  }
+}
+
+/// "dari irsyads.com" — the quiet way back to the main site.
+class _IrsyadsLink extends StatelessWidget {
+  const _IrsyadsLink();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Pressable(
+        onTap: Ecosystem.openHome,
+        semanticLabel: 'Buka irsyads.com',
+        tooltip: 'Buka irsyads.com',
+        hoverLift: 0,
+        borderRadius: BorderRadius.circular(6),
+        builder: (context, s, _) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'dari irsyads.com',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: s.active ? c.textPrimary : c.textTertiary,
+                decoration: s.hovered ? TextDecoration.underline : TextDecoration.none,
+                decorationColor: c.textTertiary,
+              ),
+            ),
+            const SizedBox(width: 3),
+            Icon(Icons.north_east_rounded, size: 13, color: s.active ? c.textPrimary : c.textTertiary),
+          ],
+        ),
+        child: const SizedBox.shrink(),
+      ),
+    );
   }
 }

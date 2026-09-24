@@ -16,11 +16,8 @@ import 'package:financial_recording/data/models/memo_model/memo_model.dart';
 import 'package:financial_recording/data/models/tx_model/tx_item_model.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
-import 'package:financial_recording/data/repositories/template_repository.dart';
 import 'package:financial_recording/data/services/backup_service.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
-import 'package:financial_recording/data/services/recurring_service.dart';
-import 'package:financial_recording/data/services/seed_service.dart';
 import 'package:financial_recording/data/services/sync/sync_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 
@@ -60,15 +57,13 @@ Future<void> bootstrap() async {
   await Hive.openBox<MemoModel>(AppBoxes.memos);
   await SyncService.ensureOpen();
 
+  // Starter data and recurring posts now happen after sign-in, once the
+  // cloud ledger has been pulled (see `SyncController._housekeeping`), so a
+  // fresh device never seeds duplicates of an existing ledger. The bundled
+  // personal seed still applies to native builds only.
   if (AccountRepository().all(includeArchived: true).isEmpty) {
-    final loadedFromSeed = await _tryLoadBundledSeed();
-    if (!loadedFromSeed) {
-      await SeedService().seedIfEmpty();
-    }
+    await _tryLoadBundledSeed();
   }
-
-  await QuickTemplateRepository().seedDefaultsIfEmpty();
-  await RecurringService().catchUp(DateTime.now());
 }
 
 /// Never runs on web: a bundled seed asset is a public, unauthenticated file

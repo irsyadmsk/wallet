@@ -33,4 +33,6 @@ class TombstoneService {
   }
 
   Future<void> clear(String table, String id) => _box.delete('$table:$id');
+
+  Future<void> clearAll() => _box.clear();
 }

@@ -24,19 +24,16 @@ class DebtsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: const Text('Utang & Piutang'),
-        actions: [
-          IconButton(
-            tooltip: 'Tambah Catatan',
-            icon: const Icon(Icons.add_circle_outline_rounded),
-            onPressed: () => _openFormDialog(context, c),
-          ),
-        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openFormDialog(context, c),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Catat Pinjaman'),
-      ),
+      // One add action per screen: the empty state carries its own button,
+      // so the floating one only appears once there is a list.
+      floatingActionButton: Obx(() => c.filteredList.isEmpty
+          ? const SizedBox.shrink()
+          : FloatingActionButton.extended(
+              onPressed: () => _openFormDialog(context, c),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Catat Pinjaman'),
+            )),
       body: Obx(() {
         final list = c.filteredList;
         return ContentShell(
@@ -73,7 +70,7 @@ class DebtsView extends StatelessWidget {
       color: colors.surfaceRaised.withValues(alpha: 0.7),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+        side: BorderSide(color: colors.border.withValues(alpha: colors.border.a * 0.5)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -121,7 +118,7 @@ class DebtsView extends StatelessWidget {
                 Container(
                   width: 1,
                   height: 38,
-                  color: colors.border.withValues(alpha: 0.5),
+                  color: colors.border.withValues(alpha: colors.border.a * 0.5),
                 ),
                 Expanded(
                   child: Padding(
@@ -228,7 +225,7 @@ class DebtsView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: isSettled
-              ? colors.border.withValues(alpha: 0.3)
+              ? colors.border.withValues(alpha: colors.border.a * 0.3)
               : color.withValues(alpha: 0.25),
         ),
       ),

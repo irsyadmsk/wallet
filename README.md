@@ -10,36 +10,15 @@ Aplikasi pencatat keuangan (*Personal Finance & Money Management*) lintas platfo
 
 ## 🌟 Fitur Utama
 
-- 📊 **Dashboard Interaktif & Ringkas**:
-  - Saldo gabungan multi-dompet dengan fitur intip saldo (*hide/show balance*).
-  - Ringkasan arus kas bulanan (*Income vs Expense*).
-  - Target Anggaran Bulanan (*Monthly Budget Tracker*) dengan indikator persentase real-time.
-  - Aksi cepat: Tambah Pengeluaran, Tambah Pemasukan, dan Transfer antar-dompet.
-  - Riwayat transaksi terkini dengan lencana kategori dan visual kontras.
-- 💳 **Multi-Wallet / Dompet Fleksibel**:
-  - Tambah, edit, dan hapus dompet rekening (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay, Tunai, dll.).
-  - Kartu gradien elegan dan pelacakan transaksi spesifik per dompet.
-- 🏷️ **Kustomisasi Kategori**:
-  - Tab kategori Pemasukan & Pengeluaran dengan ikon dan pemilih warna personal.
-- 📝 **Pencatatan Transaksi Detail**:
-  - Input nominal instan dengan format ribuan (*thousand separator*).
-  - Dukungan multi-item rincian belanja dalam satu transaksi.
-  - Transfer dana antar-dompet dengan validasi saldo otomatis.
-  - Hapus transaksi dengan **otomatisasi pemulihan saldo (*balance reversal*)**.
-- 🔍 **Pencarian & Filter Canggih**:
-  - Filter rentang tanggal fleksibel (*Custom Date Range*).
-  - Filter tipe transaksi, dompet, dan kategori.
-  - Pencarian teks langsung (*live search*) untuk kategori, dompet, maupun nama rincian item.
-- 📈 **Laporan Keuangan & Statistik (Analytics)**:
-  - Grafik Donut (*Donut Chart*) proporsi pengeluaran dan pemasukan per kategori.
-  - Kartu Arus Kas Bersih (*Net Cashflow*) & Rasio Tabungan (*Savings Rate %*).
-  - Filter periode: Bulan Ini, Bulan Lalu, Tahun Ini, dan Semua Waktu.
-- 🎯 **Target Anggaran Bulanan (Budgeting)**:
-  - Atur limit pengeluaran bulanan dan pantau sisa kuota belanja dengan peringatan otomatis.
-- 💾 **Manajemen Data & Ekspor**:
-  - Ekspor seluruh riwayat transaksi ke format **CSV (Microsoft Excel / Google Sheets)**.
-  - Backup & Restore database lokal dalam format JSON.
-  - Penggantian tema warna utama aplikasi secara dinamis (*dynamic color palette*).
+- 🔐 **Wajib masuk / daftar** — layar sambutan sinematik; akun Supabase dengan verifikasi email, lupa & ubah kata sandi. Data lokal dihapus dari perangkat saat keluar (setelah disinkronkan).
+- 👨‍👩‍👧 **Akun keluarga** — buat keluarga, undang anggota dengan kode 8 karakter, dan semua anggota mencatat di satu buku kas yang tersinkron **realtime**. Setiap transaksi menyimpan nama pencatatnya.
+- 🔄 **Sinkronisasi otomatis** — saat masuk, saat aplikasi dibuka kembali, beberapa detik setelah mencatat, tiap 3 menit, dan saat anggota lain mengubah data. Hanya baris yang berubah yang dikirim.
+- 🧮 **Kalkulator baru** — ekspresi lengkap (urutan operasi, kurung, persen ala kalkulator ponsel), hasil langsung, riwayat, alat *bagi tagihan*, *diskon*, *+PPN 11%*, *+servis*, *bulatkan ribuan*, dan dukungan keyboard.
+- 🧠 **Laporan cerdas & otomatis** — ringkasan naratif tiap bulan, perbandingan dengan bulan lalu, deteksi lonjakan kategori, proyeksi akhir bulan, deteksi langganan, pola belanja per hari, rincian per anggota keluarga, saran langkah berikutnya, dan salin laporan sebagai teks.
+- 🏷️ **Kategori otomatis** — kategori dipilih sendiri dari riwayat saat Anda mengetik catatan.
+- 🕌 **Kalkulator zakat** — penghasilan, mal, dan fitrah; terisi otomatis dari data Wallet; dasar hukum UU No. 23 Tahun 2011 dan PMA No. 52 Tahun 2014 jo. PMA No. 31 Tahun 2019.
+- 📊 Dasbor, multi-akun & dompet, anggaran, target tabungan, utang & piutang, transaksi berulang, pindai struk (OCR), impor `.mmbak`, ekspor CSV/JSON, kunci PIN.
+- 🎨 **Desain editorial** dengan gerak dinamis di setiap tombol — lihat [DESIGN.md](DESIGN.md).
 
 ---
 
@@ -98,6 +77,13 @@ class AppConfig {
 
 ---
 
+## 🧰 Alat Pengembangan
+
+Skill AI, server MCP (Context7, Supabase), Playwright CLI, Strix, dan SkillUI
+didokumentasikan di [docs/TOOLING.md](docs/TOOLING.md).
+
+---
+
 ## 🚀 Cara Menjalankan Aplikasi
 
 ### Prasyarat
@@ -127,6 +113,9 @@ class AppConfig {
 
    # Menjalankan di Android Device / Emulator
    flutter run
+
+   # Mode demo (tanpa login, data contoh lokal) untuk meninjau desain
+   flutter run -d chrome --dart-define=WALLET_DEMO=true
    ```
 
 ---

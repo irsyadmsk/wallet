@@ -3,8 +3,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
-import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
-import 'package:financial_recording/presentation/auth/view/auth_sheet.dart';
+import 'package:financial_recording/presentation/auth/view/account_card.dart';
 import 'package:financial_recording/presentation/import_mmbak/view/import_mmbak_view.dart';
 import 'package:financial_recording/presentation/memo/view/memo_view.dart';
 import 'package:financial_recording/presentation/pin_lock/view/pin_setup_sheet.dart';
@@ -12,6 +11,7 @@ import 'package:financial_recording/presentation/trash/view/trash_accounts_view.
 import 'package:financial_recording/data/services/pin_lock_service.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/presentation/settings/controller/settings_controller.dart';
+import 'package:financial_recording/shared/ecosystem.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
@@ -40,8 +40,8 @@ class SettingsView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _SectionLabel('Akun & Sinkronisasi'),
-              const _AccountSyncCard(),
+              _SectionLabel('Akun'),
+              const AccountCard(),
               const SizedBox(height: AppSpacing.lg),
 
               _SectionLabel('Mode Tampilan'),
@@ -73,7 +73,7 @@ class SettingsView extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              _SectionLabel('Palet Warna Zen Menenangkan'),
+              _SectionLabel('Warna Aksen'),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
@@ -89,12 +89,12 @@ class SettingsView extends StatelessWidget {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _buildPaletteChip(theme, 'Irsyads Teal', AppColors.presetIrsyads),
-                              _buildPaletteChip(theme, 'Sage Calm', AppColors.presetSage),
-                              _buildPaletteChip(theme, 'Ocean Slate', AppColors.presetOcean),
-                              _buildPaletteChip(theme, 'Warm Sand', AppColors.presetSand),
-                              _buildPaletteChip(theme, 'Lavender Dusk', AppColors.presetLavender),
-                              _buildPaletteChip(theme, 'Forest Emerald', AppColors.presetForest),
+                              _buildPaletteChip(theme, 'Tinta Hutan', AppColors.presetIrsyads),
+                              _buildPaletteChip(theme, 'Sage', AppColors.presetSage),
+                              _buildPaletteChip(theme, 'Laut Senja', AppColors.presetOcean),
+                              _buildPaletteChip(theme, 'Tanah Liat', AppColors.presetSand),
+                              _buildPaletteChip(theme, 'Ungu Senja', AppColors.presetLavender),
+                              _buildPaletteChip(theme, 'Zamrud', AppColors.presetForest),
                             ],
                           )),
                       const Divider(height: AppSpacing.xl),
@@ -152,7 +152,7 @@ class SettingsView extends StatelessWidget {
                                         : colors.surfaceAlt.withValues(alpha: 0.5),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.4),
+                                      color: isSelected ? colors.primary : colors.border.withValues(alpha: colors.border.a * 0.4),
                                       width: isSelected ? 1.5 : 1,
                                     ),
                                   ),
@@ -222,7 +222,7 @@ class SettingsView extends StatelessWidget {
                       title: const Text('Utang & Piutang'),
                       subtitle: const Text('Catat pinjaman, cicilan, dan jatuh tempo'),
                       trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => shell.goTo(6),
+                      onTap: () => shell.goTo(AppPage.debts),
                     ),
                     const Divider(height: 1),
                     ListTile(
@@ -230,7 +230,7 @@ class SettingsView extends StatelessWidget {
                       title: const Text('Target Tabungan (Goals)'),
                       subtitle: const Text('Pantau impian finansial dan progres tabungan'),
                       trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => shell.goTo(5),
+                      onTap: () => shell.goTo(AppPage.goals),
                     ),
                     const Divider(height: 1),
                     ListTile(
@@ -238,7 +238,7 @@ class SettingsView extends StatelessWidget {
                       title: const Text('Transaksi Berulang'),
                       subtitle: const Text('Kelola tagihan rutin dan jadwal otomatis'),
                       trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => shell.goTo(7),
+                      onTap: () => shell.goTo(AppPage.recurring),
                     ),
                     const Divider(height: 1),
                     ListTile(
@@ -246,7 +246,7 @@ class SettingsView extends StatelessWidget {
                       title: const Text('Kategori Transaksi'),
                       subtitle: const Text('Atur hierarki kategori pemasukan & pengeluaran'),
                       trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => shell.goTo(8),
+                      onTap: () => shell.goTo(AppPage.categories),
                     ),
                     const Divider(height: 1),
                     ListTile(
@@ -373,6 +373,16 @@ class SettingsView extends StatelessWidget {
                   subtitle: Text('v${AppConfig.appVersion} · ${AppConfig.appAuthor}'),
                 ),
               ),
+              const SizedBox(height: AppSpacing.sm),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.public_rounded),
+                  title: const Text('Kunjungi irsyads.com'),
+                  subtitle: const Text('Situs utama: karya, Academy, dan Ruang'),
+                  trailing: const Icon(Icons.north_east_rounded),
+                  onTap: Ecosystem.openHome,
+                ),
+              ),
               const SizedBox(height: AppSpacing.xxxl),
             ],
           ),
@@ -417,130 +427,6 @@ class SettingsView extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _AccountSyncCard extends StatelessWidget {
-  const _AccountSyncCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = Get.find<AuthController>();
-    final colors = context.colors;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Obx(() {
-          if (!auth.isSignedIn) {
-            return Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colors.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.cloud_off_rounded, color: colors.primary),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Belum masuk', style: TextStyle(fontWeight: FontWeight.w700)),
-                      Text(
-                        'Masuk untuk menyinkronkan data ke perangkat lain.',
-                        style: TextStyle(color: colors.textSecondary, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                FilledButton(
-                  onPressed: () => showAdaptiveSheet(context, builder: (_) => const AuthSheet()),
-                  child: const Text('Masuk'),
-                ),
-              ],
-            );
-          }
-
-          final lastSync = auth.lastSyncAt.value;
-          final lastSyncText = lastSync == null
-              ? 'Belum pernah sinkron'
-              : 'Sinkron terakhir: ${_formatRelative(lastSync)}';
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: colors.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.cloud_done_rounded, color: colors.primary),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          auth.user.value?.email ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(lastSyncText, style: TextStyle(color: colors.textSecondary, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: auth.syncing.value ? null : auth.syncNow,
-                      icon: auth.syncing.value
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.sync_rounded, size: 18),
-                      label: Text(auth.syncing.value ? 'Menyinkronkan...' : 'Sinkronkan Sekarang'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  OutlinedButton(
-                    onPressed: auth.signOut,
-                    child: const Text('Keluar'),
-                  ),
-                ],
-              ),
-              if (auth.errorText.value != null) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  auth.errorText.value!,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
-                ),
-              ],
-            ],
-          );
-        }),
-      ),
-    );
-  }
-
-  String _formatRelative(DateTime t) {
-    final diff = DateTime.now().difference(t);
-    if (diff.inMinutes < 1) return 'baru saja';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-    return '${diff.inDays} hari lalu';
   }
 }
 

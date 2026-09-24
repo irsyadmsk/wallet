@@ -1,0 +1,95 @@
+# Deploy otomatis Wallet web ke wallet.irsyads.com.
+#
+# Wallet adalah Worker berisi berkas statis (lihat wrangler.jsonc), yang
+# ditayangkan dengan `wrangler deploy`. Tanpa workflow ini, perubahan bisa
+# sudah masuk ke main tetapi belum pernah sampai ke pengunjung.
+#
+# Bila secret belum dipasang, langkah deploy dilewati dan hasilnya tetap
+# hijau: itu keadaan konfigurasi, bukan kegagalan (pola yang sama dengan
+# deploy-verify.yml di repo irsyads).
+#
+# SYARAT: secret CLOUDFLARE_API_TOKEN pada repositori ini, dengan izin
+# "Workers Scripts:Edit" dan "Zone:DNS:Edit" (untuk custom domain) pada
+# akun Cloudflare irsyads.com.
+name: Deploy Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "web/**"
+      - "assets/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "wrangler.jsonc"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  tayangkan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Periksa secret tersedia
+        id: secret
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "ada=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Secret CLOUDFLARE_API_TOKEN belum dipasang — deploy dilewati, bukan gagal."
+            {
+              echo "### Deploy Wallet dilewati"
+              echo
+              echo "Secret \`CLOUDFLARE_API_TOKEN\` belum dipasang."
+              echo
+              echo "1. Cloudflare → My Profile → API Tokens → Create Token (templat **Edit Cloudflare Workers**)."
+              echo "2. Repositori ini → Settings → Secrets and variables → Actions → New repository secret."
+              echo "3. Nama \`CLOUDFLARE_API_TOKEN\`, isi token tadi, lalu jalankan ulang workflow ini dari tab Actions."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ada=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: subosito/flutter-action@v2
+        if: steps.secret.outputs.ada == 'true'
+        with:
+          channel: stable
+
+      - run: flutter pub get
+        if: steps.secret.outputs.ada == 'true'
+
+      # Tes lebih dulu: deploy yang melewati tes hanya memindahkan kegagalan
+      # ke layar pengunjung.
+      - name: Tes
+        if: steps.secret.outputs.ada == 'true'
+        run: flutter test
+
+      - name: Build web
+        if: steps.secret.outputs.ada == 'true'
+        run: flutter build web --release
+
+      - name: Deploy ke Cloudflare
+        if: steps.secret.outputs.ada == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 688721d0967c0e45ffcf6fa1c03b02ff
+        run: npx --yes wrangler@4 deploy
+
+      - name: Pastikan benar-benar tayang
+        if: steps.secret.outputs.ada == 'true'
+        run: |
+          sleep 10
+          if curl -fsS -H "Cache-Control: no-cache" https://wallet.irsyads.com/ | grep -q "flutter"; then
+            echo "wallet.irsyads.com menjawab." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Deploy selesai tetapi wallet.irsyads.com tidak menjawab seperti yang diharapkan."
+            exit 1
+          fi

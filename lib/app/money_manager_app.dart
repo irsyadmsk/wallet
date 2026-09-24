@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/app/app_events.dart';
+import 'package:financial_recording/app/demo_mode.dart';
 import 'package:financial_recording/app/shell_controller.dart';
+import 'package:financial_recording/app/sync_controller.dart';
+import 'package:financial_recording/presentation/auth/view/auth_panel.dart';
+import 'package:financial_recording/presentation/auth/view/welcome_view.dart';
+import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
 import 'package:financial_recording/data/services/pin_lock_service.dart';
@@ -18,7 +24,10 @@ import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart'
 import 'package:financial_recording/presentation/goals/controller/goals_controller.dart';
 import 'package:financial_recording/presentation/goals/view/goals_view.dart';
 import 'package:financial_recording/presentation/recurring/view/recurring_view.dart';
+import 'package:financial_recording/presentation/family/view/family_view.dart';
+import 'package:financial_recording/presentation/reports/controller/reports_controller.dart';
 import 'package:financial_recording/presentation/reports/view/reports_view.dart';
+import 'package:financial_recording/presentation/zakat/view/zakat_view.dart';
 import 'package:financial_recording/presentation/settings/view/settings_view.dart';
 import 'package:financial_recording/presentation/transactions/controller/transactions_controller.dart';
 import 'package:financial_recording/presentation/transactions/view/transactions_view.dart';
@@ -34,6 +43,7 @@ class MoneyManagerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Get.put(ThemeController(), permanent: true);
     Get.put(ShellController(), permanent: true);
+    Get.put(SyncController(), permanent: true);
     Get.put(AuthController(), permanent: true);
 
     return Obx(() => GetMaterialApp(
@@ -45,15 +55,44 @@ class MoneyManagerApp extends StatelessWidget {
           theme: AppTheme.light(theme.seedColor.value),
           darkTheme: AppTheme.dark(theme.seedColor.value),
           themeMode: theme.themeMode.value,
-          home: const _AppLockGate(),
+          home: const _AuthGate(),
         ));
+  }
+}
+
+/// Signing in is required: until there's a session the welcome screen is
+/// the whole app. A password-reset link lands on [SetNewPasswordView].
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Get.find<AuthController>();
+    return Obx(() {
+      final signedIn = auth.isSignedIn; // always read, so Obx has a dependency
+      final Widget page;
+      if (kDemoMode) {
+        page = const _AppLockGate(key: ValueKey('demo'));
+      } else if (!signedIn) {
+        page = const WelcomeView(key: ValueKey('welcome'));
+      } else if (auth.recoveringPassword.value) {
+        page = const SetNewPasswordView(key: ValueKey('recover'));
+      } else {
+        page = _AppLockGate(key: ValueKey('app-${auth.user.value!.id}'));
+      }
+      return AnimatedSwitcher(
+        duration: AppMotion.of(context, const Duration(milliseconds: 600)),
+        switchInCurve: AppMotion.emphasized,
+        child: page,
+      );
+    });
   }
 }
 
 /// Shows [PinLockView] once per app launch when the user has enabled a PIN,
 /// then hands off to [HomeShell] for the rest of the session.
 class _AppLockGate extends StatefulWidget {
-  const _AppLockGate();
+  const _AppLockGate({super.key});
 
   @override
   State<_AppLockGate> createState() => _AppLockGateState();
@@ -70,45 +109,42 @@ class _AppLockGateState extends State<_AppLockGate> {
 }
 
 const _destinations = [
-  // UTAMA
   AdaptiveDestination(
     icon: Icons.space_dashboard_outlined,
     selectedIcon: Icons.space_dashboard_rounded,
     label: 'Beranda',
-    group: NavGroup.main,
   ),
   AdaptiveDestination(
     icon: Icons.receipt_long_outlined,
     selectedIcon: Icons.receipt_long_rounded,
     label: 'Transaksi',
-    group: NavGroup.main,
   ),
   AdaptiveDestination(
     icon: Icons.account_balance_wallet_outlined,
     selectedIcon: Icons.account_balance_wallet_rounded,
     label: 'Akun & Saldo',
     shortLabel: 'Akun',
-    group: NavGroup.main,
+    hint: 'Rekening & dompet',
+    showInBottomBar: false,
   ),
   AdaptiveDestination(
     icon: Icons.pie_chart_outline_rounded,
     selectedIcon: Icons.pie_chart_rounded,
     label: 'Anggaran',
-    group: NavGroup.main,
+    hint: 'Batas bulanan',
+    showInBottomBar: false,
   ),
   AdaptiveDestination(
     icon: Icons.insights_outlined,
     selectedIcon: Icons.insights_rounded,
-    label: 'Laporan Analisis',
-    shortLabel: 'Laporan',
-    group: NavGroup.main,
+    label: 'Laporan',
   ),
-
-  // ASET & RENCANA
   AdaptiveDestination(
     icon: Icons.flag_outlined,
     selectedIcon: Icons.flag_rounded,
     label: 'Target Tabungan',
+    shortLabel: 'Target',
+    hint: 'Impian & progres',
     showInBottomBar: false,
     group: NavGroup.plans,
   ),
@@ -116,6 +152,8 @@ const _destinations = [
     icon: Icons.handshake_outlined,
     selectedIcon: Icons.handshake_rounded,
     label: 'Utang & Piutang',
+    shortLabel: 'Utang',
+    hint: 'Pinjaman & cicilan',
     showInBottomBar: false,
     group: NavGroup.plans,
   ),
@@ -123,15 +161,32 @@ const _destinations = [
     icon: Icons.autorenew_rounded,
     selectedIcon: Icons.autorenew_rounded,
     label: 'Transaksi Berulang',
+    shortLabel: 'Berulang',
+    hint: 'Gaji, tagihan',
     showInBottomBar: false,
     group: NavGroup.plans,
   ),
-
-  // PENGATURAN
+  AdaptiveDestination(
+    icon: Icons.volunteer_activism_outlined,
+    selectedIcon: Icons.volunteer_activism_rounded,
+    label: 'Zakat',
+    hint: 'Penghasilan, mal, fitrah',
+    showInBottomBar: false,
+    group: NavGroup.plans,
+  ),
+  AdaptiveDestination(
+    icon: Icons.diversity_3_outlined,
+    selectedIcon: Icons.diversity_3_rounded,
+    label: 'Keluarga',
+    hint: 'Buku kas bersama',
+    showInBottomBar: false,
+    group: NavGroup.system,
+  ),
   AdaptiveDestination(
     icon: Icons.category_outlined,
     selectedIcon: Icons.category_rounded,
-    label: 'Kategori Transaksi',
+    label: 'Kategori',
+    hint: 'Pemasukan & belanja',
     showInBottomBar: false,
     group: NavGroup.system,
   ),
@@ -139,11 +194,13 @@ const _destinations = [
     icon: Icons.tune_outlined,
     selectedIcon: Icons.tune_rounded,
     label: 'Pengaturan',
+    hint: 'Akun, tema, cadangan',
     showInBottomBar: false,
     group: NavGroup.system,
   ),
 ];
 
+// Order must match [AppPage].
 const _screens = [
   DashboardView(),
   TransactionsView(),
@@ -153,12 +210,34 @@ const _screens = [
   GoalsView(),
   DebtsView(),
   RecurringView(),
+  ZakatView(),
+  FamilyView(),
   CategoriesView(),
   SettingsView(),
 ];
 
-class HomeShell extends StatelessWidget {
+class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
+
+  @override
+  State<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<HomeShell> {
+  late final Worker _dataWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    // A sync pulled rows or the ledger switched: reload every open screen.
+    _dataWorker = ever(dataVersion, (_) => _refreshAllScreens());
+  }
+
+  @override
+  void dispose() {
+    _dataWorker.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,13 +251,13 @@ class HomeShell extends StatelessWidget {
         onSelect: shell.goTo,
         onQuickAction: () => _openAddTransaction(context),
         body: AnimatedSwitcher(
-          duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
-          switchInCurve: Curves.easeOutCubic,
+          duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 360),
+          switchInCurve: AppMotion.emphasized,
           switchOutCurve: Curves.easeIn,
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: SlideTransition(
-              position: Tween<Offset>(begin: const Offset(0, 0.015), end: Offset.zero).animate(animation),
+              position: Tween<Offset>(begin: const Offset(0, 0.02), end: Offset.zero).animate(animation),
               child: child,
             ),
           ),
@@ -188,12 +267,6 @@ class HomeShell extends StatelessWidget {
           ),
           child: KeyedSubtree(key: ValueKey(index), child: _screens[index]),
         ),
-        floatingActionButton: index <= 1
-            ? FloatingActionButton(
-                onPressed: () => _openAddTransaction(context),
-                child: const Icon(Icons.add_rounded),
-              )
-            : null,
       );
     });
   }
@@ -222,5 +295,9 @@ class HomeShell extends StatelessWidget {
     if (Get.isRegistered<DebtsController>(tag: 'debts')) {
       Get.find<DebtsController>(tag: 'debts').load();
     }
+    if (Get.isRegistered<ReportsController>(tag: 'reports')) {
+      Get.find<ReportsController>(tag: 'reports').refresh();
+    }
+    if (mounted) setState(() {});
   }
 }

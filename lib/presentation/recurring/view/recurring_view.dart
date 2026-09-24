@@ -7,6 +7,7 @@ import 'package:financial_recording/presentation/recurring/controller/recurring_
 import 'package:financial_recording/presentation/recurring/widget/recurring_editor_sheet.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
+import 'package:financial_recording/shared/widget/empty_state.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/util/money/money_format.dart';
@@ -22,24 +23,26 @@ class RecurringView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: const Text('Transaksi Berulang'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await showAdaptiveSheet<RecurringRuleModel>(context, builder: (_) => const RecurringEditorSheet());
-          if (result != null) await c.save(result);
-        },
-        child: const Icon(Icons.add_rounded),
+      appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('Transaksi Berulang')),
+      floatingActionButton: Obx(
+        () => c.rules.isEmpty
+            ? const SizedBox.shrink()
+            : FloatingActionButton(
+                tooltip: 'Tambah transaksi berulang',
+                onPressed: () => _add(context, c),
+                child: const Icon(Icons.add_rounded),
+              ),
       ),
       body: SingleChildScrollView(
         child: ContentShell(
           child: Obx(() {
             if (c.rules.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(AppSpacing.xl),
-                child: Text('Belum ada transaksi berulang. Tambahkan tagihan atau gaji rutin di sini.'),
+              return EmptyState(
+                icon: Icons.event_repeat_rounded,
+                title: 'Belum ada transaksi berulang',
+                body: 'Gaji, cicilan, SPP, dan langganan bisa tercatat sendiri setiap jatuh tempo.',
+                actionLabel: 'Tambah transaksi berulang',
+                onAction: () => _add(context, c),
               );
             }
             return Column(
@@ -83,11 +86,13 @@ class RecurringView extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: colors.primaryContainer.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: colors.border.withValues(alpha: 0.5), width: 1),
+                            border: Border.all(color: colors.border.withValues(alpha: colors.border.a * 0.5), width: 1),
                           ),
                           child: Icon(Icons.autorenew_rounded, color: colors.primary, size: 22),
                         ),
-                        title: Text(r.memo?.isNotEmpty == true ? r.memo! : (accounts.byId(r.accountId)?.name ?? 'Berulang')),
+                        title: Text(
+                          r.memo?.isNotEmpty == true ? r.memo! : (accounts.byId(r.accountId)?.name ?? 'Berulang'),
+                        ),
                         subtitle: Text('Berikutnya: ${DateFormat('d MMM y', 'id_ID').format(r.nextRunDate)}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -106,5 +111,10 @@ class RecurringView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _add(BuildContext context, RecurringController c) async {
+    final result = await showAdaptiveSheet<RecurringRuleModel>(context, builder: (_) => const RecurringEditorSheet());
+    if (result != null) await c.save(result);
   }
 }

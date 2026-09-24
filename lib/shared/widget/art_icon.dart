@@ -80,7 +80,7 @@ class ArtIcon extends StatelessWidget {
   Widget _buildContainer(BuildContext context, ArtShape shape) {
     final colors = context.colors;
     final bg = backgroundColor ?? colors.surfaceAlt;
-    final border = borderColor ?? colors.border.withValues(alpha: 0.35);
+    final border = borderColor ?? colors.border.withValues(alpha: colors.border.a * 0.35);
 
     Widget innerContent;
     if (child != null) {
