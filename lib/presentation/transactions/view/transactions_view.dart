@@ -56,7 +56,7 @@ class TransactionsView extends StatelessWidget {
             children: [
               TextField(
                 decoration: const InputDecoration(
-                  hintText: 'Cari catatan atau item...',
+                  hintText: 'Cari catatan atau item…',
                   prefixIcon: Icon(Icons.search_rounded),
                 ),
                 onChanged: c.setSearch,

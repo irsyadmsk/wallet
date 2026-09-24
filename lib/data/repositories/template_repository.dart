@@ -38,8 +38,9 @@ class QuickTemplateRepository {
     await TombstoneService().record('templates', id);
   }
 
-  Future<void> seedDefaultsIfEmpty() async {
-    if (_box.isNotEmpty) return;
+  /// Returns true when the defaults were written.
+  Future<bool> seedDefaultsIfEmpty() async {
+    if (_box.isNotEmpty) return false;
 
     final accounts = AccountRepository().all();
     final defaultAccount = accounts.isNotEmpty ? accounts.first.id : null;
@@ -98,6 +99,7 @@ class QuickTemplateRepository {
     for (final t in defaults) {
       await upsert(t);
     }
+    return true;
   }
 
   Future<void> clear() => _box.clear();

@@ -90,16 +90,16 @@ class _QDatePickerState extends State<QDatePicker> {
               hintText: widget.hint,
               fillColor: inputColor,
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: primaryColor),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderSide: BorderSide(color: disabledColor),
+                borderRadius: BorderRadius.all(Radius.circular(12)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: primaryColor),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderRadius: BorderRadius.all(Radius.circular(12)),
               ),
               errorBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: dangerColor),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderRadius: BorderRadius.all(Radius.circular(12)),
               ),
             ),
           ),

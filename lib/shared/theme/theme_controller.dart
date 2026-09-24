@@ -22,8 +22,8 @@ class ThemeController extends GetxController {
     final s = _settings.current;
     themeMode.value = ThemeMode.values[s.themeModeIndex.clamp(0, 2)];
     // Automatically migrate older defaults forward: harsh indigo -> calming
-    // sage teal -> the irsyads.com brand teal this app now ships under.
-    if (s.seedColorValue == 0xFF4F46E5 || s.seedColorValue == 0xFF0D9488) {
+    // sage teal -> irsyads teal -> the editorial forest ink of the redesign.
+    if (const {0xFF4F46E5, 0xFF0D9488, 0xFF126A5A}.contains(s.seedColorValue)) {
       s.seedColorValue = AppColors.defaultSeed.toARGB32();
       _settings.save(s);
     }

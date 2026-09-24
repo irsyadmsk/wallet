@@ -149,7 +149,7 @@ class _EmoneyNfcViewState extends State<EmoneyNfcView> {
               const Center(child: CircularProgressIndicator()),
               const SizedBox(height: AppSpacing.lg),
               Center(
-                child: Text('Menunggu kartu di-tap...', style: TextStyle(color: colors.textSecondary)),
+                child: Text('Menunggu kartu di-tap…', style: TextStyle(color: colors.textSecondary)),
               ),
               const SizedBox(height: AppSpacing.xl),
               OutlinedButton(

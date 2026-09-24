@@ -64,6 +64,17 @@ class TxModel extends HiveObject {
   @HiveField(17)
   int? transferFee;
 
+  /// Supabase user id of whoever recorded this row. Lets a family ledger
+  /// show and report "who spent what". Null for rows recorded before
+  /// sign-in existed, or imported ones.
+  @HiveField(18)
+  String? createdBy;
+
+  /// Display name of [createdBy] at the time of recording, so reports can
+  /// label members without another network lookup.
+  @HiveField(19)
+  String? createdByName;
+
   TxModel({
     required this.id,
     required this.type,
@@ -81,6 +92,8 @@ class TxModel extends HiveObject {
     this.externalPairId,
     this.imagePath,
     this.transferFee,
+    this.createdBy,
+    this.createdByName,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : items = items ?? [],
@@ -121,6 +134,8 @@ class TxModel extends HiveObject {
         'externalPairId': externalPairId,
         'imagePath': imagePath,
         'transferFee': transferFee,
+        'createdBy': createdBy,
+        'createdByName': createdByName,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
       };
@@ -144,6 +159,8 @@ class TxModel extends HiveObject {
         externalPairId: json['externalPairId'] as String?,
         imagePath: json['imagePath'] as String?,
         transferFee: json['transferFee'] == null ? null : int.tryParse(json['transferFee'].toString()),
+        createdBy: json['createdBy'] as String?,
+        createdByName: json['createdByName'] as String?,
         createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
         updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
       );

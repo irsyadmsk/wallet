@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/tx_query.dart';
+import 'package:financial_recording/data/services/current_actor.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class TxRepository {
@@ -67,6 +68,10 @@ class TxRepository {
 
   /// Raw write — prefer [LedgerService] which keeps account balances correct.
   Future<void> put(TxModel t) async {
+    if (t.createdBy == null && CurrentActor.id != null) {
+      t.createdBy = CurrentActor.id;
+      t.createdByName = CurrentActor.name;
+    }
     final key = _keyFor(t.id);
     if (key != null) {
       await _box.put(key, t);

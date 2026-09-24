@@ -18,7 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Wallet — pencatat keuangan pribadi oleh Muhammad Irsyad Sirojul Khoeir.">
+  <meta name="description" content="Wallet — buku kas pribadi dan keluarga: catat, sinkron antar perangkat, dan laporan otomatis. Oleh Muhammad Irsyad Sirojul Khoeir.">
   <meta name="author" content="Muhammad Irsyad Sirojul Khoeir">
 
   <!--
@@ -26,10 +26,17 @@
     (~980px) and scale the whole page down to fit, which is what made icons
     and text look shifted/blurry on phones. `viewport-fit=cover` also turns
     on env(safe-area-inset-*) so the bottom nav can avoid the home-indicator
-    area on iOS instead of sitting under it.
+    area on iOS instead of sitting under it. Zoom is deliberately NOT
+    disabled (no maximum-scale/user-scalable=no): low-vision users need it.
   -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0b1120">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Matches the welcome screen's dark backdrop, which is the first paint. -->
+  <meta name="theme-color" content="#0b1311">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Hosts fetched during first paint: emoji fallback font and hero video. -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://d8j0ntlcm91z4.cloudfront.net" crossorigin>
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -57,7 +64,7 @@
       padding: 0;
       overflow: hidden;
       overscroll-behavior: none;
-      background: #0b1120;
+      background: #0b1311;
     }
 
     /* Flutter injects its canvas/glass-pane directly into <body>; keep it
