@@ -281,14 +281,19 @@ abstract class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: c.surface,
-        selectedColor: c.textPrimary,
-        secondarySelectedColor: c.textPrimary,
-        labelStyle: WidgetStateTextStyle.resolveWith((s) => s.contains(WidgetState.selected)
-            ? TextStyle(color: c.surfaceAlt, fontWeight: FontWeight.w600)
-            : TextStyle(color: c.textPrimary, fontWeight: FontWeight.w500)),
-        secondaryLabelStyle: TextStyle(color: c.surfaceAlt, fontWeight: FontWeight.w600),
-        checkmarkColor: c.surfaceAlt,
-        side: BorderSide(color: c.border),
+        // Light tint + ink text when selected: readable for every chip type,
+        // including ones that set their own label style.
+        selectedColor: c.primaryContainer,
+        secondarySelectedColor: c.primaryContainer,
+        labelStyle: WidgetStateTextStyle.resolveWith((s) => TextStyle(
+              color: c.textPrimary,
+              fontWeight: s.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500,
+            )),
+        secondaryLabelStyle: TextStyle(color: c.textPrimary, fontWeight: FontWeight.w600),
+        checkmarkColor: c.primary,
+        side: WidgetStateBorderSide.resolveWith((s) => BorderSide(
+              color: s.contains(WidgetState.selected) ? c.primary.withValues(alpha: 0.5) : c.border,
+            )),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       ),

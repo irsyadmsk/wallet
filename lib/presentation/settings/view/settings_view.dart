@@ -151,7 +151,7 @@ class SettingsView extends StatelessWidget {
                                         : colors.surfaceAlt.withValues(alpha: 0.5),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.4),
+                                      color: isSelected ? colors.primary : colors.border.withValues(alpha: colors.border.a * 0.4),
                                       width: isSelected ? 1.5 : 1,
                                     ),
                                   ),

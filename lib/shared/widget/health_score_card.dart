@@ -103,7 +103,7 @@ class _HealthScoreCardState extends State<HealthScoreCard> {
                   decoration: BoxDecoration(
                     color: colors.surfaceAlt,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.6)),
+                    border: Border.all(color: colors.border.withValues(alpha: colors.border.a * 0.6)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,7 +238,7 @@ class _MetricPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surfaceAlt.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+          border: Border.all(color: colors.border.withValues(alpha: colors.border.a * 0.4)),
         ),
         child: Column(
           children: [

@@ -235,7 +235,7 @@ class _InsightCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Color.lerp(c.surface, const Color(0xFF1C2B2A), t),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: c.border.withValues(alpha: 1 - t)),
+                  border: Border.all(color: c.border.withValues(alpha: c.border.a * (1 - t))),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.04 + 0.14 * t),

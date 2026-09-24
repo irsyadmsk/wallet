@@ -10,11 +10,11 @@ import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
-import 'package:financial_recording/shared/responsive/adaptive_grid.dart';
 import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
+import 'package:financial_recording/shared/theme/app_typography.dart';
 import 'package:financial_recording/shared/widget/account_avatar.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 
@@ -127,9 +127,7 @@ class _GroupSection extends StatelessWidget {
               children: [
                 Text(group.icon, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(group.label, style: Theme.of(context).textTheme.titleMedium),
-                ),
+                Expanded(child: Text(group.label, style: Theme.of(context).textTheme.titleMedium)),
                 Text(
                   subtotal.rupiah,
                   style: TextStyle(
@@ -140,9 +138,9 @@ class _GroupSection extends StatelessWidget {
               ],
             ),
             const Divider(height: AppSpacing.lg),
-            AdaptiveGrid(
-              columnsOverride: context.isCompact ? 1 : 2,
-              spacing: AppSpacing.sm,
+            // One column: a balance should sit at the row's right edge, not
+            // float mid-card as it did in a half-empty two-column grid.
+            Column(
               children: [
                 for (final a in accounts)
                   ListTile(
@@ -166,8 +164,9 @@ class _GroupSection extends StatelessWidget {
                       children: [
                         Text(
                           a.cachedBalance.rupiah,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
+                          style: AppTypography.numeric(
+                            size: 15,
+                            weight: FontWeight.w600,
                             color: a.cachedBalance < 0 ? colors.danger : colors.textPrimary,
                           ),
                         ),

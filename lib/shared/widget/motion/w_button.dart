@@ -69,7 +69,7 @@ class WButton extends StatelessWidget {
             right: arrow ? 4 : height * 0.4,
           ),
           decoration: BoxDecoration(
-            color: enabled ? hoverBg : c.border.withValues(alpha: 0.6),
+            color: enabled ? hoverBg : c.border,
             borderRadius: BorderRadius.circular(height),
             border: border == null ? null : Border.all(color: state.active ? fg.withValues(alpha: 0.5) : border),
             boxShadow: variant == WButtonVariant.primary || variant == WButtonVariant.accent
