@@ -21,31 +21,36 @@ SyncEntity _syncEntityFor<T extends HiveObject>({
 }) {
   Box<T> box() => Hive.box<T>(boxName);
 
-  dynamic keyFor(String id) {
-    for (final key in box().keys) {
-      final v = box().get(key);
-      if (v != null && idOf(v) == id) return key;
-    }
-    return null;
-  }
-
   return SyncEntity(
     table: table,
     allItems: () => box().values.toList(),
     toJson: (item) => toJson(item as T),
     idOf: (item) => idOf(item as T),
-    upsertLocal: (data) {
-      final item = fromJson(data);
-      final key = keyFor(idOf(item));
-      if (key != null) {
-        box().put(key, item);
-      } else {
-        box().add(item);
+    normalize: (data) => toJson(fromJson(data)),
+    applyRemote: (upserts, deletes) async {
+      final b = box();
+      // One id → key index per batch; looking each row up by scanning the
+      // box made a pull of n rows cost n² reads.
+      final keyById = <String, dynamic>{};
+      for (final key in b.keys) {
+        final v = b.get(key);
+        if (v != null) keyById[idOf(v)] = key;
       }
-    },
-    deleteLocal: (id) {
-      final key = keyFor(id);
-      if (key != null) box().delete(key);
+      final puts = <dynamic, T>{};
+      final adds = <T>[];
+      for (final data in upserts) {
+        final item = fromJson(data);
+        final key = keyById[idOf(item)];
+        if (key != null) {
+          puts[key] = item;
+        } else {
+          adds.add(item);
+        }
+      }
+      final deleteKeys = [for (final id in deletes) keyById[id]].whereType<Object>().toList();
+      if (puts.isNotEmpty) await b.putAll(puts);
+      if (adds.isNotEmpty) await b.addAll(adds);
+      if (deleteKeys.isNotEmpty) await b.deleteAll(deleteKeys);
     },
   );
 }

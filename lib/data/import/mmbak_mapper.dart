@@ -14,6 +14,13 @@ import 'package:financial_recording/domain/enums/hive_enums.dart';
 /// every platform, including inside `tool/mmbak_to_json.dart`.
 class MmbakMapper {
   static const _uuid = Uuid();
+
+  /// Same Money Manager row → same id on every import, so re-importing the
+  /// same backup updates rows instead of piling up duplicates in the cloud.
+  static String _stableId(Object? uid) {
+    final s = uid?.toString() ?? '';
+    return s.isEmpty ? _uuid.v4() : 'mm-$s';
+  }
   static final _leadingEmoji = RegExp(
     r'^([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}️]+)\s*',
     unicode: true,
@@ -113,7 +120,7 @@ class MmbakMapper {
       }
       final memo = (t['ZCONTENT']?.toString() ?? '').trim();
       transactions.add(TxModel(
-        id: _uuid.v4(),
+        id: _stableId(t['uid']),
         type: isIncome ? TxType.income : TxType.expense,
         amount: amount,
         accountId: t['assetUid']?.toString() ?? '',
@@ -130,7 +137,7 @@ class MmbakMapper {
       final date = dateMs != null ? DateTime.fromMillisecondsSinceEpoch(dateMs) : DateTime.now();
       final memo = (leg3['ZCONTENT']?.toString() ?? '').trim();
       transactions.add(TxModel(
-        id: _uuid.v4(),
+        id: _stableId(leg3['uid']),
         type: TxType.transfer,
         amount: amount,
         accountId: leg3['assetUid']?.toString() ?? '',

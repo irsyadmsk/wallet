@@ -20,6 +20,12 @@ class TombstoneService {
     await _box.put('$table:$id', DateTime.now().toIso8601String());
   }
 
+  Future<void> recordAll(String table, Iterable<String> ids) async {
+    await ensureOpen();
+    final now = DateTime.now().toIso8601String();
+    await _box.putAll({for (final id in ids) '$table:$id': now});
+  }
+
   Map<String, List<String>> byTable() {
     final result = <String, List<String>>{};
     for (final key in _box.keys.cast<String>()) {

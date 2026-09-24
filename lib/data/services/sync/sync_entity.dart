@@ -12,14 +12,21 @@ class SyncEntity {
     required this.allItems,
     required this.toJson,
     required this.idOf,
-    required this.upsertLocal,
-    required this.deleteLocal,
+    required this.normalize,
+    required this.applyRemote,
   });
 
   final String table;
   final List<dynamic> Function() allItems;
   final Map<String, dynamic> Function(dynamic item) toJson;
   final String Function(dynamic item) idOf;
-  final void Function(Map<String, dynamic> data) upsertLocal;
-  final void Function(String id) deleteLocal;
+
+  /// Round-trips remote `data` through the model (`fromJson` → `toJson`), so
+  /// its hash matches what [toJson] produces for the same row locally.
+  /// Postgres `jsonb` reorders keys, so hashing the raw remote map would
+  /// make every pulled row look edited and get pushed straight back.
+  final Map<String, dynamic> Function(Map<String, dynamic> data) normalize;
+
+  /// Writes a whole pull batch in one pass: upserts by id, deletes by id.
+  final Future<void> Function(List<Map<String, dynamic>> upserts, List<String> deletes) applyRemote;
 }
