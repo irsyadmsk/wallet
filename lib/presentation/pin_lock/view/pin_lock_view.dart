@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/data/services/pin_lock_service.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/shared/widget/art_icon.dart';
 
-const _pinLength = 4;
+/// Must match the 4–6 digit range allowed by `PinSetupSheet`.
+const _minPinLength = 4;
+const _maxPinLength = 6;
 
 /// Full-screen PIN gate shown once per app launch when the lock is enabled.
 /// Purely a local UI gate — it doesn't touch Supabase auth or sync at all.
@@ -19,8 +22,16 @@ class PinLockView extends StatefulWidget {
 
 class _PinLockViewState extends State<PinLockView> {
   final _service = PinLockService();
+  late final int _pinLength = _service.pinLength ?? _maxPinLength;
+  final _focus = FocusNode();
   String _entered = '';
   String? _error;
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
 
   void _tap(String d) {
     if (_entered.length >= _pinLength) return;
@@ -28,7 +39,23 @@ class _PinLockViewState extends State<PinLockView> {
       _entered += d;
       _error = null;
     });
-    if (_entered.length == _pinLength) _check();
+    // Older PINs were saved without their length, so try each allowed length
+    // as digits come in; only a full-length miss counts as wrong.
+    if (_entered.length >= _minPinLength) _check();
+  }
+
+  KeyEventResult _onKey(FocusNode _, KeyEvent e) {
+    if (e is! KeyDownEvent) return KeyEventResult.ignored;
+    final ch = e.character;
+    if (ch != null && RegExp(r'^[0-9]$').hasMatch(ch)) {
+      _tap(ch);
+      return KeyEventResult.handled;
+    }
+    if (e.logicalKey == LogicalKeyboardKey.backspace) {
+      _backspace();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   void _backspace() {
@@ -39,7 +66,7 @@ class _PinLockViewState extends State<PinLockView> {
   void _check() {
     if (_service.verify(_entered)) {
       widget.onUnlocked();
-    } else {
+    } else if (_entered.length == _pinLength) {
       setState(() {
         _error = 'PIN salah, coba lagi.';
         _entered = '';
@@ -50,7 +77,11 @@ class _PinLockViewState extends State<PinLockView> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Scaffold(
+    return Focus(
+      focusNode: _focus,
+      autofocus: true,
+      onKeyEvent: _onKey,
+      child: Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
         child: Padding(
@@ -99,6 +130,7 @@ class _PinLockViewState extends State<PinLockView> {
           ),
         ),
       ),
+    ),
     );
   }
 }

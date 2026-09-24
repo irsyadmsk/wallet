@@ -15,7 +15,7 @@ class PinLockService {
     final salt = _randomSalt();
     final hash = _hash(pin, salt);
     final s = _settings.current
-      ..pinHash = '$salt:$hash'
+      ..pinHash = '$salt:$hash:${pin.length}'
       ..pinEnabled = true;
     await _settings.save(s);
   }
@@ -27,13 +27,20 @@ class PinLockService {
     await _settings.save(s);
   }
 
+  /// Stored as `salt:hash:length`. PINs saved before the length was
+  /// recorded are `salt:hash` — for those this returns null and the lock
+  /// screen tries every allowed length instead.
+  int? get pinLength {
+    final parts = _settings.current.pinHash?.split(':');
+    if (parts == null || parts.length < 3) return null;
+    return int.tryParse(parts[2]);
+  }
+
   bool verify(String pin) {
     final stored = _settings.current.pinHash;
     if (stored == null || !stored.contains(':')) return false;
     final parts = stored.split(':');
-    final salt = parts.first;
-    final expected = parts.sublist(1).join(':');
-    return _hash(pin, salt) == expected;
+    return _hash(pin, parts[0]) == parts[1];
   }
 
   String _hash(String pin, String salt) => sha256.convert(utf8.encode('$salt:$pin')).toString();
