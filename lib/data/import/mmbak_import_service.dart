@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:financial_recording/data/import/mmbak_mapper.dart';
 import 'package:financial_recording/data/import/mmbak_models.dart';
 import 'package:financial_recording/data/import/mmbak_reader.dart';
@@ -34,9 +36,9 @@ class MmbakImportService {
 
   static bool get isSupportedOnThisPlatform => MmbakReader.isSupported;
 
-  Future<MmbakPreview> analyze(String filePath, {ImportProgressCb? onProgress}) async {
+  Future<MmbakPreview> analyze({String? path, Uint8List? bytes, ImportProgressCb? onProgress}) async {
     onProgress?.call('Membaca file cadangan', 0.1);
-    final raw = await MmbakReader.read(filePath);
+    final raw = await MmbakReader.read(path: path, bytes: bytes);
     onProgress?.call('Memetakan data', 0.6);
     final preview = MmbakMapper.map(raw);
     onProgress?.call('Selesai memindai', 1.0);

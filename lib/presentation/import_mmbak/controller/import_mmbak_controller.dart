@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/data/import/mmbak_import_service.dart';
 import 'package:financial_recording/data/import/mmbak_models.dart';
@@ -10,6 +11,7 @@ class ImportMmbakController extends GetxController {
 
   final Rx<ImportStep> step = ImportStep.pickFile.obs;
   final RxString filePath = ''.obs;
+  Uint8List? _bytes;
   final Rx<MmbakPreview?> preview = Rx<MmbakPreview?>(null);
   final Rx<ImportMode> mode = ImportMode.replaceAll.obs;
   final RxDouble progress = 0.0.obs;
@@ -20,9 +22,14 @@ class ImportMmbakController extends GetxController {
   bool get isSupported => MmbakImportService.isSupportedOnThisPlatform;
 
   Future<void> pickAndAnalyze() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any, withData: false);
-    if (result == null || result.files.isEmpty || result.files.single.path == null) return;
-    filePath.value = result.files.single.path!;
+    // Web has no file paths — the picker hands back the file's bytes instead.
+    final result = await FilePicker.platform.pickFiles(type: FileType.any, withData: kIsWeb);
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.single;
+    _bytes = kIsWeb ? file.bytes : null;
+    final path = kIsWeb ? null : file.path;
+    if (_bytes == null && path == null) return;
+    filePath.value = path ?? file.name;
     await analyze();
   }
 
@@ -31,7 +38,8 @@ class ImportMmbakController extends GetxController {
       step.value = ImportStep.preview;
       progress.value = 0;
       final p = await _service.analyze(
-        filePath.value,
+        path: _bytes == null ? filePath.value : null,
+        bytes: _bytes,
         onProgress: (phase, frac) {
           progressPhase.value = phase;
           progress.value = frac;
@@ -68,6 +76,7 @@ class ImportMmbakController extends GetxController {
   void reset() {
     step.value = ImportStep.pickFile;
     filePath.value = '';
+    _bytes = null;
     preview.value = null;
     report.value = null;
     errorMessage.value = '';

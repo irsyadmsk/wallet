@@ -20,7 +20,7 @@ Future<void> main(List<String> args) async {
   final outputPath = args[1];
 
   stdout.writeln('Membaca $inputPath ...');
-  final raw = await MmbakReader.read(inputPath);
+  final raw = await MmbakReader.read(path: inputPath);
   stdout.writeln('Memetakan data...');
   final preview = MmbakMapper.map(raw);
 
