@@ -9,6 +9,14 @@ import 'package:financial_recording/data/services/sync/sync_entity.dart';
 import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
+class PullPlan {
+  final upserts = <Map<String, dynamic>>[];
+  final deletes = <String>[];
+  final newHashes = <String, String>{};
+  final goneHashes = <String>[];
+  String? maxCursor;
+}
+
 class SyncResult {
   const SyncResult({required this.pushed, required this.pulled, this.error});
   final int pushed;
@@ -150,7 +158,7 @@ class SyncService {
       for (final item in entity.allItems()) {
         final id = entity.idOf(item);
         final data = entity.toJson(item);
-        final h = _hash(data);
+        final h = hashRow(data);
         final key = '${entity.table}:$id';
         if (_hashes.get(key) == h) continue;
         rows.add({'id': id, 'user_id': ledger, 'data': data, 'deleted_at': null});
@@ -167,6 +175,9 @@ class SyncService {
     return count;
   }
 
+  /// Returns how many rows actually changed locally. Our own pushes come
+  /// straight back through Realtime; those match the stored hash and are
+  /// skipped, so they cost no writes, no balance recompute and no refresh.
   Future<int> _pullRemote(String ledger) async {
     var count = 0;
     for (final entity in syncEntities) {
@@ -175,37 +186,48 @@ class SyncService {
       var query = SupabaseService.client.from(entity.table).select().eq('user_id', ledger);
       if (since != null) query = query.gt('updated_at', since);
       final rows = await query.order('updated_at') as List<dynamic>;
-      String? maxCursor = since;
-      for (final raw in rows) {
-        final row = Map<String, dynamic>.from(raw as Map);
-        _applyRemoteRow(entity, row);
-        final updated = row['updated_at']?.toString();
-        if (updated != null && (maxCursor == null || updated.compareTo(maxCursor) > 0)) {
-          maxCursor = updated;
-        }
-        count++;
-      }
-      if (maxCursor != null) await _meta.put(cursorKey, maxCursor);
+      final plan = planPull(entity, rows.map((r) => Map<String, dynamic>.from(r as Map)), _hashes.get);
+      await entity.applyRemote(plan.upserts, plan.deletes);
+      if (plan.newHashes.isNotEmpty) await _hashes.putAll(plan.newHashes);
+      if (plan.goneHashes.isNotEmpty) await _hashes.deleteAll(plan.goneHashes);
+      if (plan.maxCursor != null && plan.maxCursor != since) await _meta.put(cursorKey, plan.maxCursor!);
+      count += plan.upserts.length + plan.deletes.length;
     }
     return count;
   }
 
-  void _applyRemoteRow(SyncEntity entity, Map<String, dynamic> row) {
-    final id = row['id'] as String;
-    final key = '${entity.table}:$id';
-    if (row['deleted_at'] != null) {
-      entity.deleteLocal(id);
-      _hashes.delete(key);
-      return;
+  /// Pure planning step of a pull, split out so it can be tested without
+  /// Supabase: which rows to write, which to delete, and their new hashes.
+  static PullPlan planPull(
+    SyncEntity entity,
+    Iterable<Map<String, dynamic>> rows,
+    String? Function(String key) storedHash,
+  ) {
+    final plan = PullPlan();
+    for (final row in rows) {
+      final updated = row['updated_at']?.toString();
+      if (updated != null && (plan.maxCursor == null || updated.compareTo(plan.maxCursor!) > 0)) {
+        plan.maxCursor = updated;
+      }
+      final id = row['id'] as String;
+      final key = '${entity.table}:$id';
+      if (row['deleted_at'] != null) {
+        plan.deletes.add(id);
+        plan.goneHashes.add(key);
+        continue;
+      }
+      final data = Map<String, dynamic>.from(row['data'] as Map);
+      final h = hashRow(entity.normalize(data));
+      if (storedHash(key) == h) continue;
+      plan.upserts.add(data);
+      plan.newHashes[key] = h;
     }
-    final data = Map<String, dynamic>.from(row['data'] as Map);
-    entity.upsertLocal(data);
-    _hashes.put(key, _hash(data));
+    return plan;
   }
 
   /// `cachedBalance` is derived (recomputed from the ledger after every
   /// pull), so a balance-only change is not a reason to re-upload a row.
-  static String _hash(Map<String, dynamic> data) {
+  static String hashRow(Map<String, dynamic> data) {
     final stable = Map<String, dynamic>.from(data)..remove('cachedBalance');
     return sha1.convert(utf8.encode(jsonEncode(stable))).toString();
   }

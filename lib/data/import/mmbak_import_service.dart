@@ -9,6 +9,7 @@ import 'package:financial_recording/data/repositories/tag_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/data/repositories/tx_repository.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
+import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 typedef ImportProgressCb = void Function(String phase, double fraction);
 
@@ -52,6 +53,13 @@ class MmbakImportService {
   }) async {
     if (mode == ImportMode.replaceAll) {
       onProgress?.call('Menghapus data lama', 0.05);
+      // Tell the cloud too, or the old rows come back on the next full pull
+      // (a new device, or signing in again) alongside the imported ones.
+      final tombstones = TombstoneService();
+      await tombstones.recordAll('accounts', _accounts.all(includeArchived: true, includeDeleted: true).map((a) => a.id));
+      await tombstones.recordAll('categories', _categories.all(includeArchived: true).map((c) => c.id));
+      await tombstones.recordAll('transactions', _txs.all().map((t) => t.id));
+      await tombstones.recordAll('tags', _tags.all(includeArchived: true).map((t) => t.id));
       await Future.wait([_accounts.clear(), _categories.clear(), _txs.clear(), _tags.clear()]);
     }
 
