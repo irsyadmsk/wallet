@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -9,6 +10,7 @@ import 'package:video_player/video_player.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/auth/view/auth_panel.dart';
 import 'package:financial_recording/presentation/auth/view/feature_tour.dart';
+import 'package:financial_recording/shared/ecosystem.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
@@ -42,6 +44,7 @@ class _WelcomeViewState extends State<WelcomeView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _handleDeepLink();
     if (_video == null && !AppMotion.reduced(context)) _initVideo();
   }
 
@@ -69,6 +72,24 @@ class _WelcomeViewState extends State<WelcomeView> {
   }
 
   void _openAuth(AuthMode mode) => showAuthPanel(context, mode: mode);
+
+  bool _deepLinkHandled = false;
+
+  /// wallet.irsyads.com/masuk and /daftar open the form straight away, so
+  /// irsyads.com (and anyone else) can link to "log in to Wallet" directly.
+  /// The Worker serves index.html for every path, so these URLs load the app.
+  void _handleDeepLink() {
+    if (_deepLinkHandled || !kIsWeb) return;
+    _deepLinkHandled = true;
+    var path = Uri.base.path.toLowerCase();
+    if (path.length > 1 && path.endsWith('/')) path = path.substring(0, path.length - 1);
+    final AuthMode? mode = switch (path) {
+      '/masuk' || '/login' => AuthMode.signIn,
+      '/daftar' || '/register' || '/signup' => AuthMode.signUp,
+      _ => null,
+    };
+    if (mode != null) WidgetsBinding.instance.addPostFrameCallback((_) => _openAuth(mode));
+  }
 
   void _openTour(int topic) => showFeatureTour(context, initialTopic: topic, onStart: () => _openAuth(AuthMode.signUp));
 
@@ -347,6 +368,7 @@ class _CtaGroupState extends State<_CtaGroup> {
                 ),
               ),
               _GhostLink(label: 'Sudah punya akun? Masuk', onTap: widget.onSignIn, lit: lit),
+              _GhostLink(label: 'irsyads.com', icon: Icons.north_east_rounded, onTap: Ecosystem.openHome, lit: false),
             ],
           ).animate().fadeIn(delay: 560.ms, duration: 850.ms, curve: curve).moveY(begin: 24, end: 0, delay: 560.ms, duration: 850.ms, curve: curve),
         ],
@@ -356,10 +378,11 @@ class _CtaGroupState extends State<_CtaGroup> {
 }
 
 class _GhostLink extends StatelessWidget {
-  const _GhostLink({required this.label, required this.onTap, required this.lit});
+  const _GhostLink({required this.label, required this.onTap, required this.lit, this.icon});
   final String label;
   final VoidCallback onTap;
   final bool lit;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -379,7 +402,16 @@ class _GhostLink extends StatelessWidget {
             decoration: s.hovered ? TextDecoration.underline : TextDecoration.none,
             decorationColor: Colors.white70,
           ),
-          child: Text(label),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label),
+              if (icon != null) ...[
+                const SizedBox(width: 4),
+                Icon(icon, size: 14, color: Colors.white.withValues(alpha: s.hovered || lit ? 0.95 : 0.7)),
+              ],
+            ],
+          ),
         ),
       ),
       child: const SizedBox.shrink(),

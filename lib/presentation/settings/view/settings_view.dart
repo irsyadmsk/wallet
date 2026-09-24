@@ -11,6 +11,7 @@ import 'package:financial_recording/presentation/trash/view/trash_accounts_view.
 import 'package:financial_recording/data/services/pin_lock_service.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/presentation/settings/controller/settings_controller.dart';
+import 'package:financial_recording/shared/ecosystem.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
@@ -370,6 +371,16 @@ class SettingsView extends StatelessWidget {
                   ),
                   title: Text(AppConfig.appName, style: const TextStyle(fontWeight: FontWeight.w700)),
                   subtitle: Text('v${AppConfig.appVersion} · ${AppConfig.appAuthor}'),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.public_rounded),
+                  title: const Text('Kunjungi irsyads.com'),
+                  subtitle: const Text('Situs utama: karya, Academy, dan Ruang'),
+                  trailing: const Icon(Icons.north_east_rounded),
+                  onTap: Ecosystem.openHome,
                 ),
               ),
               const SizedBox(height: AppSpacing.xxxl),

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
+import 'package:financial_recording/shared/ecosystem.dart';
 import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
@@ -317,6 +318,22 @@ class _MoreSheet extends StatelessWidget {
                     child: _Tile(d: destinations[more[k]], selected: more[k] == index, onTap: () => onSelect(more[k])),
                   ),
                 ),
+              Reveal(
+                index: more.length,
+                dy: 12,
+                child: InertiaTile(
+                  child: _Tile(
+                    d: const AdaptiveDestination(
+                      icon: Icons.north_east_rounded,
+                      selectedIcon: Icons.north_east_rounded,
+                      label: 'irsyads.com',
+                      hint: 'Situs utama',
+                    ),
+                    selected: false,
+                    onTap: Ecosystem.openHome,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -390,7 +407,7 @@ class _Sidebar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
+            padding: const EdgeInsets.fromLTRB(24, 26, 24, 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -398,6 +415,10 @@ class _Sidebar extends StatelessWidget {
                 Text('*', style: TextStyle(fontSize: 14, color: c.textPrimary, height: 1)),
               ],
             ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: _IrsyadsLink(),
           ),
           if (onQuickAction != null)
             Padding(
@@ -613,5 +634,42 @@ class _ThemeToggle extends StatelessWidget {
         onPressed: () => theme.setThemeMode(dark ? ThemeMode.light : ThemeMode.dark),
       );
     });
+  }
+}
+
+/// "dari irsyads.com" — the quiet way back to the main site.
+class _IrsyadsLink extends StatelessWidget {
+  const _IrsyadsLink();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Pressable(
+        onTap: Ecosystem.openHome,
+        semanticLabel: 'Buka irsyads.com',
+        tooltip: 'Buka irsyads.com',
+        hoverLift: 0,
+        borderRadius: BorderRadius.circular(6),
+        builder: (context, s, _) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'dari irsyads.com',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: s.active ? c.textPrimary : c.textTertiary,
+                decoration: s.hovered ? TextDecoration.underline : TextDecoration.none,
+                decorationColor: c.textTertiary,
+              ),
+            ),
+            const SizedBox(width: 3),
+            Icon(Icons.north_east_rounded, size: 13, color: s.active ? c.textPrimary : c.textTertiary),
+          ],
+        ),
+        child: const SizedBox.shrink(),
+      ),
+    );
   }
 }
