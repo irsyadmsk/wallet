@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/presentation/settings/view/danger_zone.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
@@ -383,6 +384,20 @@ class SettingsView extends StatelessWidget {
                   onTap: () => Ecosystem.showSwitcher(context),
                 ),
               ),
+              const SizedBox(height: AppSpacing.sm),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Kebijakan Privasi'),
+                  subtitle: const Text('Data yang disimpan dan cara menghapusnya'),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                  onTap: () => Ecosystem.open(Uri.parse('https://wallet.irsyads.com/privasi.html')),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              _SectionLabel('Zona bahaya'),
+              const DangerZone(),
               const SizedBox(height: AppSpacing.xxxl),
             ],
           ),

@@ -139,6 +139,34 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Permanently deletes the account and everything in it on the server
+  /// (see the `delete_my_account` function), then clears this device and
+  /// signs out. Returns an error message, or null on success.
+  Future<String?> deleteAccount() async {
+    busy.value = true;
+    try {
+      await SupabaseService.client.rpc('delete_my_account');
+    } catch (e) {
+      busy.value = false;
+      return 'Gagal menghapus akun. Periksa koneksi lalu coba lagi. ($e)';
+    }
+    try {
+      await _sync.onSignedOut();
+      await _sync.discardLocal();
+      try {
+        await SupabaseService.auth.signOut();
+      } catch (_) {
+        // The user no longer exists server-side; the local session is
+        // dropped either way.
+      }
+      _setUser(null);
+      await Get.deleteAll();
+      return null;
+    } finally {
+      busy.value = false;
+    }
+  }
+
   Future<bool> _run(Future<void> Function() op) async {
     errorText.value = null;
     infoText.value = null;

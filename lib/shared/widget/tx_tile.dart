@@ -9,6 +9,7 @@ import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/shared/widget/art_icon.dart';
 import 'package:financial_recording/shared/widget/receipt_preview_dialog.dart';
 import 'package:financial_recording/data/services/receipt_service.dart';
+import 'package:financial_recording/data/services/current_actor.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 
 class TxTile extends StatelessWidget {
@@ -137,7 +138,12 @@ class TxTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      tx.memo != null && tx.memo!.isNotEmpty && showAccount ? '$subtitle · ${tx.memo}' : subtitle,
+                      [
+                        tx.memo != null && tx.memo!.isNotEmpty && showAccount ? '$subtitle · ${tx.memo}' : subtitle,
+                        // Family ledgers: name whoever else recorded it.
+                        if (tx.createdBy != null && tx.createdBy != CurrentActor.id && (tx.createdByName?.isNotEmpty ?? false))
+                          'oleh ${tx.createdByName}',
+                      ].where((s) => s.isNotEmpty).join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: colors.textSecondary, fontSize: 12),

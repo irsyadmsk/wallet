@@ -87,22 +87,42 @@ class _NoFamilyState extends State<_NoFamily> {
       setState(() => _joinError = 'Kode undangan terdiri dari 8 huruf/angka.');
       return;
     }
+    var bringData = true;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Gabung ke buku kas keluarga?'),
-        content: const Text(
-          'Perangkat ini akan menampilkan buku kas keluarga. Catatan pribadi Anda disinkronkan dulu '
-          'dan tetap tersimpan di akun Anda, lalu kembali jika Anda keluar dari keluarga.',
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          title: const Text('Gabung ke buku kas keluarga?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Perangkat ini akan menampilkan buku kas keluarga, dan semua catatan anggota langsung terlihat di sini.',
+              ),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: bringData,
+                onChanged: (v) => setDialog(() => bringData = v ?? true),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Bawa catatan saya ke keluarga'),
+                subtitle: const Text(
+                  'Akun, transaksi, dan anggaran Anda digabung ke buku kas keluarga. '
+                  'Kategori yang sama tidak diduplikasi. Salinan pribadi tetap tersimpan di akun Anda.',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Gabung')),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Gabung')),
-        ],
       ),
     );
     if (ok != true) return;
-    final err = await _sync.joinFamily(code, _auth.displayName);
+    final err = await _sync.joinFamily(code, _auth.displayName, bringData: bringData);
     if (mounted) setState(() => _joinError = err);
   }
 
@@ -297,6 +317,45 @@ class _FamilyDetail extends StatelessWidget {
             ],
           ),
         ),
+        if (!isOwner)
+          Obx(() {
+            sync.ownLedgerMergedTick.value;
+            if (sync.ownLedgerMerged) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Catatan pribadi Anda', style: t.titleMedium),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Catatan yang Anda buat sebelum bergabung belum ada di buku kas keluarga. '
+                        'Gabungkan agar semua terlihat di satu tempat.',
+                        style: TextStyle(color: c.textSecondary),
+                      ),
+                      const SizedBox(height: 14),
+                      WButton(
+                        label: 'Gabungkan catatan pribadi saya',
+                        icon: Icons.merge_rounded,
+                        loading: sync.familyBusy.value,
+                        onPressed: () async {
+                          final err = await sync.mergeOwnLedger();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(err ?? 'Catatan pribadi Anda sudah tergabung ke buku kas keluarga.'),
+                            ));
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
         const SizedBox(height: 28),
         WButton(
           label: isOwner ? 'Bubarkan keluarga' : 'Keluar dari keluarga',

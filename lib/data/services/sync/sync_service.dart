@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/supabase_service.dart';
 import 'package:financial_recording/data/services/sync/sync_entity.dart';
+import 'package:financial_recording/data/services/sync/ledger_merge.dart';
 import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
@@ -16,8 +17,21 @@ class PullPlan {
   String? maxCursor;
 }
 
+/// A transaction another person recorded, seen for the first time in a pull.
+class IncomingTx {
+  const IncomingTx({required this.by, required this.amount, required this.type, this.memo});
+  final String by;
+  final int amount;
+  final String type;
+  final String? memo;
+}
+
 class SyncResult {
-  const SyncResult({required this.pushed, required this.pulled, this.error});
+  const SyncResult({required this.pushed, required this.pulled, this.error, this.incoming = const []});
+
+  /// New transactions recorded by someone else (family members, or this
+  /// user on another device is excluded), for a "just arrived" notice.
+  final List<IncomingTx> incoming;
   final int pushed;
   final int pulled;
   final String? error;
@@ -95,12 +109,13 @@ class SyncService {
 
     try {
       final pushed = await _pushTombstones(ledger) + await _pushLocal(ledger);
+      _incoming.clear();
       final pulled = await _pullRemote(ledger);
       await _meta.put(_lastSyncKey, DateTime.now().toIso8601String());
       await _meta.put(_ledgerKey, ledger);
       await _meta.put(_userKey, user.id);
       if (pulled > 0) await LedgerService().recomputeAllBalances();
-      return SyncResult(pushed: pushed, pulled: pulled);
+      return SyncResult(pushed: pushed, pulled: pulled, incoming: List.of(_incoming));
     } catch (e) {
       return SyncResult(pushed: 0, pulled: 0, error: _friendly(e));
     }
@@ -119,6 +134,37 @@ class SyncService {
     await setLedgerOwner(ownerId);
     return syncNow();
   }
+
+  /// Copies [fromUserId]'s own cloud ledger into the ledger this device is
+  /// on (the family's), mapping shared categories, tags, templates and
+  /// unused starter accounts onto the family's — see [LedgerMerge]. Rows
+  /// keep their ids, so running it again updates rather than duplicates.
+  /// Returns how many rows were written locally; the caller syncs them up.
+  Future<int> importLedger(String fromUserId) async {
+    final mine = <String, List<Map<String, dynamic>>>{};
+    for (final entity in syncEntities) {
+      final rows = await _fetchAll(entity.table, fromUserId, null, liveOnly: true);
+      mine[entity.table] = [for (final r in rows) Map<String, dynamic>.from(r['data'] as Map)];
+    }
+    final family = {
+      for (final entity in syncEntities) entity.table: [for (final item in entity.allItems()) entity.toJson(item)],
+    };
+    final plan = LedgerMerge.plan(mine: mine, family: family);
+    var written = 0;
+    for (final entity in syncEntities) {
+      final rows = plan[entity.table];
+      if (rows != null && rows.isNotEmpty) written += await entity.applyRemote(rows, const []);
+    }
+    await LedgerService().recomputeAllBalances();
+    await _meta.put('$_importedPrefix$fromUserId', DateTime.now().toIso8601String());
+    return written;
+  }
+
+  static const _importedPrefix = 'imported:';
+  static final _incoming = <IncomingTx>[];
+
+  /// Whether [userId]'s personal ledger was already merged into this one.
+  bool hasImported(String userId) => _meta.get('$_importedPrefix$userId') != null;
 
   /// Clears every financial box plus sync bookkeeping. Device preferences
   /// (theme, PIN) are kept.
@@ -209,6 +255,21 @@ class SyncService {
       final since = _meta.get(cursorKey);
       final rows = await _fetchAll(entity.table, ledger, pullFrom(since));
       final plan = planPull(entity, rows, _hashes.get);
+      // Only incremental pulls announce arrivals — a first full pull of a
+      // ledger isn't "new" activity.
+      if (entity.table == 'transactions' && since != null) {
+        final me = SupabaseService.currentUser?.id;
+        for (final data in plan.upserts) {
+          final by = data['createdBy'];
+          if (by == null || by == me || _hashes.get('transactions:${data['id']}') != null) continue;
+          _incoming.add(IncomingTx(
+            by: data['createdByName']?.toString() ?? 'Anggota keluarga',
+            amount: (data['amount'] as num?)?.toInt() ?? 0,
+            type: data['type']?.toString() ?? '',
+            memo: data['memo'] as String?,
+          ));
+        }
+      }
       // Only ever move the cursor forward (the overlap can return nothing
       // newer than it).
       if (since != null && plan.maxCursor != null && !isAfterCursor(plan.maxCursor!, since)) plan.maxCursor = since;
