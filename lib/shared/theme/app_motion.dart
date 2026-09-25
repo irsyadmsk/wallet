@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 /// Motion tokens (see DESIGN.md). One easing family, a few durations.
@@ -23,6 +24,13 @@ abstract class AppMotion {
   static const Duration stagger = Duration(milliseconds: 60);
 
   static bool reduced(BuildContext context) => MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
+  /// Page entrances and page-to-page transitions. Skipped on the web, where
+  /// every frame of a staggered entrance or cross-fade re-lays out and
+  /// repaints whole pages (two of them during a cross-fade) through
+  /// CanvasKit — measured at hundreds of ms per page switch on a large
+  /// ledger. Native builds keep them.
+  static bool skipPageMotion(BuildContext context) => kIsWeb || reduced(context);
 
   /// [d], or zero when the user asked the OS to reduce motion.
   static Duration of(BuildContext context, Duration d) => reduced(context) ? Duration.zero : d;

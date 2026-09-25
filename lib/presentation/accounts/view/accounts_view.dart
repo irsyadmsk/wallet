@@ -48,17 +48,17 @@ class AccountsView extends StatelessWidget {
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () => c.recomputeBalances(),
           ),
+          // In the app bar rather than a FAB: on phones a FAB sat under the
+          // floating bottom bar and couldn't be tapped.
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.md),
+            child: FilledButton.tonalIcon(
+              onPressed: () => _addAccount(context, c),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Tambah'),
+            ),
+          ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await showAdaptiveSheet<AccountEditorResult>(
-            context,
-            builder: (_) => const AccountEditorSheet(),
-          );
-          if (result?.saved != null) await c.saveAccount(result!.saved!);
-        },
-        child: const Icon(Icons.add_rounded),
       ),
       body: SingleChildScrollView(
         child: ContentShell(
@@ -67,7 +67,7 @@ class AccountsView extends StatelessWidget {
             if (groups.isEmpty) {
               return const Padding(
                 padding: EdgeInsets.all(AppSpacing.xl),
-                child: Text('Belum ada akun. Tambahkan dengan tombol +.'),
+                child: Text('Belum ada akun. Tambahkan dengan tombol "Tambah" di atas.'),
               );
             }
             return Column(
@@ -104,6 +104,25 @@ class AccountsView extends StatelessWidget {
     );
   }
 }
+
+Future<void> _addAccount(BuildContext context, AccountsController c) async {
+  final result = await showAdaptiveSheet<AccountEditorResult>(
+    context,
+    builder: (_) => const AccountEditorSheet(),
+  );
+  if (result?.saved != null) await c.saveAccount(result!.saved!);
+}
+
+Future<void> _editAccount(BuildContext context, AccountsController c, AccountModel a) async {
+  final result = await showAdaptiveSheet<AccountEditorResult>(
+    context,
+    builder: (_) => AccountEditorSheet(existing: a),
+  );
+  if (result?.saved != null) await c.saveAccount(result!.saved!);
+  if (result?.deletedId != null) await c.deleteAccount(result!.deletedId!);
+}
+
+enum _AccountAction { edit, delete }
 
 class _GroupSection extends StatelessWidget {
   const _GroupSection({required this.group, required this.accounts, required this.controller});
@@ -144,15 +163,11 @@ class _GroupSection extends StatelessWidget {
                 for (final a in accounts)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    onTap: () => Get.to(() => AccountDetailView(accountId: a.id)),
-                    onLongPress: () async {
-                      final result = await showAdaptiveSheet<AccountEditorResult>(
-                        context,
-                        builder: (_) => AccountEditorSheet(existing: a),
-                      );
-                      if (result?.saved != null) await controller.saveAccount(result!.saved!);
-                      if (result?.deletedId != null) await controller.deleteAccount(result!.deletedId!);
+                    onTap: () async {
+                      await Get.to(() => AccountDetailView(accountId: a.id));
+                      controller.refresh();
                     },
+                    onLongPress: () => _editAccount(context, controller, a),
                     leading: AccountAvatar(account: a, radius: 18),
                     title: Text(a.name),
                     subtitle: a.isLiability && a.dueDay != null
@@ -169,8 +184,29 @@ class _GroupSection extends StatelessWidget {
                             color: a.cachedBalance < 0 ? colors.danger : colors.textPrimary,
                           ),
                         ),
+                        PopupMenuButton<_AccountAction>(
+                          tooltip: 'Opsi ${a.name}',
+                          icon: Icon(Icons.more_vert_rounded, size: 20, color: colors.textSecondary),
+                          onSelected: (action) async {
+                            switch (action) {
+                              case _AccountAction.edit:
+                                await _editAccount(context, controller, a);
+                              case _AccountAction.delete:
+                                if (await confirmDeleteAccount(context, a)) await controller.deleteAccount(a.id);
+                            }
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(
+                              value: _AccountAction.edit,
+                              child: ListTile(leading: Icon(Icons.edit_rounded), title: Text('Ubah'), contentPadding: EdgeInsets.zero),
+                            ),
+                            PopupMenuItem(
+                              value: _AccountAction.delete,
+                              child: ListTile(leading: Icon(Icons.delete_outline_rounded), title: Text('Hapus'), contentPadding: EdgeInsets.zero),
+                            ),
+                          ],
+                        ),
                         if (a.isLiability) ...[
-                          const SizedBox(width: 4),
                           IconButton(
                             tooltip: 'Bayar ${a.name}',
                             icon: Icon(Icons.payments_rounded, size: 18, color: colors.primary),

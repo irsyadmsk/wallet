@@ -82,7 +82,23 @@ class AdaptiveScaffold extends StatelessWidget {
       return Scaffold(
         backgroundColor: c.surfaceAlt,
         extendBody: true,
-        body: body,
+        // Pages scroll behind the floating bar, but their own Scaffold FABs
+        // and SafeAreas must clear it: report the bar as bottom padding.
+        // Without this every page FAB (Kategori, Target, Utang, Memo,
+        // Berulang) sat under the bar and couldn't be tapped.
+        body: Builder(builder: (context) {
+          final mq = MediaQuery.of(context);
+          final bottom = _PhoneBar.height + mq.viewPadding.bottom;
+          // Scaffold places its FAB from viewPadding, lists and SafeArea
+          // read padding — set both.
+          return MediaQuery(
+            data: mq.copyWith(
+              padding: mq.padding.copyWith(bottom: bottom > mq.padding.bottom ? bottom : mq.padding.bottom),
+              viewPadding: mq.viewPadding.copyWith(bottom: bottom),
+            ),
+            child: body,
+          );
+        }),
         bottomNavigationBar: _PhoneBar(
           destinations: destinations,
           index: index,
@@ -111,6 +127,9 @@ class AdaptiveScaffold extends StatelessWidget {
 
 class _PhoneBar extends StatelessWidget {
   const _PhoneBar({required this.destinations, required this.index, required this.onSelect, this.onQuickAction});
+
+  /// Bar height plus its bottom margin (see build).
+  static const double height = 68 + 10;
   final List<AdaptiveDestination> destinations;
   final int index;
   final ValueChanged<int> onSelect;

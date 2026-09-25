@@ -16,7 +16,7 @@ class Reveal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (AppMotion.reduced(context)) return child;
+    if (AppMotion.skipPageMotion(context)) return child;
     final d = delay + AppMotion.stagger * index;
     return child
         .animate(delay: d)

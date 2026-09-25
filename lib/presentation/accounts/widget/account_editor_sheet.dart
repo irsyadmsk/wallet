@@ -123,9 +123,12 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
                     child: QOutlineButton(
                       label: 'Hapus',
                       color: colors.danger,
-                      onPressed: () => Navigator.of(context).pop<_AccountEditorResult>(
-                        _AccountEditorResult.delete(widget.existing!.id),
-                      ),
+                      onPressed: () async {
+                        if (!await confirmDeleteAccount(context, widget.existing!)) return;
+                        if (context.mounted) {
+                          Navigator.of(context).pop<_AccountEditorResult>(_AccountEditorResult.delete(widget.existing!.id));
+                        }
+                      },
                     ),
                   ),
                 if (isEditing) const SizedBox(width: AppSpacing.md),
@@ -149,7 +152,13 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
                         ..colorValue = colorValue
                         ..iconPath = iconPath
                         ..dueDay = isLiability ? dueDay : null;
-                      if (!isEditing) {
+                      if (isEditing) {
+                        // Opening balance used to be shown here but silently
+                        // ignored on save. Shift the cached balance by the
+                        // same delta so the ledger stays consistent.
+                        account.cachedBalance += openingBalance - account.openingBalance;
+                        account.openingBalance = openingBalance;
+                      } else {
                         account.openingBalance = openingBalance;
                         account.cachedBalance = openingBalance;
                       }
@@ -176,6 +185,30 @@ const _palette = [
   0xFFEC4899,
   0xFF64748B,
 ];
+
+/// Asks before soft-deleting [account]. Its transactions stay, and the
+/// account can be restored from Pengaturan > Akun Terhapus.
+Future<bool> confirmDeleteAccount(BuildContext context, AccountModel account) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Hapus akun "${account.name}"?'),
+      content: const Text(
+        'Akun disembunyikan dari daftar dan saldo total. Riwayat transaksinya tetap tersimpan, '
+        'dan akun bisa dipulihkan dari Pengaturan › Akun Terhapus.',
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Batal')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: ctx.colors.danger),
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Hapus'),
+        ),
+      ],
+    ),
+  );
+  return ok == true;
+}
 
 class _AccountEditorResult {
   final AccountModel? saved;

@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:intl/intl.dart';
 import 'package:financial_recording/presentation/account_detail/controller/account_detail_controller.dart';
 import 'package:financial_recording/shared/widget/section_card.dart';
@@ -43,6 +44,10 @@ class AccountDetailView extends StatelessWidget {
                     );
                     if (result?.saved != null) {
                       await c.saveAccount(result!.saved!);
+                    }
+                    if (result?.deletedId != null) {
+                      await AccountRepository().delete(result!.deletedId!);
+                      if (context.mounted) Navigator.of(context).pop();
                     }
                   },
                 ),
