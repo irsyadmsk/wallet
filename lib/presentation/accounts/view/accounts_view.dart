@@ -33,8 +33,8 @@ class AccountsView extends StatelessWidget {
         actions: [
           if (EmoneyNfcService.isSupported)
             IconButton(
-              tooltip: 'Pindai Kartu E-Money (NFC)',
-              icon: const Icon(Icons.nfc_rounded),
+              tooltip: 'Cek saldo kartu (NFC)',
+              icon: const Icon(Icons.contactless_rounded),
               onPressed: () async {
                 final created = await Navigator.push<bool>(
                   context,

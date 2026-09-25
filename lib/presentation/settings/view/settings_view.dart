@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/data/services/emoney_nfc_service.dart';
+import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view.dart';
 import 'package:financial_recording/app/distribution.dart';
 import 'package:financial_recording/presentation/donation/view/donation_view.dart';
 import 'package:financial_recording/presentation/settings/view/danger_zone.dart';
@@ -220,6 +222,16 @@ class SettingsView extends StatelessWidget {
               Card(
                 child: Column(
                   children: [
+                    if (EmoneyNfcService.isSupported) ...[
+                      ListTile(
+                        leading: const Icon(Icons.contactless_rounded),
+                        title: const Text('Cek Saldo Kartu (NFC)'),
+                        subtitle: const Text('e-Money Mandiri, Brizzi, TapCash, Flazz'),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => Get.to(() => const EmoneyNfcView()),
+                      ),
+                      const Divider(height: 1),
+                    ],
                     ListTile(
                       leading: const Icon(Icons.handshake_rounded),
                       title: const Text('Utang & Piutang'),

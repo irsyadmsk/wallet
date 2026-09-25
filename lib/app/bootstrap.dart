@@ -59,6 +59,7 @@ Future<void> bootstrap() async {
   await Hive.openBox<MemoModel>(AppBoxes.memos);
   await Hive.openBox<CryptoHoldingModel>(AppBoxes.crypto);
   await Hive.openBox<String>(AppBoxes.cryptoPrices);
+  await Hive.openBox<String>(AppBoxes.nfcScans);
   await SyncService.ensureOpen();
 
   // Starter data and recurring posts now happen after sign-in, once the

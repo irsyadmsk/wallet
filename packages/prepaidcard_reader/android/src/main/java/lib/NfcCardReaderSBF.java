@@ -155,7 +155,9 @@ public class NfcCardReaderSBF {
                                 if (tagIsoDep.isConnected()) {
                                     tagIsoDep.close();
                                 }
-
+                                // Wallet patch: stop here instead of parsing a
+                                // short response (ArrayIndexOutOfBounds).
+                                return;
                             }
                             long l1 = 0L;
                             for (int ix = j; ix < 4; ix = j) {
