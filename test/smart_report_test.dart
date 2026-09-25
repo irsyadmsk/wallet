@@ -95,4 +95,23 @@ void main() {
     expect(r.narrative, hasLength(1));
     expect(r.actions, isEmpty);
   });
+
+  test('5.000 transaksi tetap cepat (dulu >1 detik karena DateTime dibuat per baris)', () {
+    final now = DateTime(2026, 9, 25);
+    final all = [
+      for (var i = 0; i < 5000; i++)
+        TxModel(
+          id: 'p$i',
+          type: i % 9 == 0 ? TxType.income : TxType.expense,
+          amount: 10000 + i,
+          accountId: 'a',
+          categoryId: 'c${i % 12}',
+          date: now.subtract(Duration(hours: 7 * i)),
+          memo: 'catatan $i',
+        ),
+    ];
+    final sw = Stopwatch()..start();
+    build(all, now, now);
+    expect(sw.elapsedMilliseconds, lessThan(300), reason: 'butuh ${sw.elapsedMilliseconds} ms');
+  });
 }

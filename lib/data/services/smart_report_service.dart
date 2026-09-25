@@ -206,10 +206,15 @@ class SmartReportBuilder {
     final daysElapsed = isCurrent ? now.day : daysInMonth;
 
     bool inRange(TxModel t, DateTime a, DateTime b) => !t.date.isBefore(a) && t.date.isBefore(b);
-    DateTime monthsBack(int n) => DateTime(month.year, month.month - n, 1);
+    // Month starts computed once: building a local DateTime is costly
+    // (time-zone lookup), and doing it inside the per-transaction filters
+    // made this report take over a second on a 5,000-row ledger.
+    final starts = [for (var n = 0; n <= 3; n++) DateTime(month.year, month.month - n, 1)];
+    DateTime monthsBack(int n) => starts[n];
 
     final cur = all.where((t) => inRange(t, start, end)).toList();
-    final prev = all.where((t) => inRange(t, monthsBack(1), start)).toList();
+    final prevStart = monthsBack(1);
+    final prev = all.where((t) => inRange(t, prevStart, start)).toList();
 
     int sum(Iterable<TxModel> list, TxType type) =>
         list.where((t) => t.type == type).fold(0, (s, t) => s + t.amount);
@@ -240,7 +245,13 @@ class SmartReportBuilder {
 
     final curCat = byCat(cur);
     final prevCat = byCat(prev);
-    final hist = [for (var i = 1; i <= 3; i++) byCat(all.where((t) => inRange(t, monthsBack(i), monthsBack(i - 1))))];
+    final hist = [
+      for (var i = 1; i <= 3; i++)
+        byCat(() {
+          final from = monthsBack(i), to = monthsBack(i - 1);
+          return all.where((t) => inRange(t, from, to));
+        }()),
+    ];
     final categories = curCat.entries.map((e) {
       final avg = (hist.fold<int>(0, (s, m) => s + (m[e.key]?.$1 ?? 0)) / 3).round();
       return CategoryInsight(
@@ -270,7 +281,8 @@ class SmartReportBuilder {
     // Subscriptions: same payee, similar amount, in ≥3 of the 4 months
     // ending with the report month.
     final subs = <SubscriptionInsight>[];
-    final window = all.where((t) => t.type == TxType.expense && inRange(t, monthsBack(3), end));
+    final windowStart = monthsBack(3);
+    final window = all.where((t) => t.type == TxType.expense && inRange(t, windowStart, end));
     final byPayee = <String, Map<int, List<int>>>{};
     final payeeLabels = <String, String>{};
     for (final t in window) {

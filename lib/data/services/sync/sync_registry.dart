@@ -57,6 +57,7 @@ SyncEntity _syncEntityFor<T extends HiveObject>({
       if (puts.isNotEmpty) await b.putAll(puts);
       if (adds.isNotEmpty) await b.addAll(adds);
       if (deleteKeys.isNotEmpty) await b.deleteAll(deleteKeys);
+      return puts.length + adds.length + deleteKeys.length;
     },
   );
 }
