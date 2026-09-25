@@ -125,11 +125,14 @@ class AdaptiveScaffold extends StatelessWidget {
 
 // ------------------------------------------------------------------ phone
 
+/// Phone navigation: one rounded pill holding the bottom-bar pages plus
+/// "Lainnya" — the current page as a raised chip with its label, the rest
+/// as icons — and a separate round "+" beside it.
 class _PhoneBar extends StatelessWidget {
   const _PhoneBar({required this.destinations, required this.index, required this.onSelect, this.onQuickAction});
 
   /// Bar height plus its bottom margin (see build).
-  static const double height = 68 + 10;
+  static const double height = 60 + 12;
   final List<AdaptiveDestination> destinations;
   final int index;
   final ValueChanged<int> onSelect;
@@ -138,48 +141,47 @@ class _PhoneBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final bar = destinations.where((d) => d.showInBottomBar).toList();
-    final half = (bar.length / 2).ceil();
     final inMore = !destinations[index].showInBottomBar;
+    const more = AdaptiveDestination(icon: Icons.grid_view_outlined, selectedIcon: Icons.grid_view_rounded, label: 'Lainnya');
 
-    Widget item(AdaptiveDestination d) {
-      final i = destinations.indexOf(d);
-      return Expanded(child: _BarItem(d: d, selected: i == index, onTap: () => onSelect(i)));
-    }
+    final items = <(AdaptiveDestination, bool, VoidCallback)>[
+      for (final d in bar) (d, destinations.indexOf(d) == index, () => onSelect(destinations.indexOf(d))),
+      (more, inMore, () => _showMore(context)),
+    ];
 
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-        child: Container(
-          height: 68,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          decoration: BoxDecoration(
-            color: c.surfaceRaised,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: c.border),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8))],
-          ),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        child: SizedBox(
+          height: 60,
           child: Row(
             children: [
-              for (final d in bar.take(half)) item(d),
-              if (onQuickAction != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _AddButton(onTap: onQuickAction!),
-                ),
-              for (final d in bar.skip(half)) item(d),
               Expanded(
-                child: _BarItem(
-                  d: const AdaptiveDestination(
-                    icon: Icons.grid_view_outlined,
-                    selectedIcon: Icons.grid_view_rounded,
-                    label: 'Lainnya',
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Color.lerp(c.surfaceAlt, c.textPrimary, dark ? 0.08 : 0.05),
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.3 : 0.08), blurRadius: 24, offset: const Offset(0, 8))],
                   ),
-                  selected: inMore,
-                  onTap: () => _showMore(context),
+                  child: Row(
+                    children: [
+                      for (final (d, selected, onTap) in items)
+                        if (selected)
+                          Expanded(child: _BarItem(d: d, selected: true, onTap: onTap))
+                        else
+                          SizedBox(width: 44, child: _BarItem(d: d, selected: false, onTap: onTap)),
+                    ],
+                  ),
                 ),
               ),
+              if (onQuickAction != null) ...[
+                const SizedBox(width: 10),
+                _AddButton(onTap: onQuickAction!),
+              ],
             ],
           ),
         ),
@@ -213,47 +215,43 @@ class _BarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Semantics(
       selected: selected,
       child: Pressable(
         onTap: onTap,
         semanticLabel: d.bottomBarLabel,
+        tooltip: selected ? null : d.bottomBarLabel,
         hoverLift: 0,
-        pressedScale: 0.9,
-        borderRadius: BorderRadius.circular(16),
-        builder: (context, s, _) => Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: AppMotion.base,
-              curve: AppMotion.standard,
-              width: selected ? 48 : 36,
-              height: 30,
-              decoration: BoxDecoration(
-                color: selected ? c.textPrimary : Colors.transparent,
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: AnimatedSwitcher(
-                duration: AppMotion.hover,
-                child: Icon(
-                  selected ? d.selectedIcon : d.icon,
-                  key: ValueKey(selected),
-                  size: 21,
-                  color: selected ? c.surfaceAlt : c.textSecondary,
+        pressedScale: 0.92,
+        borderRadius: BorderRadius.circular(26),
+        builder: (context, s, _) => Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: selected ? 12 : 0),
+          decoration: selected
+              ? BoxDecoration(
+                  color: dark ? Color.lerp(c.surfaceRaised, c.textPrimary, 0.14) : c.surfaceRaised,
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.25 : 0.06), blurRadius: 10, offset: const Offset(0, 3))],
+                )
+              : null,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(selected ? d.selectedIcon : d.icon, size: 22, color: selected ? c.textPrimary : c.textSecondary),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    d.bottomBarLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: c.textPrimary),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: AppMotion.hover,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? c.textPrimary : c.textSecondary,
-              ),
-              child: Text(d.bottomBarLabel, maxLines: 1, overflow: TextOverflow.clip),
-            ),
-          ],
+              ],
+            ],
+          ),
         ),
         child: const SizedBox.shrink(),
       ),
@@ -261,7 +259,7 @@ class _BarItem extends StatelessWidget {
   }
 }
 
-/// Centre "+" — spins a quarter turn while pressed.
+/// Round "+" beside the bar — spins a quarter turn while pressed.
 class _AddButton extends StatelessWidget {
   const _AddButton({required this.onTap});
   final VoidCallback onTap;
@@ -274,22 +272,21 @@ class _AddButton extends StatelessWidget {
       semanticLabel: 'Catat transaksi',
       tooltip: 'Catat transaksi',
       hoverLift: 0,
-      pressedScale: 0.88,
+      pressedScale: 0.9,
       borderRadius: BorderRadius.circular(99),
-      builder: (context, s, _) => AnimatedContainer(
-        duration: AppMotion.hover,
-        width: 52,
-        height: 52,
+      builder: (context, s, _) => Container(
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
-          color: s.active ? c.primary : c.textPrimary,
+          color: c.primary,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: c.textPrimary.withValues(alpha: 0.28), blurRadius: 14, offset: const Offset(0, 6))],
+          boxShadow: [BoxShadow(color: c.primary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6))],
         ),
         child: AnimatedRotation(
           turns: s.pressed ? 0.25 : 0,
           duration: AppMotion.base,
           curve: AppMotion.emphasized,
-          child: Icon(Icons.add_rounded, color: c.surfaceAlt, size: 28),
+          child: Icon(Icons.add_rounded, color: c.onPrimary, size: 30),
         ),
       ),
       child: const SizedBox.shrink(),
