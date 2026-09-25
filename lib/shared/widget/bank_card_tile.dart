@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
@@ -70,24 +69,20 @@ class BankCardTile extends StatelessWidget {
                   ),
                 ),
                 if (account.iconPath != null && account.iconPath!.isNotEmpty)
-                  // Frosted-glass badge so the logo reads as part of the
-                  // card's surface instead of a sticker slapped on top.
-                  ClipOval(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.82),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 0.8),
-                        ),
-                        padding: const EdgeInsets.all(6),
-                        child: Image.asset(account.iconPath!, fit: BoxFit.contain),
-                      ),
+                  // Near-opaque badge so the logo reads as part of the card.
+                  // A BackdropFilter blur used to sit here; behind 82% white
+                  // it was invisible yet cost a blur pass per card per frame.
+                  Container(
+                    width: 34,
+                    height: 34,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.88),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 0.8),
                     ),
+                    padding: const EdgeInsets.all(6),
+                    child: Image.asset(account.iconPath!, fit: BoxFit.contain),
                   )
                 else
                   const Icon(Icons.credit_card_rounded, color: Colors.white70, size: 24),

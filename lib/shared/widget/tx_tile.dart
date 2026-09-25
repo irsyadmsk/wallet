@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
@@ -9,6 +8,7 @@ import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/shared/widget/art_icon.dart';
 import 'package:financial_recording/shared/widget/receipt_preview_dialog.dart';
+import 'package:financial_recording/data/services/receipt_service.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 
 class TxTile extends StatelessWidget {
@@ -26,6 +26,8 @@ class TxTile extends StatelessWidget {
   final TxCategoryRepository? categoryRepository;
   final VoidCallback? onTap;
   final bool showAccount;
+
+  static final _dateFormat = DateFormat('d MMM', 'id_ID');
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +69,7 @@ class TxTile extends StatelessWidget {
         break;
     }
 
-    final hasReceipt = tx.imagePath != null && File(tx.imagePath!).existsSync();
+    final hasReceipt = ReceiptService.receiptExistsCached(tx.imagePath);
 
     return Material(
       color: Colors.transparent,
@@ -161,7 +163,7 @@ class TxTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    DateFormat('d MMM', 'id_ID').format(tx.date),
+                    _dateFormat.format(tx.date),
                     style: TextStyle(color: colors.textTertiary, fontSize: 11),
                   ),
                 ],

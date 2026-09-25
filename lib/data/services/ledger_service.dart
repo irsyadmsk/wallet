@@ -161,7 +161,11 @@ class LedgerService {
       }
     }
     for (final acc in _accounts.all(includeArchived: true, includeDeleted: true)) {
-      acc.cachedBalance = balances[acc.id] ?? acc.openingBalance;
+      final balance = balances[acc.id] ?? acc.openingBalance;
+      // Unchanged rows are skipped: every save is a disk write plus a box
+      // event that wakes the sync and UI listeners.
+      if (acc.cachedBalance == balance) continue;
+      acc.cachedBalance = balance;
       await acc.save();
     }
   }

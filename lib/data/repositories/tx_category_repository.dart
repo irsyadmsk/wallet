@@ -1,10 +1,12 @@
 import 'package:hive/hive.dart';
+import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/tx_category_model/tx_category_model.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class TxCategoryRepository {
   Box<TxCategoryModel> get _box => Hive.box<TxCategoryModel>(AppBoxes.categories);
+  BoxIdIndex<TxCategoryModel> get _index => BoxIdIndex.of(_box, (v) => v.id);
 
   List<TxCategoryModel> all({bool includeArchived = false}) {
     final list = _box.values.where((c) => includeArchived || !c.isArchived).toList();
@@ -21,13 +23,7 @@ class TxCategoryRepository {
   List<TxCategoryModel> childrenOf(String parentId) =>
       all().where((c) => c.parentId == parentId).toList();
 
-  TxCategoryModel? byId(String id) {
-    try {
-      return _box.values.firstWhere((c) => c.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  TxCategoryModel? byId(String id) => _index.valueFor(_box, id);
 
   /// Category display name including its parent, e.g. "Makanan • Makan siang".
   String pathName(String id) {
@@ -66,10 +62,5 @@ class TxCategoryRepository {
 
   Future<void> clear() => _box.clear();
 
-  dynamic _keyFor(String id) {
-    for (final key in _box.keys) {
-      if (_box.get(key)?.id == id) return key;
-    }
-    return null;
-  }
+  dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 }

@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/tx_query.dart';
@@ -7,16 +8,11 @@ import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class TxRepository {
   Box<TxModel> get _box => Hive.box<TxModel>(AppBoxes.transactions);
+  BoxIdIndex<TxModel> get _index => BoxIdIndex.of(_box, (v) => v.id);
 
   List<TxModel> all() => _box.values.toList();
 
-  TxModel? byId(String id) {
-    try {
-      return _box.values.firstWhere((t) => t.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  TxModel? byId(String id) => _index.valueFor(_box, id);
 
   /// All rows touching [accountId], including the "to" leg of transfers.
   List<TxModel> forAccount(String accountId) => _box.values
@@ -90,10 +86,5 @@ class TxRepository {
 
   Future<void> clear() => _box.clear();
 
-  dynamic _keyFor(String id) {
-    for (final key in _box.keys) {
-      if (_box.get(key)?.id == id) return key;
-    }
-    return null;
-  }
+  dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 }

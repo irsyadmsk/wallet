@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +12,17 @@ class ReceiptService {
   ReceiptService();
 
   static final _rnd = Random();
+
+  /// Whether each receipt path exists, remembered so list tiles don't hit
+  /// the disk synchronously on every build. Receipts are only ever written
+  /// or deleted through this service, which keeps the cache current.
+  static final Map<String, bool> _existsCache = {};
+
+  /// Cached, synchronous existence check for rendering.
+  static bool receiptExistsCached(String? path) {
+    if (path == null || path.isEmpty || kIsWeb) return false;
+    return _existsCache[path] ??= File(path).existsSync();
+  }
 
   /// Prompts user to pick an image file (PNG, JPG, JPEG, WEBP, HEIC, etc.)
   Future<String?> pickReceiptImage() async {
@@ -56,12 +68,14 @@ class ReceiptService {
     final targetPath = p.join(receiptsDir.path, fileName);
 
     final savedFile = await sourceFile.copy(targetPath);
+    _existsCache[savedFile.path] = true;
     return savedFile.path;
   }
 
   /// Safely deletes a receipt file from disk if it exists.
   Future<void> deleteReceipt(String? path) async {
     if (path == null || path.isEmpty) return;
+    _existsCache.remove(path);
     try {
       final file = File(path);
       if (await file.exists()) {

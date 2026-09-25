@@ -1,10 +1,12 @@
 import 'package:hive/hive.dart';
+import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/goal_model/goal_model.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class FinancialGoalRepository {
   Box<FinancialGoalModel> get _box => Hive.box<FinancialGoalModel>(AppBoxes.goals);
+  BoxIdIndex<FinancialGoalModel> get _index => BoxIdIndex.of(_box, (v) => v.id);
 
   List<FinancialGoalModel> all() {
     final list = _box.values.toList();
@@ -23,13 +25,7 @@ class FinancialGoalRepository {
   List<FinancialGoalModel> completed() =>
       all().where((g) => g.isCompleted).toList();
 
-  FinancialGoalModel? byId(String id) {
-    try {
-      return _box.values.firstWhere((g) => g.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  FinancialGoalModel? byId(String id) => _index.valueFor(_box, id);
 
   Future<void> upsert(FinancialGoalModel goal) async {
     if (goal.currentAmount >= goal.targetAmount && goal.targetAmount > 0) {
@@ -61,10 +57,5 @@ class FinancialGoalRepository {
 
   Future<void> clear() => _box.clear();
 
-  dynamic _keyFor(String id) {
-    for (final key in _box.keys) {
-      if (_box.get(key)?.id == id) return key;
-    }
-    return null;
-  }
+  dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 }
