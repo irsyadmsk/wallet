@@ -13,4 +13,8 @@ abstract class AppBoxes {
   static const templates = 'templates_v2';
   static const debts = 'debts_v2';
   static const memos = 'memos_v2';
+  static const crypto = 'crypto_v2';
+
+  /// Last fetched coin prices, device-local cache (not synced).
+  static const cryptoPrices = 'crypto_prices';
 }

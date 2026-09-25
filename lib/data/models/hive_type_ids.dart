@@ -25,4 +25,5 @@
 /// | 16     | QuickTemplateModel    | templates_v2    |
 /// | 17     | DebtLoanModel         | debts_v2        |
 /// | 18     | MemoModel             | memos_v2        |
+/// | 19     | CryptoHoldingModel    | crypto_v2       |
 library;

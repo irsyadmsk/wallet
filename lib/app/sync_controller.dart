@@ -277,7 +277,7 @@ class SyncController extends GetxController {
     var channel = SupabaseService.client.channel('ledger-$ledger');
     for (final table in const [
       'accounts', 'categories', 'transactions', 'tags', 'budgets',
-      'recurring', 'goals', 'templates', 'debts', 'memos',
+      'recurring', 'goals', 'templates', 'debts', 'memos', 'crypto_holdings',
     ]) {
       channel = channel.onPostgresChanges(
         event: PostgresChangeEvent.all,

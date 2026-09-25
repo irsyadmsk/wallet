@@ -13,6 +13,7 @@ import 'package:financial_recording/data/models/goal_model/goal_model.dart';
 import 'package:financial_recording/data/models/template_model/template_model.dart';
 import 'package:financial_recording/data/models/debt_model/debt_model.dart';
 import 'package:financial_recording/data/models/memo_model/memo_model.dart';
+import 'package:financial_recording/data/models/crypto_model/crypto_holding_model.dart';
 import 'package:financial_recording/data/models/tx_model/tx_item_model.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
@@ -43,6 +44,7 @@ Future<void> bootstrap() async {
   Hive.registerAdapter(QuickTemplateModelAdapter());
   Hive.registerAdapter(DebtLoanModelAdapter());
   Hive.registerAdapter(MemoModelAdapter());
+  Hive.registerAdapter(CryptoHoldingModelAdapter());
 
   await Hive.openBox<AccountModel>(AppBoxes.accounts);
   await Hive.openBox<TxCategoryModel>(AppBoxes.categories);
@@ -55,6 +57,8 @@ Future<void> bootstrap() async {
   await Hive.openBox<QuickTemplateModel>(AppBoxes.templates);
   await Hive.openBox<DebtLoanModel>(AppBoxes.debts);
   await Hive.openBox<MemoModel>(AppBoxes.memos);
+  await Hive.openBox<CryptoHoldingModel>(AppBoxes.crypto);
+  await Hive.openBox<String>(AppBoxes.cryptoPrices);
   await SyncService.ensureOpen();
 
   // Starter data and recurring posts now happen after sign-in, once the
