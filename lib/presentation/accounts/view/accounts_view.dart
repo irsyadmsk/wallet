@@ -10,7 +10,6 @@ import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
-import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';

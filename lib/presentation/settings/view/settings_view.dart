@@ -376,11 +376,11 @@ class SettingsView extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Card(
                 child: ListTile(
-                  leading: const Icon(Icons.public_rounded),
-                  title: const Text('Kunjungi irsyads.com'),
-                  subtitle: const Text('Situs utama: karya, Academy, dan Ruang'),
-                  trailing: const Icon(Icons.north_east_rounded),
-                  onTap: Ecosystem.openHome,
+                  leading: const Icon(Icons.grid_view_rounded),
+                  title: const Text('Ruang Irsyads'),
+                  subtitle: const Text('Pindah ke situs utama, Academy, Studio, atau Ruang'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => Ecosystem.showSwitcher(context),
                 ),
               ),
               const SizedBox(height: AppSpacing.xxxl),

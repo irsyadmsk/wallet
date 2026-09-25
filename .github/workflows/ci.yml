@@ -1,0 +1,45 @@
+# Pemeriksaan setiap pull request, sebelum di-merge.
+#
+# Deploy Web dan Build APK hanya berjalan setelah perubahan masuk ke main,
+# sehingga kegagalan baru ketahuan setelah terlambat (contoh: 24 September
+# 2026, build APK merah tiga kali berturut-turut karena hive_generator tidak
+# mengenal sintaks Dart baru, padahal tes dan build web hijau). Workflow ini
+# menjalankan langkah-langkah yang sama lebih awal.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  periksa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+
+      # Langkah yang sama dengan Build APK: gagal bila ada sintaks yang tidak
+      # dikenali generator, dan bila adapter yang ter-commit sudah basi.
+      - name: Adapter Hive terbaru
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code -- '*.g.dart' || { echo "::error::Adapter .g.dart berubah setelah build_runner. Jalankan build_runner lalu commit hasilnya."; exit 1; }
+
+      - name: Analisis
+        run: flutter analyze --no-fatal-infos
+
+      - name: Tes
+        run: flutter test
+
+      - name: Build web
+        run: flutter build web --release
