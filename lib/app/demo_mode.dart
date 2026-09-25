@@ -1,7 +1,9 @@
 import 'package:uuid/uuid.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
+import 'package:financial_recording/data/models/crypto_model/crypto_holding_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
+import 'package:financial_recording/data/repositories/crypto_repository.dart';
 import 'package:financial_recording/data/repositories/template_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/data/repositories/tx_repository.dart';
@@ -78,6 +80,15 @@ Future<void> seedDemoData(DateTime now) async {
     if (back == 0 && has(12)) await add(TxType.expense, 950000, d(12), 'Liburan akhir pekan', 'Hiburan', 'Istri');
     if (back > 0 && has(20)) await add(TxType.expense, 160000, d(20), 'Bioskop', 'Hiburan', 'Irsyad');
   }
+  final crypto = CryptoRepository();
+  await crypto.upsert(CryptoHoldingModel(
+    id: uuid.v4(), coinId: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', amount: 0.0125, costBasis: 15000000,
+    imageUrl: 'https://coin-images.coingecko.com/coins/images/1/thumb/bitcoin.png',
+  ));
+  await crypto.upsert(CryptoHoldingModel(
+    id: uuid.v4(), coinId: 'ethereum', symbol: 'ETH', name: 'Ethereum', amount: 0.4, costBasis: 22000000,
+    imageUrl: 'https://coin-images.coingecko.com/coins/images/279/thumb/ethereum.png', note: 'Disimpan di Indodax',
+  ));
   if (kDemoBig) await _seedBulk(now, [bank.id, wallet.id, savings.id], cats);
   await LedgerService().recomputeAllBalances();
 }

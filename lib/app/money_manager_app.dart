@@ -31,6 +31,8 @@ import 'package:financial_recording/presentation/family/view/family_view.dart';
 import 'package:financial_recording/presentation/reports/controller/reports_controller.dart';
 import 'package:financial_recording/presentation/reports/view/reports_view.dart';
 import 'package:financial_recording/presentation/zakat/view/zakat_view.dart';
+import 'package:financial_recording/presentation/crypto/controller/crypto_controller.dart';
+import 'package:financial_recording/presentation/crypto/view/crypto_view.dart';
 import 'package:financial_recording/presentation/settings/view/settings_view.dart';
 import 'package:financial_recording/presentation/transactions/controller/transactions_controller.dart';
 import 'package:financial_recording/presentation/transactions/view/transactions_view.dart';
@@ -178,6 +180,14 @@ const _destinations = [
     group: NavGroup.plans,
   ),
   AdaptiveDestination(
+    icon: Icons.currency_bitcoin_rounded,
+    selectedIcon: Icons.currency_bitcoin_rounded,
+    label: 'Kripto',
+    hint: 'Portofolio & harga live',
+    showInBottomBar: false,
+    group: NavGroup.plans,
+  ),
+  AdaptiveDestination(
     icon: Icons.diversity_3_outlined,
     selectedIcon: Icons.diversity_3_rounded,
     label: 'Keluarga',
@@ -214,6 +224,7 @@ const _screens = [
   DebtsView(),
   RecurringView(),
   ZakatView(),
+  CryptoView(),
   FamilyView(),
   CategoriesView(),
   SettingsView(),
@@ -245,6 +256,10 @@ class _HomeShellState extends State<HomeShell> {
     _dataWorker = ever(dataVersion, (_) => _invalidate());
     _pageWorker = ever<int>(_shell.selectedIndex, (i) {
       if ((_seenVersion[i] ?? 0) != _version) _refreshPage(i);
+      // Prices move on their own; the controller throttles to once a minute.
+      if (i == AppPage.crypto && Get.isRegistered<CryptoController>(tag: 'crypto')) {
+        Get.find<CryptoController>(tag: 'crypto').refreshPrices();
+      }
     });
     // Local edits: the screen that made them already refreshes itself, so
     // only mark the others stale.
@@ -338,6 +353,10 @@ class _HomeShellState extends State<HomeShell> {
       case AppPage.reports:
         if (Get.isRegistered<ReportsController>(tag: 'reports')) {
           Get.find<ReportsController>(tag: 'reports').refresh();
+        }
+      case AppPage.crypto:
+        if (Get.isRegistered<CryptoController>(tag: 'crypto')) {
+          Get.find<CryptoController>(tag: 'crypto').refresh();
         }
     }
   }

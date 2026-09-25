@@ -12,9 +12,10 @@ abstract class AppPage {
   static const debts = 6;
   static const recurring = 7;
   static const zakat = 8;
-  static const family = 9;
-  static const categories = 10;
-  static const settings = 11;
+  static const crypto = 9;
+  static const family = 10;
+  static const categories = 11;
+  static const settings = 12;
 }
 
 class ShellController extends GetxController {

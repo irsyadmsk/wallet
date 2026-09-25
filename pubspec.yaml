@@ -57,6 +57,7 @@ dependencies:
   prepaidcard_reader: ^0.0.4
   crypto: ^3.0.3
   video_player: ^2.14.0
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0

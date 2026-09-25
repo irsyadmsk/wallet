@@ -5,6 +5,7 @@ import 'package:financial_recording/data/models/budget_model/budget_model.dart';
 import 'package:financial_recording/data/models/debt_model/debt_model.dart';
 import 'package:financial_recording/data/models/goal_model/goal_model.dart';
 import 'package:financial_recording/data/models/memo_model/memo_model.dart';
+import 'package:financial_recording/data/models/crypto_model/crypto_holding_model.dart';
 import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
 import 'package:financial_recording/data/models/tag_model/tag_model.dart';
 import 'package:financial_recording/data/models/template_model/template_model.dart';
@@ -133,6 +134,13 @@ final List<SyncEntity> syncEntities = [
     boxName: AppBoxes.memos,
     toJson: (m) => m.toJson(),
     fromJson: MemoModel.fromJson,
+    idOf: (m) => m.id,
+  ),
+  _syncEntityFor<CryptoHoldingModel>(
+    table: 'crypto_holdings',
+    boxName: AppBoxes.crypto,
+    toJson: (m) => m.toJson(),
+    fromJson: CryptoHoldingModel.fromJson,
     idOf: (m) => m.id,
   ),
 ];
