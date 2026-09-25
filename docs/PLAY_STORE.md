@@ -10,9 +10,9 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 | Kunci unggah tetap | ✅ Keystore `wallet-release.jks` (secret `ANDROID_KEYSTORE_*`), cadangan di `C:\Users\T6N0CV02S35823C\.wallet-signing\` |
 | `versionCode` naik tiap build | ✅ = nomor run GitHub Actions |
 | Ikon aplikasi (adaptif + 512 px) | ✅ `docs/play-store/icon-512.png`, dibuat oleh `tool/make_icons.py` |
-| Kebijakan privasi (URL publik) | ✅ `https://wallet.irsyads.com/privasi.html` (tayang setelah merge) |
+| Kebijakan privasi (URL publik) | ✅ `https://wallet.irsyads.com/privasi` (tayang setelah merge) |
 | Hapus akun di dalam aplikasi | ✅ Pengaturan › Zona bahaya › Hapus akun permanen |
-| URL permintaan hapus akun | ✅ `https://wallet.irsyads.com/hapus-akun.html` |
+| URL permintaan hapus akun | ✅ `https://wallet.irsyads.com/hapus-akun` |
 | Izin minimal | ✅ Internet, kamera (pindai struk), NFC (e-money), baca penyimpanan hanya ≤ Android 12 |
 | Target SDK terbaru | ✅ Mengikuti Flutter 3.47 (API 35+) |
 
@@ -50,7 +50,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 | Kategori | Keuangan |
 | Email kontak | `irsyad.msk@gmail.com` |
 | Situs | `https://wallet.irsyads.com` |
-| Kebijakan privasi | `https://wallet.irsyads.com/privasi.html` |
+| Kebijakan privasi | `https://wallet.irsyads.com/privasi` |
 
 ## 4. Formulir wajib (App content)
 
@@ -60,7 +60,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 - **Target audiens**: 18+ (menghindari persyaratan Families).
 - **Keamanan data (Data safety)**:
   - Dikumpulkan: *Email*, *Nama*, *Info keuangan lain (catatan transaksi)*. Tujuan: fungsionalitas aplikasi dan manajemen akun. Tidak dibagikan ke pihak ketiga. Dienkripsi saat transit.
-  - Pengguna bisa meminta penghapusan: **Ya**, dengan URL `https://wallet.irsyads.com/hapus-akun.html`.
+  - Pengguna bisa meminta penghapusan: **Ya**, dengan URL `https://wallet.irsyads.com/hapus-akun`.
   - Foto struk dan data NFC diproses di perangkat, tidak dikumpulkan.
 - **Aplikasi keuangan (Financial features)**: pilih *"Aplikasi tidak menyediakan layanan keuangan"*. Wallet hanya mencatat dan tidak memindahkan uang. Harga kripto hanya informasi.
 - **Pemerintah / berita / kesehatan**: Tidak.

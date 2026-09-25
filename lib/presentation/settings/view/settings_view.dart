@@ -405,7 +405,7 @@ class SettingsView extends StatelessWidget {
                   title: const Text('Kebijakan Privasi'),
                   subtitle: const Text('Data yang disimpan dan cara menghapusnya'),
                   trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-                  onTap: () => Ecosystem.open(Uri.parse('https://wallet.irsyads.com/privasi.html')),
+                  onTap: () => Ecosystem.open(Uri.parse('https://wallet.irsyads.com/privasi')),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
