@@ -34,9 +34,10 @@ class LedgerService {
     List<TxItemModel>? items,
     List<String>? tagIds,
     String? imagePath,
+    String? id,
   }) =>
       _write(TxModel(
-        id: _uuid.v4(),
+        id: id ?? _uuid.v4(),
         type: TxType.income,
         amount: amount,
         accountId: accountId,
@@ -57,9 +58,10 @@ class LedgerService {
     List<TxItemModel>? items,
     List<String>? tagIds,
     String? imagePath,
+    String? id,
   }) =>
       _write(TxModel(
-        id: _uuid.v4(),
+        id: id ?? _uuid.v4(),
         type: TxType.expense,
         amount: amount,
         accountId: accountId,
@@ -79,9 +81,10 @@ class LedgerService {
     String? memo,
     String? imagePath,
     int? fee,
+    String? id,
   }) =>
       _write(TxModel(
-        id: _uuid.v4(),
+        id: id ?? _uuid.v4(),
         type: TxType.transfer,
         amount: amount,
         accountId: fromAccountId,

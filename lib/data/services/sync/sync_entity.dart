@@ -32,7 +32,9 @@ class SyncEntity {
   final Map<String, dynamic> Function(Map<String, dynamic> data) normalize;
 
   /// Writes a whole pull batch in one pass: upserts by id, deletes by id.
-  final Future<void> Function(List<Map<String, dynamic>> upserts, List<String> deletes) applyRemote;
+  /// Returns how many local rows actually changed (deleting a row this
+  /// device never had doesn't count).
+  final Future<int> Function(List<Map<String, dynamic>> upserts, List<String> deletes) applyRemote;
 
   /// The typed Hive box backing this entity, or null while it isn't open.
   /// Hive rejects an untyped `Hive.box(name)` for a box opened with a value

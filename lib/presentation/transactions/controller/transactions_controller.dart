@@ -68,7 +68,6 @@ class TransactionsController extends GetxController {
 
   Timer? _searchDebounce;
 
-  static final _dayKey = DateFormat('yyyy-MM-dd');
   static final _dayLabel = DateFormat('EEEE, d MMMM y', 'id_ID');
   final Rx<DateTime> calendarMonth = Rx(DateTime(DateTime.now().year, DateTime.now().month, 1));
 
@@ -197,8 +196,11 @@ class TransactionsController extends GetxController {
     String keyFor(TxModel t) {
       switch (groupMode.value) {
         case TxGroupMode.date:
-          final key = _dayKey.format(t.date);
-          labels.putIfAbsent(key, () => _dayLabel.format(t.date));
+          // Plain zero-padded key: formatting a date per row is costly on
+          // the web; the readable label is formatted once per group.
+          final d = t.date;
+          final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+          labels.putIfAbsent(key, () => _dayLabel.format(d));
           return key;
         case TxGroupMode.account:
           final acc = _accounts.byId(t.accountId);

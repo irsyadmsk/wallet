@@ -208,16 +208,42 @@ class SyncService {
       final cursorKey = 'cursor:${entity.table}';
       final since = _meta.get(cursorKey);
       var query = SupabaseService.client.from(entity.table).select().eq('user_id', ledger);
-      if (since != null) query = query.gt('updated_at', since);
+      final from = pullFrom(since);
+      if (from != null) query = query.gte('updated_at', from);
       final rows = await query.order('updated_at') as List<dynamic>;
       final plan = planPull(entity, rows.map((r) => Map<String, dynamic>.from(r as Map)), _hashes.get);
-      await entity.applyRemote(plan.upserts, plan.deletes);
+      // Only ever move the cursor forward (the overlap can return nothing
+      // newer than it).
+      if (since != null && plan.maxCursor != null && !isAfterCursor(plan.maxCursor!, since)) plan.maxCursor = since;
+      final changed = await entity.applyRemote(plan.upserts, plan.deletes);
       if (plan.newHashes.isNotEmpty) await _hashes.putAll(plan.newHashes);
       if (plan.goneHashes.isNotEmpty) await _hashes.deleteAll(plan.goneHashes);
       if (plan.maxCursor != null && plan.maxCursor != since) await _meta.put(cursorKey, plan.maxCursor!);
-      count += plan.upserts.length + plan.deletes.length;
+      count += changed;
     }
     return count;
+  }
+
+  /// How far back a pull re-reads before the stored cursor. `updated_at`
+  /// is stamped when a write *starts*, so a row committed a moment after
+  /// our last pull can carry a timestamp older than the cursor and would be
+  /// skipped forever. Re-reading a short window catches it; unchanged rows
+  /// match their stored hash and cost nothing.
+  static const pullOverlap = Duration(minutes: 2);
+
+  /// Lower bound for the next pull, or null for a full pull.
+  static String? pullFrom(String? cursor) {
+    if (cursor == null) return null;
+    final t = DateTime.tryParse(cursor);
+    if (t == null) return cursor;
+    return t.toUtc().subtract(pullOverlap).toIso8601String();
+  }
+
+  /// Whether server timestamp [a] is later than [b].
+  static bool isAfterCursor(String a, String b) {
+    final ta = DateTime.tryParse(a), tb = DateTime.tryParse(b);
+    if (ta == null || tb == null) return a.compareTo(b) > 0;
+    return ta.isAfter(tb);
   }
 
   /// Pure planning step of a pull, split out so it can be tested without
