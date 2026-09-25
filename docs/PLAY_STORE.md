@@ -19,8 +19,8 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 **Yang masih perlu Anda siapkan sebelum mengisi Play Console:**
 
 1. ~~Email dukungan~~ ✅ `irsyad.msk@gmail.com` (dipakai di kebijakan privasi, halaman hapus akun, dan kolom kontak Play).
-2. **Screenshot**: minimal 2, disarankan 4–8, ukuran HP (1080×1920 atau 1080×2400). Bisa diambil dari mode demo (`--dart-define=WALLET_DEMO=true`) supaya tidak memuat data pribadi.
-3. **Feature graphic** 1024×500 (spanduk di halaman toko).
+2. ~~Screenshot~~ ✅ `docs/play-store/screenshot-*-light.png` (5 layar, 1080×2160, data demo). Versi gelap juga ada. Dibuat ulang dengan `tool/store_screenshots.py`.
+3. ~~Feature graphic~~ ✅ `docs/play-store/feature-graphic.png` (1024×500), dibuat dengan `tool/make_feature_graphic.py`.
 4. **Akun uji untuk tim review Google**, karena aplikasi wajib login. Buat satu akun Supabase khusus (misalnya `review@irsyads.com`) dan isi dengan data contoh.
 
 ## 1. Buat akun Google Play Console (Anda)
