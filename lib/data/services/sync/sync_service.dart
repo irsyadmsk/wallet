@@ -207,11 +207,8 @@ class SyncService {
     for (final entity in syncEntities) {
       final cursorKey = 'cursor:${entity.table}';
       final since = _meta.get(cursorKey);
-      var query = SupabaseService.client.from(entity.table).select().eq('user_id', ledger);
-      final from = pullFrom(since);
-      if (from != null) query = query.gte('updated_at', from);
-      final rows = await query.order('updated_at') as List<dynamic>;
-      final plan = planPull(entity, rows.map((r) => Map<String, dynamic>.from(r as Map)), _hashes.get);
+      final rows = await _fetchAll(entity.table, ledger, pullFrom(since));
+      final plan = planPull(entity, rows, _hashes.get);
       // Only ever move the cursor forward (the overlap can return nothing
       // newer than it).
       if (since != null && plan.maxCursor != null && !isAfterCursor(plan.maxCursor!, since)) plan.maxCursor = since;
@@ -222,6 +219,26 @@ class SyncService {
       count += changed;
     }
     return count;
+  }
+
+  /// PostgREST returns at most this many rows per request (Supabase's
+  /// default `max_rows`), so every read pages through with `range`.
+  static const pageSize = 1000;
+
+  /// Every row of [table] in [ledger] (optionally only those updated since
+  /// [from]), paged. Without paging a ledger of more than 1,000 rows reached
+  /// a new device only partly — and an import that "replaces all" on such a
+  /// device left the rows it never saw behind as duplicates.
+  Future<List<Map<String, dynamic>>> _fetchAll(String table, String ledger, String? from, {bool liveOnly = false}) async {
+    final out = <Map<String, dynamic>>[];
+    for (var offset = 0;; offset += pageSize) {
+      var query = SupabaseService.client.from(table).select().eq('user_id', ledger);
+      if (from != null) query = query.gte('updated_at', from);
+      if (liveOnly) query = query.isFilter('deleted_at', null);
+      final page = await query.order('updated_at').order('id').range(offset, offset + pageSize - 1) as List<dynamic>;
+      out.addAll(page.map((r) => Map<String, dynamic>.from(r as Map)));
+      if (page.length < pageSize) return out;
+    }
   }
 
   /// How far back a pull re-reads before the stored cursor. `updated_at`
