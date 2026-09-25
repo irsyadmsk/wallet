@@ -37,30 +37,40 @@ class _EmoneyNfcViewState extends State<EmoneyNfcView> {
     super.dispose();
   }
 
+  /// True when the last failure was NFC being switched off, so the error
+  /// view can offer to open the NFC settings.
+  bool _nfcOff = false;
+
   Future<void> _startScan() async {
+    final status = await _service.status();
+    if (!mounted) return;
+    if (status != NfcStatus.on) {
+      setState(() {
+        _state = _ScanState.error;
+        _nfcOff = status == NfcStatus.off;
+        _errorText = status == NfcStatus.off
+            ? 'NFC di HP ini sedang nonaktif. Aktifkan NFC, lalu kembali ke sini dan ketuk "Coba Lagi".'
+            : 'HP ini tidak memiliki NFC, jadi kartu e-money tidak bisa dipindai.';
+      });
+      return;
+    }
     setState(() {
       _state = _ScanState.scanning;
       _errorText = null;
+      _nfcOff = false;
     });
     try {
       final result = await _service.scanOnce();
       if (!mounted) return;
-      if (result == null) {
-        setState(() {
-          _state = _ScanState.error;
-          _errorText = 'NFC tidak tersedia di perangkat ini.';
-        });
-        return;
-      }
       setState(() {
         _result = result;
         _state = _ScanState.done;
       });
-    } catch (e) {
-      if (!mounted) return;
+    } on EmoneyScanException catch (e) {
+      if (!mounted || _state != _ScanState.scanning) return;
       setState(() {
         _state = _ScanState.error;
-        _errorText = 'Gagal membaca kartu: $e';
+        _errorText = e.message;
       });
     }
   }
@@ -149,7 +159,11 @@ class _EmoneyNfcViewState extends State<EmoneyNfcView> {
               const Center(child: CircularProgressIndicator()),
               const SizedBox(height: AppSpacing.lg),
               Center(
-                child: Text('Menunggu kartu di-tap…', style: TextStyle(color: colors.textSecondary)),
+                child: Text(
+                  'Tempelkan kartu ke bagian belakang HP dan tahan 2–3 detik…',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: colors.textSecondary),
+                ),
               ),
               const SizedBox(height: AppSpacing.xl),
               OutlinedButton(
@@ -165,7 +179,16 @@ class _EmoneyNfcViewState extends State<EmoneyNfcView> {
               const SizedBox(height: AppSpacing.md),
               Center(child: Text(_errorText ?? 'Terjadi kesalahan.', textAlign: TextAlign.center)),
               const SizedBox(height: AppSpacing.xl),
-              FilledButton(onPressed: _startScan, child: const Text('Coba Lagi')),
+              if (_nfcOff) ...[
+                FilledButton.icon(
+                  onPressed: _service.openSettings,
+                  icon: const Icon(Icons.settings_rounded),
+                  label: const Text('Buka Pengaturan NFC'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton(onPressed: _startScan, child: const Text('Coba Lagi')),
+              ] else
+                FilledButton(onPressed: _startScan, child: const Text('Coba Lagi')),
             ],
             if (_state == _ScanState.done && _result != null) ...[
               Card(
