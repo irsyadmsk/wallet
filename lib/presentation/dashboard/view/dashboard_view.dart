@@ -56,7 +56,7 @@ class _DashboardViewState extends State<DashboardView> {
                   index: i++,
                   child: _NetWorthCard(controller: c, hidden: _hidden, onToggle: () => setState(() => _hidden = !_hidden)),
                 );
-                final insight = Reveal(index: i++, child: const _InsightTeaser());
+                final insight = Reveal(index: i++, child: _InsightTeaser(report: c.insightReport.value));
                 final left = <Widget>[
                   Reveal(index: i++, child: _AccountsSection(controller: c)),
                   const SizedBox(height: 28),
@@ -288,7 +288,11 @@ class _Figure extends StatelessWidget {
 /// The smart report's lead sentence, surfaced where it will be read. In the
 /// first week of a month it switches to last month's closing report.
 class _InsightTeaser extends StatelessWidget {
-  const _InsightTeaser();
+  const _InsightTeaser({required this.report});
+
+  /// Computed by [DashboardController.refresh]; building it here walked the
+  /// whole ledger on every dashboard rebuild.
+  final SmartReport? report;
 
   @override
   Widget build(BuildContext context) {
@@ -296,7 +300,7 @@ class _InsightTeaser extends StatelessWidget {
     final now = DateTime.now();
     final closing = now.day <= 7;
     final month = closing ? DateTime(now.year, now.month - 1) : DateTime(now.year, now.month);
-    final r = SmartReportService().forMonth(month);
+    final r = report ?? SmartReportService().forMonth(month);
     final notes = [...r.narrative.where((n) => n.tone == InsightTone.warning), ...r.narrative.where((n) => n.tone != InsightTone.warning)];
 
     return Pressable(

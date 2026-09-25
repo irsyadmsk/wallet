@@ -23,7 +23,12 @@ SyncEntity _syncEntityFor<T extends HiveObject>({
 
   return SyncEntity(
     table: table,
+    box: () => Hive.isBoxOpen(boxName) ? box() : null,
     allItems: () => box().values.toList(),
+    itemsAt: (keys) {
+      final b = box();
+      return [for (final k in keys) b.get(k)].whereType<T>().toList();
+    },
     toJson: (item) => toJson(item as T),
     idOf: (item) => idOf(item as T),
     normalize: (data) => toJson(fromJson(data)),
@@ -131,3 +136,6 @@ final List<SyncEntity> syncEntities = [
     idOf: (m) => m.id,
   ),
 ];
+
+/// Every open financial box, typed correctly (see [SyncEntity.box]).
+Iterable<Box<dynamic>> openFinancialBoxes() => syncEntities.map((e) => e.box?.call()).whereType<Box<dynamic>>();

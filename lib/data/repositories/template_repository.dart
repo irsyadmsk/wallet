@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/template_model/template_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
@@ -8,6 +9,7 @@ import 'package:financial_recording/domain/enums/hive_enums.dart';
 
 class QuickTemplateRepository {
   Box<QuickTemplateModel> get _box => Hive.box<QuickTemplateModel>(AppBoxes.templates);
+  BoxIdIndex<QuickTemplateModel> get _index => BoxIdIndex.of(_box, (v) => v.id);
 
   List<QuickTemplateModel> all() {
     final list = _box.values.toList();
@@ -15,13 +17,7 @@ class QuickTemplateRepository {
     return list;
   }
 
-  QuickTemplateModel? byId(String id) {
-    try {
-      return _box.values.firstWhere((t) => t.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  QuickTemplateModel? byId(String id) => _index.valueFor(_box, id);
 
   Future<void> upsert(QuickTemplateModel template) async {
     final key = _keyFor(template.id);
@@ -104,10 +100,5 @@ class QuickTemplateRepository {
 
   Future<void> clear() => _box.clear();
 
-  dynamic _keyFor(String id) {
-    for (final key in _box.keys) {
-      if (_box.get(key)?.id == id) return key;
-    }
-    return null;
-  }
+  dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 }

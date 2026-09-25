@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/app/demo_mode.dart';
 import 'package:financial_recording/app/shell_controller.dart';
@@ -224,24 +227,48 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
+  final _shell = Get.find<ShellController>();
   late final Worker _dataWorker;
+  late final Worker _pageWorker;
+  final _boxSubs = <StreamSubscription>[];
+
+  /// Bumped on every data change. A page whose controller last refreshed at
+  /// an older version is stale and reloads when it's opened again, so a
+  /// change never recomputes every screen that happens to be alive.
+  int _version = 0;
+  final _seenVersion = <int, int>{};
 
   @override
   void initState() {
     super.initState();
-    // A sync pulled rows or the ledger switched: reload every open screen.
-    _dataWorker = ever(dataVersion, (_) => _refreshAllScreens());
+    // A sync pulled rows or the ledger switched: reload the open screen.
+    _dataWorker = ever(dataVersion, (_) => _invalidate());
+    _pageWorker = ever<int>(_shell.selectedIndex, (i) {
+      if ((_seenVersion[i] ?? 0) != _version) _refreshPage(i);
+    });
+    // Local edits: the screen that made them already refreshes itself, so
+    // only mark the others stale.
+    for (final box in openFinancialBoxes()) {
+      _boxSubs.add(box.watch().listen((_) {
+        _version++;
+        _seenVersion[_shell.selectedIndex.value] = _version;
+      }));
+    }
   }
 
   @override
   void dispose() {
     _dataWorker.dispose();
+    _pageWorker.dispose();
+    for (final s in _boxSubs) {
+      s.cancel();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final shell = Get.find<ShellController>();
+    final shell = _shell;
     return Obx(() {
       final index = shell.selectedIndex.value;
       final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
@@ -273,31 +300,45 @@ class _HomeShellState extends State<HomeShell> {
 
   Future<void> _openAddTransaction(BuildContext context) async {
     final saved = await showAdaptiveSheet<bool>(context, builder: (_) => const FormTxView());
-    if (saved == true) _refreshAllScreens();
+    if (saved == true) _invalidate();
   }
 
-  void _refreshAllScreens() {
-    if (Get.isRegistered<DashboardController>(tag: 'dashboard')) {
-      Get.find<DashboardController>(tag: 'dashboard').refresh();
+  void _invalidate() {
+    _version++;
+    _refreshPage(_shell.selectedIndex.value);
+  }
+
+  void _refreshPage(int page) {
+    _seenVersion[page] = _version;
+    switch (page) {
+      case AppPage.dashboard:
+        if (Get.isRegistered<DashboardController>(tag: 'dashboard')) {
+          Get.find<DashboardController>(tag: 'dashboard').refresh();
+        }
+      case AppPage.transactions:
+        if (Get.isRegistered<TransactionsController>(tag: 'transactions')) {
+          Get.find<TransactionsController>(tag: 'transactions').refresh();
+        }
+      case AppPage.accounts:
+        if (Get.isRegistered<AccountsController>(tag: 'accounts')) {
+          Get.find<AccountsController>(tag: 'accounts').refresh();
+        }
+      case AppPage.budgets:
+        if (Get.isRegistered<BudgetsController>(tag: 'budgets')) {
+          Get.find<BudgetsController>(tag: 'budgets').refresh();
+        }
+      case AppPage.goals:
+        if (Get.isRegistered<GoalsController>()) {
+          Get.find<GoalsController>().refresh();
+        }
+      case AppPage.debts:
+        if (Get.isRegistered<DebtsController>(tag: 'debts')) {
+          Get.find<DebtsController>(tag: 'debts').load();
+        }
+      case AppPage.reports:
+        if (Get.isRegistered<ReportsController>(tag: 'reports')) {
+          Get.find<ReportsController>(tag: 'reports').refresh();
+        }
     }
-    if (Get.isRegistered<TransactionsController>(tag: 'transactions')) {
-      Get.find<TransactionsController>(tag: 'transactions').refresh();
-    }
-    if (Get.isRegistered<AccountsController>(tag: 'accounts')) {
-      Get.find<AccountsController>(tag: 'accounts').refresh();
-    }
-    if (Get.isRegistered<BudgetsController>(tag: 'budgets')) {
-      Get.find<BudgetsController>(tag: 'budgets').refresh();
-    }
-    if (Get.isRegistered<GoalsController>()) {
-      Get.find<GoalsController>().refresh();
-    }
-    if (Get.isRegistered<DebtsController>(tag: 'debts')) {
-      Get.find<DebtsController>(tag: 'debts').load();
-    }
-    if (Get.isRegistered<ReportsController>(tag: 'reports')) {
-      Get.find<ReportsController>(tag: 'reports').refresh();
-    }
-    if (mounted) setState(() {});
   }
 }

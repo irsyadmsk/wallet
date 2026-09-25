@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
@@ -28,6 +30,21 @@ class TxGroup {
   int get net => income - expense;
 }
 
+/// One row of the flattened, lazily built transaction list: either a
+/// group header or a transaction inside that group's card.
+class TxListRow {
+  const TxListRow.header(TxGroup this.group)
+      : tx = null,
+        isFirst = false,
+        isLast = false;
+  const TxListRow.item(TxModel this.tx, {required this.isFirst, required this.isLast}) : group = null;
+
+  final TxGroup? group;
+  final TxModel? tx;
+  final bool isFirst;
+  final bool isLast;
+}
+
 class TransactionsController extends GetxController {
   final _txs = TxRepository();
   final _accounts = AccountRepository();
@@ -41,6 +58,18 @@ class TransactionsController extends GetxController {
   final Rx<DateTime?> to = Rx<DateTime?>(null);
   final Rx<TxGroupMode> groupMode = TxGroupMode.date.obs;
   final RxBool calendarMode = false.obs;
+
+  /// [results] grouped per [groupMode], recomputed only when either changes
+  /// instead of on every rebuild.
+  final RxList<TxGroup> groups = <TxGroup>[].obs;
+
+  /// [groups] flattened for a lazily built list.
+  final RxList<TxListRow> rows = <TxListRow>[].obs;
+
+  Timer? _searchDebounce;
+
+  static final _dayKey = DateFormat('yyyy-MM-dd');
+  static final _dayLabel = DateFormat('EEEE, d MMMM y', 'id_ID');
   final Rx<DateTime> calendarMonth = Rx(DateTime(DateTime.now().year, DateTime.now().month, 1));
 
   void toggleCalendarMode() => calendarMode.value = !calendarMode.value;
@@ -78,6 +107,12 @@ class TransactionsController extends GetxController {
   }
 
   @override
+  void onClose() {
+    _searchDebounce?.cancel();
+    super.onClose();
+  }
+
+  @override
   void refresh() {
     var list = _txs.query(TxQuery(
       search: search.value,
@@ -90,6 +125,7 @@ class TransactionsController extends GetxController {
       list = list.where((t) => t.imagePath != null && t.imagePath!.isNotEmpty).toList();
     }
     results.assignAll(list);
+    _rebuildGroups();
   }
 
   void toggleOnlyWithReceipt() {
@@ -97,9 +133,12 @@ class TransactionsController extends GetxController {
     refresh();
   }
 
+  /// Debounced: filtering the whole ledger on every keystroke made typing
+  /// stutter on large ledgers.
   void setSearch(String v) {
     search.value = v;
-    refresh();
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 250), refresh);
   }
 
   void setTypeFilter(Set<TxType>? types) {
@@ -113,7 +152,10 @@ class TransactionsController extends GetxController {
     refresh();
   }
 
-  void setGroupMode(TxGroupMode mode) => groupMode.value = mode;
+  void setGroupMode(TxGroupMode mode) {
+    groupMode.value = mode;
+    _rebuildGroups();
+  }
 
   final RxBool exporting = false.obs;
 
@@ -136,15 +178,27 @@ class TransactionsController extends GetxController {
   /// Groups [results] according to [groupMode] — mirrors the "By Date / By
   /// Account / By Category" grouping in the Money Manager desktop viewer,
   /// each with its own income/expense subtotal.
-  List<TxGroup> get groups {
+  void _rebuildGroups() {
+    final list = _computeGroups();
+    groups.assignAll(list);
+    rows.assignAll([
+      for (final g in list) ...[
+        TxListRow.header(g),
+        for (var i = 0; i < g.items.length; i++)
+          TxListRow.item(g.items[i], isFirst: i == 0, isLast: i == g.items.length - 1),
+      ],
+    ]);
+  }
+
+  List<TxGroup> _computeGroups() {
     final buckets = <String, List<TxModel>>{};
     final labels = <String, String>{};
 
     String keyFor(TxModel t) {
       switch (groupMode.value) {
         case TxGroupMode.date:
-          final key = DateFormat('yyyy-MM-dd').format(t.date);
-          labels[key] = DateFormat('EEEE, d MMMM y', 'id_ID').format(t.date);
+          final key = _dayKey.format(t.date);
+          labels.putIfAbsent(key, () => _dayLabel.format(t.date));
           return key;
         case TxGroupMode.account:
           final acc = _accounts.byId(t.accountId);

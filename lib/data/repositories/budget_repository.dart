@@ -1,10 +1,12 @@
 import 'package:hive/hive.dart';
+import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/budget_model/budget_model.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class BudgetRepository {
   Box<BudgetModel> get _box => Hive.box<BudgetModel>(AppBoxes.budgets);
+  BoxIdIndex<BudgetModel> get _index => BoxIdIndex.of(_box, (v) => v.id);
 
   List<BudgetModel> all({bool includeArchived = false}) =>
       _box.values.where((b) => includeArchived || !b.isArchived).toList();
@@ -38,10 +40,5 @@ class BudgetRepository {
 
   Future<void> clear() => _box.clear();
 
-  dynamic _keyFor(String id) {
-    for (final key in _box.keys) {
-      if (_box.get(key)?.id == id) return key;
-    }
-    return null;
-  }
+  dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 }

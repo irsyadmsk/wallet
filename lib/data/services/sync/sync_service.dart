@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:hive/hive.dart';
-import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/supabase_service.dart';
 import 'package:financial_recording/data/services/sync/sync_entity.dart';
@@ -50,6 +49,22 @@ class SyncService {
     if (!Hive.isBoxOpen(_metaBox)) await Hive.openBox<String>(_metaBox);
     if (!Hive.isBoxOpen(_hashBox)) await Hive.openBox<String>(_hashBox);
     await TombstoneService.ensureOpen();
+  }
+
+  /// Hive keys written per table since that table was last pushed, fed by a
+  /// box watcher. A table not yet watched in this process (or whose push
+  /// failed mid-way) is in [_needsFullScan] and gets one full hash pass.
+  static final _dirtyKeys = <String, Set<dynamic>>{};
+  static final _needsFullScan = <String>{};
+  static final _watchedBoxes = <String, Box>{};
+
+  static void _watch(SyncEntity entity) {
+    final box = entity.box?.call();
+    if (box == null) return;
+    if (identical(_watchedBoxes[entity.table], box)) return;
+    _watchedBoxes[entity.table] = box;
+    _needsFullScan.add(entity.table);
+    box.watch().listen((e) => _dirtyKeys.putIfAbsent(entity.table, () => {}).add(e.key));
   }
 
   Box<String> get _meta => Hive.box<String>(_metaBox);
@@ -108,22 +123,13 @@ class SyncService {
   /// Clears every financial box plus sync bookkeeping. Device preferences
   /// (theme, PIN) are kept.
   Future<void> wipeLocal() async {
-    for (final name in [
-      AppBoxes.accounts,
-      AppBoxes.categories,
-      AppBoxes.transactions,
-      AppBoxes.tags,
-      AppBoxes.budgets,
-      AppBoxes.recurring,
-      AppBoxes.goals,
-      AppBoxes.templates,
-      AppBoxes.debts,
-      AppBoxes.memos,
-    ]) {
-      if (Hive.isBoxOpen(name)) await Hive.box(name).clear();
+    for (final box in openFinancialBoxes()) {
+      await box.clear();
     }
     await _hashes.clear();
     await _meta.clear();
+    _dirtyKeys.clear();
+    _needsFullScan.addAll(_watchedBoxes.keys);
     await TombstoneService().clearAll();
   }
 
@@ -153,24 +159,42 @@ class SyncService {
   Future<int> _pushLocal(String ledger) async {
     var count = 0;
     for (final entity in syncEntities) {
-      final rows = <Map<String, dynamic>>[];
-      final newHashes = <String, String>{};
-      for (final item in entity.allItems()) {
-        final id = entity.idOf(item);
-        final data = entity.toJson(item);
-        final h = hashRow(data);
-        final key = '${entity.table}:$id';
-        if (_hashes.get(key) == h) continue;
-        rows.add({'id': id, 'user_id': ledger, 'data': data, 'deleted_at': null});
-        newHashes[key] = h;
+      _watch(entity);
+      final table = entity.table;
+      final full = entity.itemsAt == null || !_watchedBoxes.containsKey(table) || _needsFullScan.contains(table);
+      // Snapshot and reset before any await, so writes made while this push
+      // is in flight are tracked for the next one.
+      final pending = _dirtyKeys.remove(table) ?? <dynamic>{};
+      _needsFullScan.remove(table);
+      if (!full && pending.isEmpty) continue;
+      try {
+        final items = full ? entity.allItems() : entity.itemsAt!(pending);
+        final rows = <Map<String, dynamic>>[];
+        final newHashes = <String, String>{};
+        for (final item in items) {
+          final id = entity.idOf(item);
+          final data = entity.toJson(item);
+          final h = hashRow(data);
+          final key = '$table:$id';
+          if (_hashes.get(key) == h) continue;
+          rows.add({'id': id, 'user_id': ledger, 'data': data, 'deleted_at': null});
+          newHashes[key] = h;
+        }
+        if (rows.isEmpty) continue;
+        for (var i = 0; i < rows.length; i += 500) {
+          final chunk = rows.sublist(i, i + 500 > rows.length ? rows.length : i + 500);
+          await SupabaseService.client.from(table).upsert(chunk, onConflict: 'user_id,id');
+        }
+        await _hashes.putAll(newHashes);
+        count += rows.length;
+      } catch (_) {
+        if (full) {
+          _needsFullScan.add(table);
+        } else {
+          _dirtyKeys.putIfAbsent(table, () => {}).addAll(pending);
+        }
+        rethrow;
       }
-      if (rows.isEmpty) continue;
-      for (var i = 0; i < rows.length; i += 500) {
-        final chunk = rows.sublist(i, i + 500 > rows.length ? rows.length : i + 500);
-        await SupabaseService.client.from(entity.table).upsert(chunk, onConflict: 'user_id,id');
-      }
-      await _hashes.putAll(newHashes);
-      count += rows.length;
     }
     return count;
   }

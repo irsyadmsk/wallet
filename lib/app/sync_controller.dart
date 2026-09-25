@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:hive/hive.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:financial_recording/app/app_events.dart';
-import 'package:financial_recording/config/app_config_v2.dart';
+import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/template_repository.dart';
 import 'package:financial_recording/data/services/family_service.dart';
@@ -40,19 +39,6 @@ class SyncController extends GetxController {
   AppLifecycleListener? _lifecycle;
   bool _suppressLocal = false;
   bool _queued = false;
-
-  static const _financialBoxes = [
-    AppBoxes.accounts,
-    AppBoxes.categories,
-    AppBoxes.transactions,
-    AppBoxes.tags,
-    AppBoxes.budgets,
-    AppBoxes.recurring,
-    AppBoxes.goals,
-    AppBoxes.templates,
-    AppBoxes.debts,
-    AppBoxes.memos,
-  ];
 
   String? get _uid => SupabaseService.currentUser?.id;
 
@@ -250,9 +236,8 @@ class SyncController extends GetxController {
       s.cancel();
     }
     _boxSubs.clear();
-    for (final name in _financialBoxes) {
-      if (!Hive.isBoxOpen(name)) continue;
-      _boxSubs.add(Hive.box(name).watch().listen((_) {
+    for (final box in openFinancialBoxes()) {
+      _boxSubs.add(box.watch().listen((_) {
         if (_suppressLocal || syncing.value) return;
         _schedule(const Duration(seconds: 4));
       }));

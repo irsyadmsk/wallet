@@ -1,3 +1,5 @@
+import 'package:hive/hive.dart';
+
 /// Bridges one Hive box to one Supabase table for [SyncService], reusing
 /// each model's existing `toJson`/`fromJson` instead of a parallel SQL
 /// schema — see the `create_sync_tables` migration on the `wallet` project.
@@ -14,6 +16,8 @@ class SyncEntity {
     required this.idOf,
     required this.normalize,
     required this.applyRemote,
+    this.box,
+    this.itemsAt,
   });
 
   final String table;
@@ -29,4 +33,14 @@ class SyncEntity {
 
   /// Writes a whole pull batch in one pass: upserts by id, deletes by id.
   final Future<void> Function(List<Map<String, dynamic>> upserts, List<String> deletes) applyRemote;
+
+  /// The typed Hive box backing this entity, or null while it isn't open.
+  /// Hive rejects an untyped `Hive.box(name)` for a box opened with a value
+  /// type, so code that treats every financial box alike goes through this.
+  /// `SyncService` also watches it to push only rows written since the last
+  /// push instead of hashing the whole box on every sync.
+  final Box<dynamic>? Function()? box;
+
+  /// The live rows at [keys] (Hive keys); deleted keys are skipped.
+  final List<dynamic> Function(Iterable<dynamic> keys)? itemsAt;
 }

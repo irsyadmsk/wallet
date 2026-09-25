@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
@@ -6,6 +7,7 @@ import 'package:financial_recording/domain/enums/account_group_type.dart';
 
 class AccountRepository {
   Box<AccountModel> get _box => Hive.box<AccountModel>(AppBoxes.accounts);
+  BoxIdIndex<AccountModel> get _index => BoxIdIndex.of(_box, (v) => v.id);
 
   List<AccountModel> all({bool includeArchived = false, bool includeDeleted = false}) {
     final list = _box.values
@@ -24,13 +26,7 @@ class AccountRepository {
     return list;
   }
 
-  AccountModel? byId(String id) {
-    try {
-      return _box.values.firstWhere((a) => a.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  AccountModel? byId(String id) => _index.valueFor(_box, id);
 
   Map<AccountGroupType, List<AccountModel>> grouped({bool includeArchived = false}) {
     final result = <AccountGroupType, List<AccountModel>>{};
@@ -89,13 +85,7 @@ class AccountRepository {
 
   Future<void> clear() => _box.clear();
 
-  dynamic _keyFor(String id) {
-    for (final key in _box.keys) {
-      final v = _box.get(key);
-      if (v != null && v.id == id) return key;
-    }
-    return null;
-  }
+  dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 
   int get netWorth => all().fold(0, (sum, a) => sum + a.cachedBalance);
   int get totalAssets =>

@@ -1,10 +1,12 @@
 import 'package:hive/hive.dart';
+import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/memo_model/memo_model.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class MemoRepository {
   Box<MemoModel> get _box => Hive.box<MemoModel>(AppBoxes.memos);
+  BoxIdIndex<MemoModel> get _index => BoxIdIndex.of(_box, (v) => v.id);
 
   List<MemoModel> all() {
     final list = _box.values.toList();
@@ -19,13 +21,7 @@ class MemoRepository {
       .where((m) => m.date.year == date.year && m.date.month == date.month && m.date.day == date.day)
       .toList();
 
-  MemoModel? byId(String id) {
-    try {
-      return _box.values.firstWhere((m) => m.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  MemoModel? byId(String id) => _index.valueFor(_box, id);
 
   Future<void> upsert(MemoModel memo) async {
     memo.updatedAt = DateTime.now();
@@ -45,10 +41,5 @@ class MemoRepository {
 
   Future<void> clear() => _box.clear();
 
-  dynamic _keyFor(String id) {
-    for (final key in _box.keys) {
-      if (_box.get(key)?.id == id) return key;
-    }
-    return null;
-  }
+  dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 }

@@ -8,6 +8,7 @@ import 'package:financial_recording/data/models/account_model/account_model.dart
 import 'package:financial_recording/data/models/template_model/template_model.dart';
 import 'package:financial_recording/data/repositories/template_repository.dart';
 import 'package:financial_recording/data/services/financial_health_service.dart';
+import 'package:financial_recording/data/services/smart_report_service.dart';
 import 'package:financial_recording/data/services/budget_service_v2.dart';
 import 'package:financial_recording/data/services/recurring_service.dart';
 import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
@@ -34,6 +35,10 @@ class DashboardController extends GetxController {
   final RxList<RecurringRuleModel> upcomingRecurring = <RecurringRuleModel>[].obs;
   final Rx<BudgetProgress?> overallBudget = Rx<BudgetProgress?>(null);
   final Rx<FinancialHealthReport?> healthReport = Rx<FinancialHealthReport?>(null);
+
+  /// Insight teaser report: last month during its first week (the closing
+  /// review), otherwise the current month.
+  final Rx<SmartReport?> insightReport = Rx<SmartReport?>(null);
   final RxList<QuickTemplateModel> templates = <QuickTemplateModel>[].obs;
   final RxList<AccountModel> accountsList = <AccountModel>[].obs;
   final RxInt activeDebtAmount = 0.obs;
@@ -80,6 +85,9 @@ class DashboardController extends GetxController {
     accountsList.assignAll(_accounts.all());
     templates.assignAll(_templates.all());
     healthReport.value = _healthService.calculateReport(now);
+    insightReport.value = SmartReportService().forMonth(
+      now.day <= 7 ? DateTime(now.year, now.month - 1) : DateTime(now.year, now.month),
+    );
 
     final activeDebts = _debts.active();
     activeDebtCount.value = activeDebts.length;
