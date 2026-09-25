@@ -43,3 +43,21 @@ jobs:
 
       - name: Build web
         run: flutter build web --release
+
+  # Kode native Android (mis. plugin NFC yang di-vendor di packages/) hanya
+  # dikompilasi saat build APK. Tanpa job ini, kesalahan Java/Kotlin baru
+  # ketahuan setelah merge, saat Build APK di main gagal.
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+
+      - name: Build APK (debug)
+        run: flutter build apk --debug

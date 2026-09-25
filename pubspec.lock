@@ -827,11 +827,10 @@ packages:
   prepaidcard_reader:
     dependency: "direct main"
     description:
-      name: prepaidcard_reader
-      sha256: a56590091af3ca13ed2da489cf4cad5787ca78c0f0d4817cdf68ec492bc0e588
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.4"
+      path: "packages/prepaidcard_reader"
+      relative: true
+    source: path
+    version: "0.0.4+wallet.1"
   pub_semver:
     dependency: transitive
     description:

@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.agusibrahim.labs.prepaidcard_reader">
+
+    <uses-permission android:name="android.permission.VIBRATE" />
+</manifest>
