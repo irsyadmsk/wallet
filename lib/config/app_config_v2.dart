@@ -17,4 +17,7 @@ abstract class AppBoxes {
 
   /// Last fetched coin prices, device-local cache (not synced).
   static const cryptoPrices = 'crypto_prices';
+
+  /// E-money balance checks (NFC), device-local history (not synced).
+  static const nfcScans = 'nfc_scans';
 }
