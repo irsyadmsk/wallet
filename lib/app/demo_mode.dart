@@ -16,6 +16,11 @@ import 'package:financial_recording/domain/enums/hive_enums.dart';
 /// every demo branch is tree-shaken out of normal builds.
 const bool kDemoMode = bool.fromEnvironment('WALLET_DEMO');
 
+/// Adds `WALLET_DEMO_BIG=true` on top of demo mode to fill the ledger with
+/// a few thousand rows over dozens of accounts, the size of a real imported
+/// `.mmbak` ledger, for checking performance.
+const bool kDemoBig = bool.fromEnvironment('WALLET_DEMO_BIG');
+
 /// Illustrative ledger: four months of a household's income and spending.
 /// All figures are made up.
 Future<void> seedDemoData(DateTime now) async {
@@ -73,5 +78,34 @@ Future<void> seedDemoData(DateTime now) async {
     if (back == 0 && has(12)) await add(TxType.expense, 950000, d(12), 'Liburan akhir pekan', 'Hiburan', 'Istri');
     if (back > 0 && has(20)) await add(TxType.expense, 160000, d(20), 'Bioskop', 'Hiburan', 'Irsyad');
   }
+  if (kDemoBig) await _seedBulk(now, [bank.id, wallet.id, savings.id], cats);
   await LedgerService().recomputeAllBalances();
+}
+
+Future<void> _seedBulk(DateTime now, List<String> baseAccounts, TxCategoryRepository cats) async {
+  const uuid = Uuid();
+  final accounts = AccountRepository();
+  final ids = [...baseAccounts];
+  for (var i = 0; i < 30; i++) {
+    final a = AccountModel(id: uuid.v4(), name: 'Rekening ${i + 1}', groupCode: AccountGroupType.bank.code, openingBalance: 1000000 * i, colorValue: 0xFF4F46E5);
+    await accounts.upsert(a);
+    ids.add(a.id);
+  }
+  final expense = cats.byType(1);
+  final income = cats.byType(0);
+  final rows = <TxModel>[];
+  for (var i = 0; i < 5000; i++) {
+    final isIncome = i % 9 == 0;
+    final c = isIncome ? income[i % income.length] : expense[i % expense.length];
+    rows.add(TxModel(
+      id: uuid.v4(),
+      type: isIncome ? TxType.income : TxType.expense,
+      amount: 10000 + (i * 7919) % 900000,
+      accountId: ids[i % ids.length],
+      categoryId: c.id,
+      date: now.subtract(Duration(hours: 7 * i + 3)),
+      memo: 'Catatan ke-$i',
+    ));
+  }
+  await TxRepository().putAllFresh(rows);
 }

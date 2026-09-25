@@ -271,7 +271,7 @@ class _HomeShellState extends State<HomeShell> {
     final shell = _shell;
     return Obx(() {
       final index = shell.selectedIndex.value;
-      final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+      final reduceMotion = AppMotion.skipPageMotion(context);
       return AdaptiveScaffold(
         destinations: _destinations,
         index: index,
