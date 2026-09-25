@@ -4,6 +4,7 @@ import 'dart:io' as io;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/data/services/backup_service.dart';
 import 'package:financial_recording/data/services/csv_export_service.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
@@ -66,6 +67,7 @@ class SettingsController extends GetxController {
           ? utf8.decode(file.bytes!)
           : await io.File(file.path!).readAsString();
       await _backup.restoreJson(content, replaceAll: true);
+      notifyDataChanged();
       lastMessage.value = 'Cadangan berhasil dipulihkan.';
       return true;
     } catch (e) {

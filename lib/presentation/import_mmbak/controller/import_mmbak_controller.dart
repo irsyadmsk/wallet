@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/data/import/mmbak_import_service.dart';
 import 'package:financial_recording/data/import/mmbak_models.dart';
 
@@ -67,6 +68,9 @@ class ImportMmbakController extends GetxController {
       );
       report.value = r;
       step.value = ImportStep.done;
+      // Every open screen (dashboard hero, lists, reports) reloads now,
+      // not on the next app start.
+      notifyDataChanged();
     } catch (e) {
       errorMessage.value = 'Gagal mengimpor: $e';
       step.value = ImportStep.error;
