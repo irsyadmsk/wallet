@@ -18,7 +18,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 
 **Yang masih perlu Anda siapkan sebelum mengisi Play Console:**
 
-1. **Email dukungan yang aktif.** Kebijakan privasi dan halaman hapus akun memakai `privasi@irsyads.com`. Buat kotak surat/alias itu (misalnya lewat Cloudflare Email Routing ke Gmail Anda), atau beri tahu alamat lain supaya halaman diganti.
+1. ~~Email dukungan~~ ✅ `irsyad.msk@gmail.com` (dipakai di kebijakan privasi, halaman hapus akun, dan kolom kontak Play).
 2. **Screenshot**: minimal 2, disarankan 4–8, ukuran HP (1080×1920 atau 1080×2400). Bisa diambil dari mode demo (`--dart-define=WALLET_DEMO=true`) supaya tidak memuat data pribadi.
 3. **Feature graphic** 1024×500 (spanduk di halaman toko).
 4. **Akun uji untuk tim review Google**, karena aplikasi wajib login. Buat satu akun Supabase khusus (misalnya `review@irsyads.com`) dan isi dengan data contoh.
@@ -48,7 +48,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 | Deskripsi lengkap | Ambil dari bagian **Fitur** di README: akun keluarga realtime, akun & saldo, anggaran, laporan cerdas, zakat, kripto, pindai struk. |
 | Ikon | `docs/play-store/icon-512.png` |
 | Kategori | Keuangan |
-| Email kontak | email dukungan dari langkah 0 |
+| Email kontak | `irsyad.msk@gmail.com` |
 | Situs | `https://wallet.irsyads.com` |
 | Kebijakan privasi | `https://wallet.irsyads.com/privasi.html` |
 
@@ -82,10 +82,17 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 | Item | Biaya | Waktu |
 |---|---|---|
 | Pendaftaran Play Console | US$25 sekali | 1–3 hari verifikasi |
-| Email dukungan (Cloudflare Email Routing) | gratis | 10 menit |
 | Uji tertutup 12 penguji (akun pribadi) | gratis | 14 hari |
 | Review produksi | gratis | 1–7 hari |
 | **Total** | **± US$25** | **± 3 minggu** (akun pribadi) |
+
+## 7a. Donasi QRIS dan kebijakan pembayaran Play
+
+Google Play mewajibkan **Google Play Billing untuk tip/donasi kepada pengembang**. QRIS di dalam aplikasi versi Play bisa membuat aplikasi ditolak atau diturunkan. Karena itu:
+
+- Build Play (`wallet.aab`, dibuat dengan `--dart-define=WALLET_CHANNEL=play`) **tidak menampilkan** halaman *Dukung Pengembang*.
+- Web (`wallet.irsyads.com`) dan APK di GitHub Releases tetap menampilkan donasi QRIS.
+- Jika kelak ingin donasi di versi Play, perlu produk *in-app* (Google Play Billing) dengan akun merchant Play. Biaya layanan Google 15%.
 
 ## 8. Setelah rilis
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/app/distribution.dart';
+import 'package:financial_recording/presentation/donation/view/donation_view.dart';
 import 'package:financial_recording/presentation/settings/view/danger_zone.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
@@ -384,6 +386,18 @@ class SettingsView extends StatelessWidget {
                   onTap: () => Ecosystem.showSwitcher(context),
                 ),
               ),
+              if (kDonationsEnabled) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Card(
+                  child: ListTile(
+                    leading: Icon(Icons.volunteer_activism_rounded, color: colors.primary),
+                    title: const Text('Dukung Pengembang', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Donasi seikhlasnya lewat QRIS'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DonationView())),
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.sm),
               Card(
                 child: ListTile(

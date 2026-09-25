@@ -90,6 +90,8 @@ flutter:
     - assets/icon_pack/bank_logo/
     # Self-hosted typography (see assets/google_fonts/LICENSE-OFL.txt).
     - assets/google_fonts/
+    # Developer's QRIS for voluntary donations (hidden in the Play build).
+    - assets/donation/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

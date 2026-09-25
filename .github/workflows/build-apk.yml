@@ -74,9 +74,10 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
-      # Google Play only accepts an Android App Bundle.
+      # Google Play only accepts an Android App Bundle. The Play build hides
+      # the QRIS donation page (Play requires its own billing for tips).
       - name: Build release App Bundle (Play Store)
-        run: flutter build appbundle --release --build-number=${{ github.run_number }}
+        run: flutter build appbundle --release --build-number=${{ github.run_number }} --dart-define=WALLET_CHANNEL=play
 
       - name: Rename APK & AAB
         run: |
