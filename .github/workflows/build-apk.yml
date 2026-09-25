@@ -74,8 +74,15 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
-      - name: Rename APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk wallet.apk
+      # Google Play only accepts an Android App Bundle. The Play build hides
+      # the QRIS donation page (Play requires its own billing for tips).
+      - name: Build release App Bundle (Play Store)
+        run: flutter build appbundle --release --build-number=${{ github.run_number }} --dart-define=WALLET_CHANNEL=play
+
+      - name: Rename APK & AAB
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk wallet.apk
+          cp build/app/outputs/bundle/release/app-release.aab wallet.aab
 
       # One rolling release, always pointing at the newest main build, so
       # the download link never changes.
@@ -90,7 +97,7 @@ jobs:
           git push -f origin refs/tags/apk-latest
           if gh release view apk-latest >/dev/null 2>&1; then
             gh release edit apk-latest --title "APK terbaru" --notes "$notes" --latest
-            gh release upload apk-latest wallet.apk --clobber
+            gh release upload apk-latest wallet.apk wallet.aab --clobber
           else
-            gh release create apk-latest wallet.apk --title "APK terbaru" --notes "$notes" --latest
+            gh release create apk-latest wallet.apk wallet.aab --title "APK terbaru" --notes "$notes" --latest
           fi

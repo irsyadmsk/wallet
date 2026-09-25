@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/util/money/money_format.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/data/services/sync/sync_registry.dart';
@@ -98,6 +99,14 @@ class SyncController extends GetxController {
     return null;
   }
 
+  /// Clears this device without syncing first — for an account that no
+  /// longer exists server-side.
+  Future<void> discardLocal() async {
+    _stopAuto();
+    await _sync.wipeLocal();
+    notifyDataChanged();
+  }
+
   Future<SyncResult> syncNow() async {
     if (_uid == null) return const SyncResult(pushed: 0, pulled: 0, error: 'Belum login.');
     if (syncing.value) {
@@ -114,6 +123,7 @@ class SyncController extends GetxController {
       errorText.value = result.error;
       lastSyncAt.value = _sync.lastSyncAt;
       if (result.pulled > 0) notifyDataChanged();
+      if (result.incoming.isNotEmpty) _announce(result.incoming);
       return result;
     } finally {
       syncing.value = false;
@@ -125,6 +135,49 @@ class SyncController extends GetxController {
         _schedule(const Duration(seconds: 2));
       }
     }
+  }
+
+  /// "Hapus semua data": empties this user's own ledger in the cloud (as
+  /// tombstones, so their other devices follow), clears this device, and
+  /// starts over with the starter accounts and categories. Returns an error
+  /// message, or null on success.
+  Future<String?> wipeAllData() async {
+    if (_uid == null) return 'Belum login.';
+    try {
+      await SupabaseService.client.rpc('wipe_my_ledger');
+    } catch (e) {
+      return 'Gagal menghapus data di cloud. Periksa koneksi lalu coba lagi. ($e)';
+    }
+    _stopAuto();
+    final ownLedger = ledgerOwnerId == _uid;
+    await _sync.wipeLocal();
+    // A member wiped their personal book; they stay on the family's.
+    if (!ownLedger) await refreshFamily(reconcile: true);
+    notifyDataChanged();
+    await syncNow();
+    _startAuto();
+    return null;
+  }
+
+  /// A short notice when someone else's entries arrive, so a family ledger
+  /// feels shared live rather than silently changing underneath.
+  void _announce(List<IncomingTx> incoming) {
+    if (Get.context == null) return;
+    final first = incoming.first;
+    final sign = first.type == 'income' ? '+' : (first.type == 'expense' ? '-' : '');
+    final what = (first.memo?.trim().isNotEmpty ?? false) ? '${first.memo!.trim()} · ' : '';
+    final message = incoming.length == 1
+        ? '${first.by} mencatat $what$sign${first.amount.rupiah}'
+        : '${first.by} dan anggota lain menambah ${incoming.length} transaksi';
+    Get.closeAllSnackbars();
+    Get.rawSnackbar(
+      message: message,
+      icon: const Icon(Icons.diversity_3_rounded, color: Colors.white),
+      duration: const Duration(seconds: 4),
+      margin: const EdgeInsets.all(12),
+      borderRadius: 14,
+      snackPosition: SnackPosition.TOP,
+    );
   }
 
   /// First-run seeding and recurring posts, done only after the cloud
@@ -181,10 +234,35 @@ class SyncController extends GetxController {
         await refreshFamily(reconcile: true);
       });
 
-  Future<String?> joinFamily(String code, String displayName) => _familyOp(() async {
+  /// Joins by invite code. With [bringData], the member's own records are
+  /// copied into the family ledger right after switching to it.
+  Future<String?> joinFamily(String code, String displayName, {bool bringData = true}) => _familyOp(() async {
         await _family.join(code, displayName: displayName);
         await refreshFamily(reconcile: true);
+        if (bringData) await _importOwnLedger();
       });
+
+  /// For a member who joined without bringing their records: merge them in
+  /// now. Safe to repeat — rows keep their ids.
+  Future<String?> mergeOwnLedger() => _familyOp(_importOwnLedger);
+
+  /// Whether this member's personal records are already in the family book.
+  bool get ownLedgerMerged => _uid != null && _sync.hasImported(_uid!);
+
+  Future<void> _importOwnLedger() async {
+    final uid = _uid;
+    final ledger = ledgerOwnerId;
+    if (uid == null || ledger == null || ledger == uid) return;
+    if (await _sync.importLedger(uid) > 0) {
+      notifyDataChanged();
+      await syncNow();
+    }
+    lastSyncAt.value = _sync.lastSyncAt;
+    ownLedgerMergedTick.value++;
+  }
+
+  /// Bumped after a merge so the family screen can hide its merge button.
+  final ownLedgerMergedTick = 0.obs;
 
   Future<String?> leaveFamily() => _familyOp(() async {
         await _family.leave();
@@ -239,7 +317,8 @@ class SyncController extends GetxController {
     for (final box in openFinancialBoxes()) {
       _boxSubs.add(box.watch().listen((_) {
         if (_suppressLocal || syncing.value) return;
-        _schedule(const Duration(seconds: 4));
+        // Short, so family members see a new entry within seconds.
+        _schedule(const Duration(milliseconds: 1500));
       }));
     }
 

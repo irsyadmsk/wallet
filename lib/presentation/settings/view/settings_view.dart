@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/app/distribution.dart';
+import 'package:financial_recording/presentation/donation/view/donation_view.dart';
+import 'package:financial_recording/presentation/settings/view/danger_zone.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
@@ -383,6 +386,32 @@ class SettingsView extends StatelessWidget {
                   onTap: () => Ecosystem.showSwitcher(context),
                 ),
               ),
+              if (kDonationsEnabled) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Card(
+                  child: ListTile(
+                    leading: Icon(Icons.volunteer_activism_rounded, color: colors.primary),
+                    title: const Text('Dukung Pengembang', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Donasi seikhlasnya lewat QRIS'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DonationView())),
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.sm),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Kebijakan Privasi'),
+                  subtitle: const Text('Data yang disimpan dan cara menghapusnya'),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                  onTap: () => Ecosystem.open(Uri.parse('https://wallet.irsyads.com/privasi.html')),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              _SectionLabel('Zona bahaya'),
+              const DangerZone(),
               const SizedBox(height: AppSpacing.xxxl),
             ],
           ),

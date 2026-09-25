@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kebijakan Privasi Wallet</title>
+  <meta name="description" content="Data apa yang dikumpulkan Wallet, untuk apa, di mana disimpan, dan cara menghapusnya.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root { --bg:#f6f4ec; --ink:#16211f; --muted:#56615e; --line:#dcd9cc; --accent:#19363b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#0d1614; --ink:#e8e6d8; --muted:#a3ab9f; --line:#26332f; --accent:#66d6bf; } }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+    main { max-width:720px; margin:0 auto; padding:48px 16px 80px; }
+    h1 { font-size:32px; line-height:1.15; margin:0 0 6px; letter-spacing:-.02em; }
+    h2 { font-size:19px; margin:36px 0 8px; }
+    p, li { color:var(--ink); } .muted { color:var(--muted); }
+    a { color:var(--accent); }
+    ul { padding-left:20px; }
+    table { width:100%; border-collapse:collapse; font-size:15px; }
+    td, th { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { color:var(--muted); font-weight:600; }
+    .mark { display:inline-flex; width:40px; height:40px; border-radius:10px; background:#19363b; color:#e1e0cc; font-weight:700; font-size:22px; align-items:center; justify-content:center; margin-bottom:18px; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="mark" aria-hidden="true">w</div>
+  <h1>Kebijakan Privasi Wallet</h1>
+  <p class="muted">Berlaku sejak 25 September 2026 · Aplikasi Android <code>com.irsyads.wallet</code> dan <a href="https://wallet.irsyads.com">wallet.irsyads.com</a></p>
+
+  <p>Wallet adalah buku kas pribadi dan keluarga buatan Muhammad Irsyad Sirojul Khoeir. Halaman ini menjelaskan data apa yang disimpan, untuk apa, dan bagaimana Anda menghapusnya.</p>
+
+  <h2>Data yang kami simpan</h2>
+  <table>
+    <tr><th>Data</th><th>Untuk apa</th></tr>
+    <tr><td>Email dan nama tampilan</td><td>Masuk ke akun, pemulihan kata sandi, dan menampilkan nama pencatat di buku kas keluarga.</td></tr>
+    <tr><td>Catatan keuangan yang Anda masukkan: akun, saldo, transaksi, kategori, anggaran, target, utang, memo, dan portofolio kripto</td><td>Menampilkan dan menyinkronkan buku kas Anda antarperangkat dan dengan anggota keluarga yang Anda undang.</td></tr>
+    <tr><td>Keanggotaan keluarga (nama keluarga, anggota, kode undangan)</td><td>Berbagi satu buku kas dengan anggota keluarga.</td></tr>
+  </table>
+
+  <h2>Yang tetap di perangkat Anda</h2>
+  <ul>
+    <li>Foto struk dan hasil pindai teks (OCR) diproses di perangkat dan tidak diunggah.</li>
+    <li>Data kartu e-money yang dibaca lewat NFC hanya dipakai untuk mengisi saldo akun yang Anda buat.</li>
+    <li>PIN kunci aplikasi dan preferensi tampilan disimpan di perangkat saja.</li>
+  </ul>
+
+  <h2>Penyimpanan dan keamanan</h2>
+  <p>Data disimpan di Supabase (server di Singapura), dikirim melalui HTTPS, dan dilindungi aturan akses baris sehingga hanya Anda dan anggota keluarga Anda yang bisa membacanya. Salinan juga disimpan di perangkat Anda agar aplikasi tetap bisa dipakai tanpa internet.</p>
+
+  <h2>Pihak ketiga</h2>
+  <ul>
+    <li><strong>Supabase</strong>: penyimpanan dan autentikasi.</li>
+    <li><strong>CoinGecko</strong>: harga kripto. Aplikasi hanya meminta harga koin; tidak ada data pribadi yang dikirim.</li>
+  </ul>
+  <p>Kami tidak menjual data, tidak menampilkan iklan, dan tidak memakai data Anda untuk pelacakan.</p>
+
+  <h2>Menghapus data dan akun</h2>
+  <p>Di aplikasi: <strong>Pengaturan › Zona bahaya</strong>.</p>
+  <ul>
+    <li><strong>Hapus semua data</strong> mengosongkan buku kas Anda di semua perangkat; akun tetap ada.</li>
+    <li><strong>Hapus akun permanen</strong> menghapus akun beserta seluruh datanya dari server seketika.</li>
+  </ul>
+  <p>Tidak bisa masuk? Lihat <a href="hapus-akun.html">cara meminta penghapusan akun</a>.</p>
+
+  <h2>Anak-anak</h2>
+  <p>Wallet tidak ditujukan untuk anak di bawah 13 tahun.</p>
+
+  <h2>Perubahan dan kontak</h2>
+  <p>Jika kebijakan ini berubah, tanggal di atas akan diperbarui. Pertanyaan tentang privasi: <a href="mailto:irsyad.msk@gmail.com">irsyad.msk@gmail.com</a>.</p>
+</main>
+</body>
+</html>
