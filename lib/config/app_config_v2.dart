@@ -20,4 +20,7 @@ abstract class AppBoxes {
 
   /// E-money balance checks (NFC), device-local history (not synced).
   static const nfcScans = 'nfc_scans';
+
+  /// Last fetched exchange rates and gold price, device-local cache.
+  static const fxRates = 'fx_rates';
 }

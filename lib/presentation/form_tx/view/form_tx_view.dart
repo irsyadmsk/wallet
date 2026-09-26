@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
+import 'package:financial_recording/data/services/currency/currency.dart';
 import 'package:financial_recording/core.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
@@ -74,6 +77,16 @@ class _FormTxViewState extends State<FormTxView> {
   late String memo = widget.existing?.memo ?? widget.initialMemo ?? '';
   late String? imagePath = widget.existing?.imagePath;
   late int transferFee = widget.existing?.transferFee ?? 0;
+
+  /// Received amount of a transfer between two currencies; follows the
+  /// live rate until the user types their own (the bank's actual rate).
+  late int? toAmount = widget.existing?.toAmount;
+  late bool _toAmountTouched = widget.existing?.toAmount != null;
+  final _fx = CurrencyService.instance;
+  String get _fromCur => accountId == null ? Currency.idr : _fx.currencyOf(accountId!);
+  String get _toCur => toAccountId == null ? _fromCur : _fx.currencyOf(toAccountId!);
+  bool get _crossCurrency => type == TxType.transfer && toAccountId != null && _fromCur != _toCur;
+  int get _received => _toAmountTouched && toAmount != null ? toAmount! : _fx.convert(amount, _fromCur, _toCur);
   int installments = 1;
   bool isNewImagePicked = false;
   bool saving = false;
@@ -150,6 +163,7 @@ class _FormTxViewState extends State<FormTxView> {
 
                   AmountField(
                     label: 'Jumlah',
+                    currency: _fromCur,
                     value: amount,
                     large: true,
                     // New entries open straight into the amount with the keyboard up.
@@ -159,7 +173,7 @@ class _FormTxViewState extends State<FormTxView> {
                       TxType.income => colors.income,
                       TxType.transfer => colors.transfer,
                     },
-                    onChanged: (v) => amount = v,
+                    onChanged: (v) => setState(() => amount = v),
                   ),
 
                   // Account picker
@@ -192,8 +206,22 @@ class _FormTxViewState extends State<FormTxView> {
                       }),
                     ),
 
+                  if (_crossCurrency)
+                    AmountField(
+                      label: 'Diterima di akun tujuan',
+                      currency: _toCur,
+                      value: _received,
+                      showQuickChips: false,
+                      helper: _rateHint(),
+                      onChanged: (v) => setState(() {
+                        toAmount = v;
+                        _toAmountTouched = true;
+                      }),
+                    ),
+
                   if (type == TxType.transfer)
                     AmountField(
+                      currency: _fromCur,
                       label: 'Biaya transfer (opsional)',
                       value: transferFee,
                       showCalculator: false,
@@ -281,6 +309,13 @@ class _FormTxViewState extends State<FormTxView> {
               ),
             ),
           ),
+          // While typing further down (catatan, jam), the amount and type
+          // scroll out of sight under the keyboard; keep them readable here.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            child: isKeyboardUp(context) && amount > 0 ? _summary(colors) : const SizedBox(width: double.infinity),
+          ),
           // Pinned under the scrolling fields so "Simpan" is always one tap
           // away — also while the keyboard is up.
           Container(
@@ -312,6 +347,45 @@ class _FormTxViewState extends State<FormTxView> {
         ],
       ),
     );
+  }
+
+  Widget _summary(AppColors colors) {
+    final (label, color) = switch (type) {
+      TxType.expense => ('Pengeluaran', colors.expense),
+      TxType.income => ('Pemasukan', colors.income),
+      TxType.transfer => ('Transfer', colors.transfer),
+    };
+    final where = type == TxType.transfer
+        ? [_accounts.byId(accountId ?? '')?.name, _accounts.byId(toAccountId ?? '')?.name].whereType<String>().join(' → ')
+        : [categoryId == null ? null : _categories.byId(categoryId!)?.name, _accounts.byId(accountId ?? '')?.name]
+            .whereType<String>()
+            .join(' · ');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 8, AppSpacing.lg, 8),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.08), border: Border(top: BorderSide(color: colors.border))),
+      child: Row(
+        children: [
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12.5)),
+          const SizedBox(width: 8),
+          Text(amount.money(_fromCur), style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(where, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: colors.textSecondary, fontSize: 12.5)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// "1 USD = Rp 17.909" for the pair being transferred, or a note that no
+  /// rate is known yet.
+  String _rateHint() {
+    final foreign = _fromCur == Currency.idr ? _toCur : _fromCur;
+    final r = _fx.rate(foreign);
+    if (r == null) return 'Kurs belum tersedia — isi jumlah yang diterima';
+    final c = Currency.of(foreign);
+    return c.isGold ? 'Buyback emas: ${r.round().rupiah}/gram' : 'Kurs: 1 ${c.code} = ${r.round().rupiah}';
   }
 
   Widget _buildReceiptSection(BuildContext context, AppColors colors) {
@@ -595,7 +669,8 @@ class _FormTxViewState extends State<FormTxView> {
         ..date = _combinedDateTime
         ..memo = memo.trim().isEmpty ? null : memo.trim()
         ..imagePath = finalImagePath
-        ..transferFee = type == TxType.transfer && transferFee > 0 ? transferFee : null;
+        ..transferFee = type == TxType.transfer && transferFee > 0 ? transferFee : null
+        ..toAmount = _crossCurrency ? _received : null;
       await _ledger.update(updated);
     } else if (type == TxType.income) {
       await _ledger.addIncome(
@@ -628,6 +703,7 @@ class _FormTxViewState extends State<FormTxView> {
         memo: memo.trim().isEmpty ? null : memo.trim(),
         imagePath: finalImagePath,
         fee: transferFee > 0 ? transferFee : null,
+        toAmount: _crossCurrency ? _received : null,
       );
     }
 

@@ -18,6 +18,7 @@ import 'package:financial_recording/data/models/tx_model/tx_item_model.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/services/backup_service.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/sync/sync_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
@@ -61,6 +62,7 @@ Future<void> bootstrap() async {
   await Hive.openBox<String>(AppBoxes.cryptoPrices);
   await Hive.openBox<String>(AppBoxes.nfcScans);
   await SyncService.ensureOpen();
+  await CurrencyService.ensureOpen();
 
   // Starter data and recurring posts now happen after sign-in, once the
   // cloud ledger has been pulled (see `SyncController._housekeeping`), so a

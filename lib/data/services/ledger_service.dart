@@ -81,11 +81,13 @@ class LedgerService {
     String? memo,
     String? imagePath,
     int? fee,
+    int? toAmount,
     String? id,
   }) =>
       _write(TxModel(
         id: id ?? _uuid.v4(),
         type: TxType.transfer,
+        toAmount: toAmount,
         amount: amount,
         accountId: fromAccountId,
         toAccountId: toAccountId,
@@ -132,7 +134,7 @@ class LedgerService {
     }
     if (tx.isTransfer && tx.toAccountId != null) {
       final to = _accounts.byId(tx.toAccountId!);
-      if (to != null) to.cachedBalance += sign * tx.amount;
+      if (to != null) to.cachedBalance += sign * tx.receivedAmount;
     }
   }
 
@@ -160,7 +162,7 @@ class LedgerService {
     for (final tx in _txs.all()) {
       balances[tx.accountId] = (balances[tx.accountId] ?? 0) + tx.signedAmountOnPrimaryAccount;
       if (tx.isTransfer && tx.toAccountId != null) {
-        balances[tx.toAccountId!] = (balances[tx.toAccountId!] ?? 0) + tx.amount;
+        balances[tx.toAccountId!] = (balances[tx.toAccountId!] ?? 0) + tx.receivedAmount;
       }
     }
     for (final acc in _accounts.all(includeArchived: true, includeDeleted: true)) {

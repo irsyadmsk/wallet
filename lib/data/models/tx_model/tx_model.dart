@@ -75,6 +75,12 @@ class TxModel extends HiveObject {
   @HiveField(19)
   String? createdByName;
 
+  /// What [toAccountId] receives when a transfer crosses currencies (e.g.
+  /// rupiah → dollars), in the destination's smallest units. Null means the
+  /// same as [amount] (same currency).
+  @HiveField(20)
+  int? toAmount;
+
   TxModel({
     required this.id,
     required this.type,
@@ -94,6 +100,7 @@ class TxModel extends HiveObject {
     this.transferFee,
     this.createdBy,
     this.createdByName,
+    this.toAmount,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : items = items ?? [],
@@ -104,6 +111,9 @@ class TxModel extends HiveObject {
   bool get isTransfer => type == TxType.transfer;
   bool get isIncome => type == TxType.income;
   bool get isExpense => type == TxType.expense;
+
+  /// What the transfer destination receives, in its own currency.
+  int get receivedAmount => toAmount ?? amount;
 
   /// Signed effect of this transaction on [accountId]'s balance.
   int get signedAmountOnPrimaryAccount {
@@ -136,6 +146,7 @@ class TxModel extends HiveObject {
         'transferFee': transferFee,
         'createdBy': createdBy,
         'createdByName': createdByName,
+        if (toAmount != null) 'toAmount': toAmount,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
       };
@@ -161,6 +172,7 @@ class TxModel extends HiveObject {
         transferFee: json['transferFee'] == null ? null : int.tryParse(json['transferFee'].toString()),
         createdBy: json['createdBy'] as String?,
         createdByName: json['createdByName'] as String?,
+        toAmount: json['toAmount'] == null ? null : int.tryParse(json['toAmount'].toString()),
         createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
         updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
       );

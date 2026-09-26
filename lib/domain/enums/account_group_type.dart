@@ -11,6 +11,7 @@ enum AccountGroupType {
   prepaid(6, 'Kartu Prabayar', isLiabilityDefault: false, icon: '🎫'),
   investment(8, 'Investasi', isLiabilityDefault: false, icon: '📈'),
   crypto(12, 'Kripto', isLiabilityDefault: false, icon: '🪙'),
+  gold(13, 'Emas', isLiabilityDefault: false, icon: '🥇'),
   minusAccount(9, 'Rekening Minus', isLiabilityDefault: true, icon: '⚠️'),
   insurance(10, 'Asuransi', isLiabilityDefault: false, icon: '🛡️'),
   other(7, 'Lainnya', isLiabilityDefault: false, icon: '📦');
@@ -42,6 +43,7 @@ enum AccountGroupType {
     savings,
     prepaid,
     investment,
+    gold,
     crypto,
     insurance,
     loan,

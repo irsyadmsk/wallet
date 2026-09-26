@@ -1,3 +1,4 @@
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/goal_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
@@ -70,8 +71,8 @@ class FinancialHealthService {
 
     // 1. Bulan ini Income & Expense
     final monthTxs = _txs.query(TxQuery(from: firstDay, to: DateTime(now.year, now.month + 1, 1)));
-    final monthIncome = monthTxs.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.amount);
-    final monthExpense = monthTxs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.amount);
+    final monthIncome = monthTxs.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.idr);
+    final monthExpense = monthTxs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.idr);
 
     // 2. Savings Rate (Rasio Tabungan)
     double savingsRate = 0.0;
@@ -100,7 +101,7 @@ class FinancialHealthService {
     // Hitung rata-rata pengeluaran 3 bulan terakhir
     final threeMonthsAgo = DateTime(now.year, now.month - 2, 1);
     final pastTxs = _txs.query(TxQuery(from: threeMonthsAgo, to: DateTime(now.year, now.month + 1, 1)));
-    final pastExpenses = pastTxs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.amount);
+    final pastExpenses = pastTxs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.idr);
     final avgMonthlyExpense = (pastExpenses / 3).round();
     final effectiveExpense = avgMonthlyExpense > 0 ? avgMonthlyExpense : (monthExpense > 0 ? monthExpense : 1);
 
@@ -241,7 +242,7 @@ class FinancialHealthService {
       final byCat = <String, int>{};
       for (final t in expenseTxs) {
         final catId = t.categoryId ?? 'none';
-        byCat[catId] = (byCat[catId] ?? 0) + t.amount;
+        byCat[catId] = (byCat[catId] ?? 0) + t.idr;
       }
       final sortedCats = byCat.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
       if (sortedCats.isNotEmpty) {

@@ -1,13 +1,16 @@
 {
   // Deployed as a Cloudflare Worker serving static assets — same pattern as
   // apps/academy in the irsyads monorepo. `flutter build web --release`
-  // produces the static bundle in build/web; there is no server code, this
-  // Worker is purely a file server + custom-domain attachment.
+  // produces the static bundle in build/web. worker/index.js only answers
+  // /api/* (the gold price proxy); every other path is a static file.
   "name": "wallet",
   "compatibility_date": "2026-09-22",
+  "main": "worker/index.js",
 
   "assets": {
     "directory": "./build/web",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
 
     // Flutter Web is a single-page app with in-app (not URL-based)
     // navigation — any unknown path should still resolve to index.html so

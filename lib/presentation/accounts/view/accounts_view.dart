@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/shared/widget/market_card.dart';
+import 'package:financial_recording/data/repositories/account_repository.dart';
+import 'package:financial_recording/data/services/currency/currency.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/repositories/account_group_repository.dart';
 import 'package:financial_recording/presentation/account_detail/view/account_detail_view.dart';
@@ -90,6 +93,10 @@ class AccountsView extends StatelessWidget {
                     ],
                   ),
                 ),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                  child: MarketCard(),
+                ),
                 for (final (group, accounts) in groups)
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.lg),
@@ -132,7 +139,8 @@ class _GroupSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final subtotal = accounts.fold<int>(0, (s, a) => s + a.cachedBalance);
+    // Rupiah value of the group, whatever currencies its accounts hold.
+    final subtotal = accounts.fold<int>(0, (s, a) => s + a.balanceIdr);
 
     return Card(
       child: Padding(
@@ -169,14 +177,16 @@ class _GroupSection extends StatelessWidget {
                     onLongPress: () => _editAccount(context, controller, a),
                     leading: AccountAvatar(account: a, radius: 18),
                     title: Text(a.name),
-                    subtitle: a.isLiability && a.dueDay != null
-                        ? Text('Jatuh tempo tgl ${a.dueDay}', style: TextStyle(fontSize: 11, color: colors.warning))
-                        : null,
+                    subtitle: a.currencyCode != Currency.idr
+                        ? Text('≈ ${a.balanceIdr.rupiah}', style: TextStyle(fontSize: 11.5, color: colors.textSecondary))
+                        : a.isLiability && a.dueDay != null
+                            ? Text('Jatuh tempo tgl ${a.dueDay}', style: TextStyle(fontSize: 11, color: colors.warning))
+                            : null,
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          a.cachedBalance.rupiah,
+                          a.cachedBalance.money(a.currencyCode),
                           style: AppTypography.numeric(
                             size: 15,
                             weight: FontWeight.w600,

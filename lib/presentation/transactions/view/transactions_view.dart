@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/data/models/tx_model/tx_model.dart';
+import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/presentation/transactions/controller/transactions_controller.dart';
@@ -168,7 +170,10 @@ class TransactionsView extends StatelessWidget {
                     return _CardSegment(
                       isFirst: row.isFirst,
                       isLast: row.isLast,
-                      child: TxTile(
+                      child: _SwipeTx(
+                        tx: tx,
+                        onChanged: c.refresh,
+                        child: TxTile(
                         tx: tx,
                         showAccount: showAccount,
                         onTap: () async {
@@ -178,6 +183,7 @@ class TransactionsView extends StatelessWidget {
                           );
                           if (saved == true) c.refresh();
                         },
+                      ),
                       ),
                     );
                   },
@@ -263,6 +269,75 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: AppSpacing.sm),
       child: ChoiceChip(label: Text(label), selected: selected, onSelected: (_) => onTap()),
+    );
+  }
+}
+
+/// Thumb-friendly row actions: swipe left to delete (after a confirm),
+/// swipe right to record the same transaction again today.
+class _SwipeTx extends StatelessWidget {
+  const _SwipeTx({required this.tx, required this.child, required this.onChanged});
+  final TxModel tx;
+  final Widget child;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    Widget bg(Color color, IconData icon, String label, Alignment align) => Container(
+          color: color.withValues(alpha: 0.14),
+          alignment: align,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        );
+    return Dismissible(
+      key: ValueKey('swipe-${tx.id}'),
+      background: bg(colors.primary, Icons.replay_rounded, 'Catat lagi', Alignment.centerLeft),
+      secondaryBackground: bg(colors.danger, Icons.delete_outline_rounded, 'Hapus', Alignment.centerRight),
+      confirmDismiss: (dir) async {
+        if (dir == DismissDirection.startToEnd) {
+          final saved = await showAdaptiveSheet<bool>(
+            context,
+            builder: (_) => FormTxView(
+              initialType: tx.type,
+              initialAccountId: tx.accountId,
+              initialToAccountId: tx.toAccountId,
+              initialCategoryId: tx.categoryId,
+              initialMemo: tx.memo,
+              initialAmount: tx.amount,
+            ),
+          );
+          if (saved == true) onChanged();
+          return false; // the original row stays
+        }
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Hapus transaksi ini?'),
+            content: const Text('Saldo akun terkait akan disesuaikan kembali.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Batal')),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: ctx.colors.danger),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Hapus'),
+              ),
+            ],
+          ),
+        );
+        if (ok != true) return false;
+        await LedgerService().delete(tx.id);
+        return true;
+      },
+      onDismissed: (_) => onChanged(),
+      child: child,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
 
 class AccountRepository {
@@ -87,9 +88,14 @@ class AccountRepository {
 
   dynamic _keyFor(String id) => _index.keyFor(_box, id, strict: true);
 
-  int get netWorth => all().fold(0, (sum, a) => sum + a.cachedBalance);
-  int get totalAssets =>
-      all().where((a) => !a.isLiability).fold(0, (sum, a) => sum + a.cachedBalance);
-  int get totalLiabilities =>
-      all().where((a) => a.isLiability).fold(0, (sum, a) => sum + a.cachedBalance);
+  // Totals are in rupiah: foreign-currency and gold balances are valued at
+  // the latest rate (see CurrencyService).
+  int get netWorth => all().fold(0, (sum, a) => sum + a.balanceIdr);
+  int get totalAssets => all().where((a) => !a.isLiability).fold(0, (sum, a) => sum + a.balanceIdr);
+  int get totalLiabilities => all().where((a) => a.isLiability).fold(0, (sum, a) => sum + a.balanceIdr);
+}
+
+extension AccountMoney on AccountModel {
+  /// [cachedBalance] in rupiah at today's rate.
+  int get balanceIdr => CurrencyService.instance.toIdr(cachedBalance, currencyCode);
 }

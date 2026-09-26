@@ -23,6 +23,7 @@ on:
       - "pubspec.yaml"
       - "pubspec.lock"
       - "wrangler.jsonc"
+      - "worker/**"
       - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 
@@ -89,6 +90,8 @@ jobs:
           sleep 10
           if curl -fsS -H "Cache-Control: no-cache" https://wallet.irsyads.com/ | grep -q "flutter"; then
             echo "wallet.irsyads.com menjawab." >> "$GITHUB_STEP_SUMMARY"
+            # Harga emas tidak memblokir deploy (sumbernya pihak ketiga), cukup dicatat.
+            curl -fsS https://wallet.irsyads.com/api/emas >> "$GITHUB_STEP_SUMMARY" || echo "::warning::/api/emas belum menjawab."
           else
             echo "::error::Deploy selesai tetapi wallet.irsyads.com tidak menjawab seperti yang diharapkan."
             exit 1

@@ -37,6 +37,7 @@ class TxTile extends StatelessWidget {
     final categories = categoryRepository ?? TxCategoryRepository();
 
     final account = accounts.byId(tx.accountId);
+    final code = account?.currencyCode;
     final category = tx.categoryId == null ? null : categories.byId(tx.categoryId!);
 
     final String title;
@@ -51,14 +52,14 @@ class TxTile extends StatelessWidget {
         subtitle = showAccount ? (account?.name ?? '-') : (tx.memo ?? '');
         amountColor = colors.income;
         baseColor = category != null ? Color(category.colorValue) : colors.income;
-        amountText = tx.amount.signedRupiah;
+        amountText = tx.amount.signedMoney(code);
         break;
       case TxType.expense:
         title = category?.displayName ?? 'Pengeluaran';
         subtitle = showAccount ? (account?.name ?? '-') : (tx.memo ?? '');
         amountColor = colors.expense;
         baseColor = category != null ? Color(category.colorValue) : colors.expense;
-        amountText = (-tx.amount).signedRupiah;
+        amountText = (-tx.amount).signedMoney(code);
         break;
       case TxType.transfer:
         final to = tx.toAccountId == null ? null : accounts.byId(tx.toAccountId!);
@@ -66,7 +67,7 @@ class TxTile extends StatelessWidget {
         subtitle = '${account?.name ?? '-'} → ${to?.name ?? '-'}';
         amountColor = colors.transfer;
         baseColor = colors.transfer;
-        amountText = tx.amount.rupiah;
+        amountText = tx.amount.money(code);
         break;
     }
 
@@ -107,7 +108,7 @@ class TxTile extends StatelessWidget {
                               context,
                               imagePath: tx.imagePath!,
                               title: title,
-                              subtitle: '${tx.amount.rupiah} · ${account?.name ?? ''}',
+                              subtitle: '${tx.amount.money(code)} · ${account?.name ?? ''}',
                             ),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

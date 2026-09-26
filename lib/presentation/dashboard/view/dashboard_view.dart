@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view.dart';
+import 'package:financial_recording/data/services/emoney_nfc_service.dart';
+import 'package:financial_recording/shared/widget/market_card.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/data/services/budget_service_v2.dart';
@@ -41,7 +45,10 @@ class _DashboardViewState extends State<DashboardView> {
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: () async {
-          await Get.find<SyncController>().syncNow();
+          await Future.wait([
+            Get.find<SyncController>().syncNow(),
+            CurrencyService.instance.refresh(force: true),
+          ]);
           c.refresh();
         },
         child: SingleChildScrollView(
@@ -64,6 +71,12 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                 );
                 final attention = <Widget>[
+                  // Only for ledgers holding gold or foreign money: the rates
+                  // behind the rupiah total.
+                  if (CurrencyService.instance.hasForeignAccounts) ...[
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: MarketCard(compact: true)),
+                    const SizedBox(height: 12),
+                  ],
                   if (c.upcomingRecurring.isNotEmpty) ...[
                     Reveal(index: i++, child: _UpcomingCard(controller: c)),
                     const SizedBox(height: 12),
@@ -83,7 +96,7 @@ class _DashboardViewState extends State<DashboardView> {
                   index: i++,
                   child: _RecentSection(controller: c, onSeeAll: () => shell.goTo(AppPage.transactions)),
                 );
-                final accounts = Reveal(index: i++, child: _AccountsSection(controller: c));
+                final accounts = Reveal(index: i++, child: _AccountsSection(controller: c, hidden: _hidden));
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,6 +182,25 @@ class _Greeting extends StatelessWidget {
                 ],
               )),
         ),
+        // One tap from home: read an e-money card's balance over NFC.
+        if (EmoneyNfcService.isSupported)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: FilledButton.tonalIcon(
+              style: FilledButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              onPressed: () async {
+                final created = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const EmoneyNfcView()));
+                if (created == true && Get.isRegistered<DashboardController>(tag: 'dashboard')) {
+                  Get.find<DashboardController>(tag: 'dashboard').refresh();
+                }
+              },
+              icon: const Icon(Icons.contactless_rounded, size: 20),
+              label: const Text('Cek kartu'),
+            ),
+          ),
         Obx(() {
           final syncing = sync.syncing.value;
           final err = sync.errorText.value;
@@ -397,8 +429,9 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _AccountsSection extends StatelessWidget {
-  const _AccountsSection({required this.controller});
+  const _AccountsSection({required this.controller, required this.hidden});
   final DashboardController controller;
+  final bool hidden;
 
   @override
   Widget build(BuildContext context) {
@@ -411,10 +444,12 @@ class _AccountsSection extends StatelessWidget {
           action: accounts.isEmpty ? null : 'Semua akun',
           onAction: () => Get.find<ShellController>().goTo(AppPage.accounts),
         ),
-        // The fanned stack is wider than its column on desktop; keep it inside.
-        ClipRect(
+        Padding(
+          // Room above for the tabs' shadows.
+          padding: const EdgeInsets.only(top: 4),
           child: AccountCardStack(
             accounts: accounts,
+            hideBalance: hidden,
             onTapAccount: (acc) async {
               await Navigator.push(context, MaterialPageRoute(builder: (_) => AccountDetailView(accountId: acc.id)));
               controller.refresh();

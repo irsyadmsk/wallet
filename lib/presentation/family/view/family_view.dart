@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/data/repositories/tx_query.dart';
@@ -265,7 +266,7 @@ class _FamilyDetail extends StatelessWidget {
     for (final tx in txs) {
       final who = tx.createdBy ?? household.ownerId;
       count[who] = (count[who] ?? 0) + 1;
-      if (tx.type == TxType.expense) spent[who] = (spent[who] ?? 0) + tx.amount;
+      if (tx.type == TxType.expense) spent[who] = (spent[who] ?? 0) + tx.idr;
     }
 
     return Column(

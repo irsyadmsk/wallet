@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:intl/intl.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/data/repositories/tx_repository.dart';
@@ -217,7 +218,7 @@ class SmartReportBuilder {
     final prev = all.where((t) => inRange(t, prevStart, start)).toList();
 
     int sum(Iterable<TxModel> list, TxType type) =>
-        list.where((t) => t.type == type).fold(0, (s, t) => s + t.amount);
+        list.where((t) => t.type == type).fold(0, (s, t) => s + t.idr);
 
     final income = sum(cur, TxType.income);
     final expense = sum(cur, TxType.expense);
@@ -238,7 +239,7 @@ class SmartReportBuilder {
       for (final t in list.where((t) => t.type == TxType.expense)) {
         final k = categoryKey(t.categoryId);
         final (a, n) = m[k] ?? (0, 0);
-        m[k] = (a + t.amount, n + 1);
+        m[k] = (a + t.idr, n + 1);
       }
       return m;
     }
@@ -273,7 +274,7 @@ class SmartReportBuilder {
       if (label == null) continue;
       final k = label.toLowerCase();
       final (l, a, n) = payeeMap[k] ?? (label, 0, 0);
-      payeeMap[k] = (l, a + t.amount, n + 1);
+      payeeMap[k] = (l, a + t.idr, n + 1);
     }
     final payees = payeeMap.values.map((v) => PayeeInsight(label: v.$1, amount: v.$2, count: v.$3)).toList()
       ..sort((a, b) => b.amount.compareTo(a.amount));
@@ -291,7 +292,7 @@ class SmartReportBuilder {
       final k = label.toLowerCase();
       payeeLabels[k] = label;
       final mk = t.date.year * 12 + t.date.month;
-      byPayee.putIfAbsent(k, () => {}).putIfAbsent(mk, () => []).add(t.amount);
+      byPayee.putIfAbsent(k, () => {}).putIfAbsent(mk, () => []).add(t.idr);
     }
     byPayee.forEach((k, months) {
       if (months.length < 3) return;
@@ -311,8 +312,8 @@ class SmartReportBuilder {
       final who = (t.createdByName?.trim().isNotEmpty ?? false) ? t.createdByName!.trim() : 'Tanpa nama';
       final (e, i, n) = memberMap[who] ?? (0, 0, 0);
       memberMap[who] = (
-        e + (t.type == TxType.expense ? t.amount : 0),
-        i + (t.type == TxType.income ? t.amount : 0),
+        e + (t.type == TxType.expense ? t.idr : 0),
+        i + (t.type == TxType.income ? t.idr : 0),
         n + 1,
       );
     }
@@ -325,13 +326,13 @@ class SmartReportBuilder {
     final weekday = List<int>.filled(7, 0);
     final daily = List<int>.filled(daysInMonth, 0);
     for (final t in curExp) {
-      weekday[t.date.weekday - 1] += t.amount;
-      daily[t.date.day - 1] += t.amount;
+      weekday[t.date.weekday - 1] += t.idr;
+      daily[t.date.day - 1] += t.idr;
     }
 
     TxModel? largest;
     for (final t in curExp) {
-      if (largest == null || t.amount > largest.amount) largest = t;
+      if (largest == null || t.idr > largest.idr) largest = t;
     }
 
     final report = SmartReport(
@@ -350,7 +351,7 @@ class SmartReportBuilder {
       members: members,
       weekdaySpend: weekday,
       dailySpend: daily,
-      largest: largest?.amount ?? 0,
+      largest: largest?.idr ?? 0,
       largestLabel: largest == null ? null : (_payeeLabel(largest) ?? categoryName(categoryKey(largest.categoryId))),
       transactionCount: cur.length,
       narrative: const [],

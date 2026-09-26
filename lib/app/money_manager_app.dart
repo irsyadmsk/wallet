@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/app/demo_mode.dart';
@@ -253,6 +254,10 @@ class _HomeShellState extends State<HomeShell> {
   /// an older version is stale and reloads when it's opened again, so a
   /// change never recomputes every screen that happens to be alive.
   int _version = 0;
+
+  /// Last shown page and which way the latest page change went (+1 right).
+  late int _lastIndex = _shell.selectedIndex.value;
+  int _direction = 1;
   final _seenVersion = <int, int>{};
 
   @override
@@ -269,6 +274,9 @@ class _HomeShellState extends State<HomeShell> {
     });
     // Local edits: the screen that made them already refreshes itself, so
     // only mark the others stale.
+    // Rates & gold price: at most hourly; a real change re-values totals.
+    CurrencyService.instance.version.addListener(_invalidate);
+    CurrencyService.instance.refresh();
     for (final box in openFinancialBoxes()) {
       _boxSubs.add(box.watch().listen((_) {
         _version++;
@@ -279,6 +287,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   void dispose() {
+    CurrencyService.instance.version.removeListener(_invalidate);
     _dataWorker.dispose();
     _pageWorker.dispose();
     for (final s in _boxSubs) {
@@ -292,6 +301,10 @@ class _HomeShellState extends State<HomeShell> {
     final shell = _shell;
     return Obx(() {
       final index = shell.selectedIndex.value;
+      if (index != _lastIndex) {
+        _direction = index > _lastIndex ? 1 : -1;
+        _lastIndex = index;
+      }
       final reduceMotion = AppMotion.skipPageMotion(context);
       return AdaptiveScaffold(
         destinations: _destinations,
@@ -302,13 +315,19 @@ class _HomeShellState extends State<HomeShell> {
           duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 360),
           switchInCurve: AppMotion.emphasized,
           switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(begin: const Offset(0, 0.02), end: Offset.zero).animate(animation),
-              child: child,
-            ),
-          ),
+          // Slides in from the side the user is moving toward, so a swipe
+          // and the page change feel like one motion.
+          transitionBuilder: (child, animation) {
+            final incoming = child.key == ValueKey(index);
+            final dx = 0.06 * _direction * (incoming ? 1 : -1);
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: Offset(dx, 0), end: Offset.zero).animate(animation),
+                child: child,
+              ),
+            );
+          },
           layoutBuilder: (currentChild, previousChildren) => Stack(
             alignment: Alignment.topLeft,
             children: [...previousChildren, if (currentChild != null) currentChild],

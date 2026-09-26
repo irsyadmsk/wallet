@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
@@ -90,7 +91,8 @@ class AdaptiveScaffold extends StatelessWidget {
         // Berulang) sat under the bar and couldn't be tapped.
         body: Builder(builder: (context) {
           final mq = MediaQuery.of(context);
-          if (keyboardUp) return body;
+          final swipeable = _SwipePages(destinations: destinations, index: index, onSelect: onSelect, child: body);
+          if (keyboardUp) return swipeable;
           final bottom = _PhoneBar.height + mq.viewPadding.bottom;
           // Scaffold places its FAB from viewPadding, lists and SafeArea
           // read padding — set both.
@@ -99,7 +101,7 @@ class AdaptiveScaffold extends StatelessWidget {
               padding: mq.padding.copyWith(bottom: bottom > mq.padding.bottom ? bottom : mq.padding.bottom),
               viewPadding: mq.viewPadding.copyWith(bottom: bottom),
             ),
-            child: body,
+            child: swipeable,
           );
         }),
         bottomNavigationBar: _PhoneBar(
@@ -128,6 +130,43 @@ class AdaptiveScaffold extends StatelessWidget {
 
 // ------------------------------------------------------------------ phone
 
+/// One-handed navigation: a quick horizontal swipe anywhere on a page moves
+/// to the neighbouring bottom-bar page (Beranda ⇄ Transaksi ⇄ Laporan).
+/// Horizontal lists, chips and swipeable rows inside the page claim their
+/// own drags first, so they keep working.
+class _SwipePages extends StatelessWidget {
+  const _SwipePages({required this.destinations, required this.index, required this.onSelect, required this.child});
+  final List<AdaptiveDestination> destinations;
+  final int index;
+  final ValueChanged<int> onSelect;
+  final Widget child;
+
+  static const _minVelocity = 450.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = [for (var i = 0; i < destinations.length; i++) if (destinations[i].showInBottomBar) i];
+    final at = pages.indexOf(index);
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (d) {
+        final v = d.primaryVelocity ?? 0;
+        if (v.abs() < _minVelocity) return;
+        // A page reached from "Lainnya": swiping right goes back home.
+        if (at < 0) {
+          if (v > 0) onSelect(pages.first);
+          return;
+        }
+        final next = at + (v < 0 ? 1 : -1);
+        if (next < 0 || next >= pages.length) return;
+        HapticFeedback.selectionClick();
+        onSelect(pages[next]);
+      },
+      child: child,
+    );
+  }
+}
+
 /// Phone navigation: one rounded pill holding the bottom-bar pages plus
 /// "Lainnya" — the current page as a raised chip with its label, the rest
 /// as icons — and a separate round "+" beside it.
@@ -154,38 +193,43 @@ class _PhoneBar extends StatelessWidget {
       (more, inMore, () => _showMore(context)),
     ];
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Color.lerp(c.surfaceAlt, c.textPrimary, dark ? 0.08 : 0.05),
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.3 : 0.08), blurRadius: 24, offset: const Offset(0, 8))],
-                  ),
-                  child: Row(
-                    children: [
-                      for (final (d, selected, onTap) in items)
-                        if (selected)
-                          Expanded(child: _BarItem(d: d, selected: true, onTap: onTap))
-                        else
-                          SizedBox(width: 44, child: _BarItem(d: d, selected: false, onTap: onTap)),
-                    ],
+    // Swipe up on the bar opens every other menu (the same sheet as
+    // "Lainnya"); swipe the sheet down anywhere to close it again.
+    return _SwipeUpToOpen(
+      onOpen: () => _showMore(context),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Color.lerp(c.surfaceAlt, c.textPrimary, dark ? 0.08 : 0.05),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.3 : 0.08), blurRadius: 24, offset: const Offset(0, 8))],
+                    ),
+                    child: Row(
+                      children: [
+                        for (final (d, selected, onTap) in items)
+                          if (selected)
+                            Expanded(child: _BarItem(d: d, selected: true, onTap: onTap))
+                          else
+                            SizedBox(width: 44, child: _BarItem(d: d, selected: false, onTap: onTap)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              if (onQuickAction != null) ...[
-                const SizedBox(width: 10),
-                _AddButton(onTap: onQuickAction!),
+                if (onQuickAction != null) ...[
+                  const SizedBox(width: 10),
+                  _AddButton(onTap: onQuickAction!),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -193,10 +237,16 @@ class _PhoneBar extends StatelessWidget {
   }
 
   void _showMore(BuildContext context) {
+    HapticFeedback.selectionClick();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      sheetAnimationStyle: const AnimationStyle(
+        duration: Duration(milliseconds: 340),
+        reverseDuration: Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+      ),
       builder: (ctx) => _MoreSheet(
         destinations: destinations,
         index: index,
@@ -207,6 +257,45 @@ class _PhoneBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Fires [onOpen] once per gesture when the finger moves up over [child]
+/// (a short flick or a slow 24px drag both count).
+class _SwipeUpToOpen extends StatefulWidget {
+  const _SwipeUpToOpen({required this.onOpen, required this.child});
+  final VoidCallback onOpen;
+  final Widget child;
+
+  @override
+  State<_SwipeUpToOpen> createState() => _SwipeUpToOpenState();
+}
+
+class _SwipeUpToOpenState extends State<_SwipeUpToOpen> {
+  double _dy = 0;
+  bool _fired = false;
+
+  void _fire() {
+    if (_fired) return;
+    _fired = true;
+    widget.onOpen();
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onVerticalDragStart: (_) {
+          _dy = 0;
+          _fired = false;
+        },
+        onVerticalDragUpdate: (d) {
+          _dy += d.primaryDelta ?? 0;
+          if (_dy < -24) _fire();
+        },
+        onVerticalDragEnd: (d) {
+          if ((d.primaryVelocity ?? 0) < -250) _fire();
+        },
+        child: widget.child,
+      );
 }
 
 class _BarItem extends StatelessWidget {
@@ -333,24 +422,20 @@ class _MoreSheet extends StatelessWidget {
                 Reveal(
                   index: k,
                   dy: 12,
-                  child: InertiaTile(
-                    child: _Tile(d: destinations[more[k]], selected: more[k] == index, onTap: () => onSelect(more[k])),
-                  ),
+                  child: _Tile(d: destinations[more[k]], selected: more[k] == index, onTap: () => onSelect(more[k])),
                 ),
               Reveal(
                 index: more.length,
                 dy: 12,
-                child: InertiaTile(
-                  child: _Tile(
-                    d: const AdaptiveDestination(
-                      icon: Icons.grid_view_rounded,
-                      selectedIcon: Icons.grid_view_rounded,
-                      label: 'Ruang Irsyads',
-                      hint: 'irsyads.com & lainnya',
-                    ),
-                    selected: false,
-                    onTap: () => Ecosystem.showSwitcher(context),
+                child: _Tile(
+                  d: const AdaptiveDestination(
+                    icon: Icons.grid_view_rounded,
+                    selectedIcon: Icons.grid_view_rounded,
+                    label: 'Ruang Irsyads',
+                    hint: 'irsyads.com & lainnya',
                   ),
+                  selected: false,
+                  onTap: () => Ecosystem.showSwitcher(context),
                 ),
               ),
             ],
