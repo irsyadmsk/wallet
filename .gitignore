@@ -58,3 +58,4 @@ assets/seed/*.json
 .playwright/
 # Strix pentest output — may contain proof-of-concept payloads.
 strix_runs/
+docs/play-store/raw/
