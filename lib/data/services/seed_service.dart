@@ -5,8 +5,7 @@ import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/domain/enums/account_group_type.dart';
 
-/// Seeds a minimal, usable starting point for a brand new install (no
-/// `.mmbak` import yet): one cash account and a small default category set.
+/// Seeds a minimal, usable starting point for a brand new install: one cash account and a small default category set.
 class SeedService {
   static const _uuid = Uuid();
 
@@ -23,7 +22,8 @@ class SeedService {
       ));
     }
 
-    if (categories.all(includeArchived: true).isEmpty) {
+    // Account-group rows (typeCode 2) share this box; only real categories count.
+    if (categories.all(includeArchived: true).every((c) => c.typeCode == TxCategoryModel.accountGroupType)) {
       final expense = <String, String>{
         '🍜': 'Makanan',
         '🚖': 'Transportasi',

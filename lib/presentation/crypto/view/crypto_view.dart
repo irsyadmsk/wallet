@@ -484,7 +484,7 @@ class _HoldingEditorState extends State<_HoldingEditor> {
           left: AppSpacing.lg,
           right: AppSpacing.lg,
           top: AppSpacing.lg,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
+          bottom: AppSpacing.lg,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

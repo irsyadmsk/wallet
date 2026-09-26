@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
@@ -38,11 +39,13 @@ Future<void> showAuthPanel(BuildContext context, {AuthMode mode = AuthMode.signI
       );
       return wide
           ? Align(alignment: Alignment.centerRight, child: SizedBox(width: 460, height: double.infinity, child: panel))
-          : Align(
-              alignment: Alignment.bottomCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.94),
-                child: panel,
+          : KeyboardInset(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.94),
+                  child: panel,
+                ),
               ),
             );
     },
@@ -129,7 +132,8 @@ class _AuthFormState extends State<AuthForm> {
     };
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(28, 20, 28, MediaQuery.viewInsetsOf(context).bottom + 28),
+      padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: AutofillGroup(
         child: Form(
           key: _form,

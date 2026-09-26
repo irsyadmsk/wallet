@@ -60,6 +60,12 @@ class MoneyManagerApp extends StatelessWidget {
           theme: AppTheme.light(theme.seedColor.value),
           darkTheme: AppTheme.dark(theme.seedColor.value),
           themeMode: theme.themeMode.value,
+          // Tapping outside a field closes the keyboard, as on native apps.
+          builder: (context, child) => GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child,
+          ),
           home: const _AuthGate(),
         ));
   }

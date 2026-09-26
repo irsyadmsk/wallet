@@ -1,5 +1,6 @@
-/// Account groups, mirroring the groups used by the Money Manager app so
-/// that a `.mmbak` import maps 1:1 without any manual re-classification.
+/// Built-in account groups. Their codes are stored on every account (and
+/// synced), so they never change; labels and icons can be customised per
+/// user — see `AccountGroupRepository`.
 enum AccountGroupType {
   cash(11, 'Tunai', isLiabilityDefault: false, icon: '💵'),
   bank(1, 'Bank', isLiabilityDefault: false, icon: '🏦'),

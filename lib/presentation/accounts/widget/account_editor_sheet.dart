@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:financial_recording/shared/widget/form/amount_field.dart';
 import 'package:financial_recording/core.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
+import 'package:financial_recording/data/repositories/account_group_repository.dart';
 import 'package:financial_recording/domain/enums/account_group_type.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
@@ -18,8 +20,8 @@ class AccountEditorSheet extends StatefulWidget {
 
 class _AccountEditorSheetState extends State<AccountEditorSheet> {
   late String name = widget.existing?.name ?? '';
-  late AccountGroupType group =
-      widget.existing?.group ?? AccountGroupType.cash;
+  final _groups = AccountGroupRepository();
+  late AccountGroup group = _groups.of(widget.existing?.groupCode ?? AccountGroupType.cash.code);
   late int openingBalance = widget.existing?.openingBalance ?? 0;
   late bool isLiability = widget.existing?.isLiability ?? group.isLiabilityDefault;
   late int colorValue = widget.existing?.colorValue ?? 0xFF4F46E5;
@@ -37,7 +39,7 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
           left: AppSpacing.lg,
           right: AppSpacing.lg,
           top: AppSpacing.lg,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
+          bottom: AppSpacing.lg,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,21 +58,24 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
               label: 'Kelompok akun',
               value: group.code,
               items: [
-                for (final g in AccountGroupType.displayOrder)
-                  {'value': g.code, 'label': '${g.icon} ${g.label}'}
+                for (final g in _groups.all())
+                  if (!g.hidden || g.code == group.code) {'value': g.code, 'label': '${g.icon} ${g.label}'}
               ],
               onChanged: (value, _) {
                 setState(() {
-                  final g = AccountGroupType.fromCode(value as int? ?? group.code);
+                  final g = _groups.of(value as int? ?? group.code);
                   group = g;
                   if (!isEditing) isLiability = g.isLiabilityDefault;
                 });
               },
             ),
-            QNumberField(
+            AmountField(
               label: isEditing ? 'Saldo awal' : 'Saldo saat ini',
-              value: openingBalance.toString(),
-              onChanged: (v) => openingBalance = int.tryParse(v.replaceAll(RegExp(r'[^0-9-]'), '')) ?? 0,
+              value: openingBalance,
+              allowNegative: true,
+              showQuickChips: false,
+              helper: isLiability ? 'Utang ditulis minus, mis. -1.500.000' : null,
+              onChanged: (v) => openingBalance = v,
             ),
             Row(
               children: [

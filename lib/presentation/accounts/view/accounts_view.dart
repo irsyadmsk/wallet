@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
-import 'package:financial_recording/domain/enums/account_group_type.dart';
+import 'package:financial_recording/data/repositories/account_group_repository.dart';
 import 'package:financial_recording/presentation/account_detail/view/account_detail_view.dart';
 import 'package:financial_recording/presentation/accounts/controller/accounts_controller.dart';
 import 'package:financial_recording/presentation/accounts/widget/account_editor_sheet.dart';
@@ -90,12 +90,11 @@ class AccountsView extends StatelessWidget {
                     ],
                   ),
                 ),
-                for (final group in AccountGroupType.displayOrder)
-                  if (groups[group]?.isNotEmpty == true)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                      child: _GroupSection(group: group, accounts: groups[group]!, controller: c),
-                    ),
+                for (final (group, accounts) in groups)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                    child: _GroupSection(group: group, accounts: accounts, controller: c),
+                  ),
               ],
             );
           }),
@@ -126,7 +125,7 @@ enum _AccountAction { edit, delete }
 
 class _GroupSection extends StatelessWidget {
   const _GroupSection({required this.group, required this.accounts, required this.controller});
-  final AccountGroupType group;
+  final AccountGroup group;
   final List<AccountModel> accounts;
   final AccountsController controller;
 

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:financial_recording/app/app_events.dart';
+import 'package:financial_recording/data/services/financial_health_service.dart';
 import 'package:financial_recording/data/services/smart_report_service.dart';
 import 'package:financial_recording/presentation/reports/controller/reports_controller.dart';
 import 'package:financial_recording/shared/responsive/adaptive_grid.dart';
@@ -14,6 +15,7 @@ import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/shared/theme/app_typography.dart';
 import 'package:financial_recording/shared/theme/chart_palette.dart';
+import 'package:financial_recording/shared/widget/health_score_card.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:financial_recording/shared/widget/section_card.dart';
 import 'package:financial_recording/util/money/money_format.dart';
@@ -160,6 +162,14 @@ class _SmartTab extends StatelessWidget {
             title: 'Langkah berikutnya',
             child: Column(children: [for (final n in r.actions) _NoteRow(note: n, action: true)]),
           ),
+        ),
+      ],
+      // Moved here from the dashboard, which now shows only today's numbers.
+      if (r.isCurrentMonth) ...[
+        const SizedBox(height: 16),
+        Reveal(
+          index: i++,
+          child: HealthScoreCard(report: FinancialHealthService().calculateReport()),
         ),
       ],
     ];

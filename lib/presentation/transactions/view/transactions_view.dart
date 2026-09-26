@@ -57,6 +57,7 @@ class TransactionsView extends StatelessWidget {
         final side = constraints.maxWidth > maxW ? (constraints.maxWidth - maxW) / 2 : 0.0;
         final hPad = EdgeInsets.only(left: side + pad.left, right: side + pad.right);
         return CustomScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           slivers: [
             SliverPadding(
               padding: hPad.copyWith(top: pad.top),

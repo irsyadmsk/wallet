@@ -19,8 +19,8 @@ import 'package:financial_recording/domain/enums/hive_enums.dart';
 const bool kDemoMode = bool.fromEnvironment('WALLET_DEMO');
 
 /// Adds `WALLET_DEMO_BIG=true` on top of demo mode to fill the ledger with
-/// a few thousand rows over dozens of accounts, the size of a real imported
-/// `.mmbak` ledger, for checking performance.
+/// a few thousand rows over dozens of accounts, the size of a long-running
+/// real ledger, for checking performance.
 const bool kDemoBig = bool.fromEnvironment('WALLET_DEMO_BIG');
 
 /// Illustrative ledger: four months of a household's income and spending.

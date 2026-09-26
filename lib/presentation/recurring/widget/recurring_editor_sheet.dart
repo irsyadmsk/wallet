@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:financial_recording/shared/widget/form/amount_field.dart';
 import 'package:financial_recording/core.dart';
 import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
@@ -37,7 +38,7 @@ class _RecurringEditorSheetState extends State<RecurringEditorSheet> {
           left: AppSpacing.lg,
           right: AppSpacing.lg,
           top: AppSpacing.lg,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
+          bottom: AppSpacing.lg,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,11 +56,10 @@ class _RecurringEditorSheetState extends State<RecurringEditorSheet> {
               ],
               onChanged: (v, _) => setState(() => type = TxType.values.firstWhere((t) => t.name == v)),
             ),
-            QNumberField(
-              label: 'Jumlah (Rp)',
-              value: amount == 0 ? '' : amount.toString(),
-              locale: 'id_ID',
-              onChanged: (v) => amount = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+            AmountField(
+              label: 'Jumlah',
+              value: amount,
+              onChanged: (v) => amount = v,
             ),
             QDropdownField(
               label: type == TxType.transfer ? 'Dari akun' : 'Akun',

@@ -27,7 +27,7 @@ APK dan web selalu diperbarui otomatis setiap ada perubahan di branch `main`.
 - 🏦 **Akun & saldo** — bank, dompet digital, tunai, kartu kredit, dll.; tambah/ubah/hapus lewat tombol *Tambah* dan menu ⋮, akun terhapus bisa dipulihkan.
 - ₿ **Portofolio kripto** — catat koin yang dimiliki, dinilai dengan harga Rupiah terkini dari CoinGecko, lengkap dengan perubahan 24 jam dan untung/rugi.
 - 🧠 **Laporan cerdas** — ringkasan naratif bulanan, perbandingan, deteksi lonjakan & langganan, proyeksi akhir bulan, rincian per anggota keluarga.
-- 📊 Dasbor, anggaran, target tabungan, utang & piutang, transaksi berulang, kalkulator (bagi tagihan, diskon, PPN), kalkulator zakat, pindai struk (OCR), impor `.mmbak`, ekspor CSV/JSON.
+- 📊 Dasbor, anggaran, target tabungan, utang & piutang, transaksi berulang, kalkulator (bagi tagihan, diskon, PPN), kalkulator zakat, pindai struk (OCR), ekspor CSV/JSON.
 - 🎨 Desain editorial yang responsif (HP, tablet, desktop) — lihat [DESIGN.md](DESIGN.md).
 
 ---
@@ -42,7 +42,6 @@ lib/
 │   ├── models/         # Model Hive + toJson/fromJson (typeId: hive_type_ids.dart)
 │   ├── repositories/   # Akses box per entitas, lookup id O(1) lewat BoxIdIndex
 │   ├── services/       # Ledger (saldo), laporan, zakat, harga kripto, sync ke Supabase
-│   └── import/         # Impor .mmbak (Money Manager)
 ├── presentation/   # Halaman (view + controller GetX) per fitur
 ├── shared/         # Tema, widget bersama, scaffold responsif
 └── util/           # Format uang, tanggal, dll.

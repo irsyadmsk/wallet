@@ -3,7 +3,6 @@ import 'package:financial_recording/data/repositories/box_id_index.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/services/sync/tombstone_service.dart';
-import 'package:financial_recording/domain/enums/account_group_type.dart';
 
 class AccountRepository {
   Box<AccountModel> get _box => Hive.box<AccountModel>(AppBoxes.accounts);
@@ -28,10 +27,11 @@ class AccountRepository {
 
   AccountModel? byId(String id) => _index.valueFor(_box, id);
 
-  Map<AccountGroupType, List<AccountModel>> grouped({bool includeArchived = false}) {
-    final result = <AccountGroupType, List<AccountModel>>{};
+  /// Accounts keyed by [AccountModel.groupCode].
+  Map<int, List<AccountModel>> grouped({bool includeArchived = false}) {
+    final result = <int, List<AccountModel>>{};
     for (final a in all(includeArchived: includeArchived)) {
-      result.putIfAbsent(a.group, () => []).add(a);
+      result.putIfAbsent(a.groupCode, () => []).add(a);
     }
     return result;
   }

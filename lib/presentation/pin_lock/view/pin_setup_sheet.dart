@@ -48,7 +48,7 @@ class _PinSetupSheetState extends State<PinSetupSheet> {
           left: AppSpacing.lg,
           right: AppSpacing.lg,
           top: AppSpacing.lg,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
+          bottom: AppSpacing.lg,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

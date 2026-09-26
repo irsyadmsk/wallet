@@ -14,7 +14,9 @@ class TxCategoryModel extends HiveObject {
   String? emoji;
 
   @HiveField(3)
-  int typeCode; // 0 = income, 1 = expense
+  int typeCode; // 0 = income, 1 = expense, 2 = account group (see AccountGroupRepository)
+
+  static const accountGroupType = 2;
 
   @HiveField(4)
   String? parentId;

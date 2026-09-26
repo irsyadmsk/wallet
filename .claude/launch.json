@@ -6,6 +6,12 @@
       "runtimeExecutable": "C:\\Users\\T6N0CV02S35823C\\flutter\\bin\\flutter.bat",
       "runtimeArgs": ["run", "-d", "web-server", "--web-port", "8765", "--web-hostname", "0.0.0.0"],
       "port": 8765
+    },
+    {
+      "name": "web-demo-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8767", "--directory", "build/web-demo"],
+      "port": 8767
     }
   ]
 }
