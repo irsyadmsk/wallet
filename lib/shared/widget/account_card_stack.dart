@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/widget/bank_card_tile.dart';
@@ -62,16 +63,27 @@ class _AccountCardStackState extends State<AccountCardStack> with TickerProvider
   void initState() {
     super.initState();
     _order = [for (final a in widget.accounts) a.id];
+    _restoreOrder();
+  }
+
+  /// The arrangement is remembered per device, so the card the user put in
+  /// front is still there next time the app opens.
+  Future<void> _restoreOrder() async {
+    final saved = await CardOrderPrefs.load();
+    if (!mounted || saved.isEmpty) return;
+    setState(() => _order = CardOrderPrefs.apply(saved, [for (final a in widget.accounts) a.id]));
+  }
+
+  void _setOrder(List<String> order) {
+    setState(() => _order = order);
+    CardOrderPrefs.save(order);
   }
 
   @override
   void didUpdateWidget(AccountCardStack old) {
     super.didUpdateWidget(old);
     // Keep the user's arrangement; new accounts come in at the front.
-    final ids = {for (final a in widget.accounts) a.id};
-    final kept = _order.where(ids.contains).toList();
-    final added = [for (final a in widget.accounts) if (!kept.contains(a.id)) a.id];
-    _order = [...added, ...kept];
+    _order = CardOrderPrefs.apply(_order, [for (final a in widget.accounts) a.id]);
   }
 
   @override
@@ -91,15 +103,13 @@ class _AccountCardStackState extends State<AccountCardStack> with TickerProvider
   void _bringToFront(String id) {
     if (_order.first == id) return;
     HapticFeedback.selectionClick();
-    setState(() => _order = [id, ..._order.where((x) => x != id)]);
+    _setOrder([id, ..._order.where((x) => x != id)]);
   }
 
   void _cycle({required bool forward}) {
     if (_order.length < 2) return;
     HapticFeedback.selectionClick();
-    setState(() {
-      _order = forward ? [..._order.skip(1), _order.first] : [_order.last, ..._order.take(_order.length - 1)];
-    });
+    _setOrder(forward ? [..._order.skip(1), _order.first] : [_order.last, ..._order.take(_order.length - 1)]);
   }
 
   void _onDragUpdate(DragUpdateDetails d) {
@@ -231,6 +241,35 @@ class _AccountCardStackState extends State<AccountCardStack> with TickerProvider
           child: _cardFor(a, front: true),
         ),
       );
+}
+
+/// Device-local memory of the card stack's order (account ids, front first).
+class CardOrderPrefs {
+  static const _key = 'wallet.cardOrder';
+
+  static Future<List<String>> load() async {
+    try {
+      return (await SharedPreferences.getInstance()).getStringList(_key) ?? const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  static Future<void> save(List<String> order) async {
+    try {
+      await (await SharedPreferences.getInstance()).setStringList(_key, order);
+    } catch (_) {}
+  }
+
+  /// [saved] order for the accounts that still exist, then any accounts
+  /// added since (in their list order, ahead of the rest — new cards are
+  /// shown in front, as when they're added while the app is open).
+  static List<String> apply(List<String> saved, List<String> current) {
+    final ids = current.toSet();
+    final kept = saved.where(ids.contains).toList();
+    final added = current.where((id) => !kept.contains(id)).toList();
+    return [...added, ...kept];
+  }
 }
 
 class _AddPill extends StatelessWidget {
