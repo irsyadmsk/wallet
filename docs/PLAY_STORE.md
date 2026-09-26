@@ -9,6 +9,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 | Android App Bundle (`.aab`) bertanda tangan | ✅ CI membangun `wallet.aab` di Release **APK terbaru** setiap push ke `main` |
 | Kunci unggah tetap | ✅ Keystore `wallet-release.jks` (secret `ANDROID_KEYSTORE_*`), cadangan di `C:\Users\T6N0CV02S35823C\.wallet-signing\` |
 | `versionCode` naik tiap build | ✅ = nomor run GitHub Actions |
+| Nama versi & catatan rilis | ✅ `version:` di `pubspec.yaml` (kini **1.3.0**), riwayat di [`CHANGELOG.md`](../CHANGELOG.md), teks *Yang baru* di `docs/play-store/whatsnew-id-ID.txt` |
 | Ikon aplikasi (adaptif + 512 px) | ✅ `docs/play-store/icon-512.png`, dibuat oleh `tool/make_icons.py` |
 | Kebijakan privasi (URL publik) | ✅ `https://wallet.irsyads.com/privasi` (tayang setelah merge) |
 | Hapus akun di dalam aplikasi | ✅ Pengaturan › Zona bahaya › Hapus akun permanen |
@@ -67,10 +68,12 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 
 ## 5. Uji tertutup lalu produksi
 
-1. *Testing › Closed testing* → buat track, unggah `wallet.aab` dari Release **APK terbaru**.
+1. *Testing › Closed testing* → buat track, unggah `wallet.aab` dari Release **APK terbaru**. Nama rilis: versi di `pubspec.yaml` (mis. `1.3.0`); kolom *Yang baru di rilis ini*: salin isi `docs/play-store/whatsnew-id-ID.txt`.
 2. Undang penguji lewat email atau Google Group. Akun pribadi wajib **≥ 12 penguji aktif selama 14 hari**; keluarga dan teman bisa jadi penguji.
 3. Setelah 14 hari: ajukan *Apply for production*, isi pertanyaan singkat tentang hasil uji, lalu tunggu review (biasanya 1–7 hari).
 4. Rilis produksi bertahap (misalnya 20% → 100%).
+
+**Setiap rilis berikutnya:** naikkan `version:` di `pubspec.yaml` dan `AppConfig.appVersion` (tes `version_test.dart` memastikan keduanya sama), tambah bagian baru di atas `CHANGELOG.md`, perbarui `whatsnew-id-ID.txt` (≤ 500 karakter), lalu unggah `wallet.aab` terbaru ke track yang sama.
 
 ## 6. Otomatisasi setelah akun ada (opsional, saya kerjakan)
 
