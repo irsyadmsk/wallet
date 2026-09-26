@@ -20,7 +20,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 **Yang masih perlu Anda siapkan sebelum mengisi Play Console:**
 
 1. ~~Email dukungan~~ ✅ `irsyad.msk@gmail.com` (dipakai di kebijakan privasi, halaman hapus akun, dan kolom kontak Play).
-2. ~~Screenshot~~ ✅ `docs/play-store/screenshot-*-light.png` (5 layar, 1080×2160, data demo). Versi gelap juga ada. Dibuat ulang dengan `tool/store_screenshots.py`.
+2. ~~Screenshot~~ ✅ **Gambar toko berjudul** `docs/play-store/listing-1…6-*.png` (1080×1920, 9:16, layar dalam bingkai HP + judul) — pakai ini di Play Console. Dibuat ulang dengan `tool/store_listing.py <build web demo>`. Tangkapan polos lama `screenshot-*.png` (tool/store_screenshots.py) masih ada sebagai cadangan.
 3. ~~Feature graphic~~ ✅ `docs/play-store/feature-graphic.png` (1024×500), dibuat dengan `tool/make_feature_graphic.py`.
 4. **Akun uji untuk tim review Google**, karena aplikasi wajib login. Buat satu akun Supabase khusus (misalnya `review@irsyads.com`) dan isi dengan data contoh.
 
