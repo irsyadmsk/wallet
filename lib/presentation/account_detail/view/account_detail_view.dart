@@ -73,17 +73,17 @@ class AccountDetailView extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          (account?.cachedBalance ?? 0).rupiah,
+                          (account?.cachedBalance ?? 0).money(account?.currencyCode),
                           style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         Row(
                           children: [
                             Expanded(
-                              child: _Stat(label: 'Masuk bulan ini', value: c.monthIncome.value.rupiah, color: colors.income),
+                              child: _Stat(label: 'Masuk bulan ini', value: c.monthIncome.value.money(account?.currencyCode), color: colors.income),
                             ),
                             Expanded(
-                              child: _Stat(label: 'Keluar bulan ini', value: c.monthExpense.value.rupiah, color: colors.expense),
+                              child: _Stat(label: 'Keluar bulan ini', value: c.monthExpense.value.money(account?.currencyCode), color: colors.expense),
                             ),
                           ],
                         ),

@@ -105,7 +105,7 @@ class BankCardTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  account.cachedBalance.rupiah,
+                  account.cachedBalance.money(account.currencyCode),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,

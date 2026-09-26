@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:financial_recording/data/services/currency/currency.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_typography.dart';
 import 'package:financial_recording/shared/widget/calculator_dialog.dart';
@@ -29,7 +30,12 @@ class AmountField extends StatefulWidget {
     this.focusNode,
     this.textInputAction = TextInputAction.done,
     this.onSubmitted,
+    this.currency = Currency.idr,
   });
+
+  /// Currency code of the amount ([Currency.all]); decides the prefix and how
+  /// many decimals can be typed. [value] is in that currency's smallest unit.
+  final String currency;
 
   final int value;
   final ValueChanged<int> onChanged;
@@ -55,13 +61,16 @@ class AmountField extends StatefulWidget {
 
 class _AmountFieldState extends State<AmountField> {
   late final TextEditingController _controller = TextEditingController(text: _format(widget.value));
+  Currency get _cur => Currency.of(widget.currency);
   late final FocusNode _focus = widget.focusNode ?? FocusNode();
-  late final ThousandsFormatter _formatter = ThousandsFormatter(allowNegative: widget.allowNegative);
+  late ThousandsFormatter _formatter = _makeFormatter();
+
+  ThousandsFormatter _makeFormatter() => ThousandsFormatter(allowNegative: widget.allowNegative, decimals: _cur.decimals);
 
   static const _quickAdds = [10000, 20000, 50000, 100000];
 
-  String _format(int v) => v == 0 ? '' : formatThousands(v);
-  int get _current => parseThousands(_controller.text, allowNegative: widget.allowNegative);
+  String _format(int v) => v == 0 ? '' : formatAmount(v, decimals: Currency.of(widget.currency).decimals);
+  int get _current => parseAmount(_controller.text, decimals: _cur.decimals, allowNegative: widget.allowNegative);
 
   @override
   void initState() {
@@ -72,6 +81,12 @@ class _AmountFieldState extends State<AmountField> {
   @override
   void didUpdateWidget(AmountField old) {
     super.didUpdateWidget(old);
+    if (old.currency != widget.currency) {
+      // Switching account currency: same number, new unit rules.
+      _formatter = _makeFormatter();
+      _set(widget.value, notify: false);
+      return;
+    }
     // A value pushed in from outside (OCR, calculator, a suggestion chip).
     if (widget.value != _current) _set(widget.value, notify: false);
   }
@@ -102,7 +117,8 @@ class _AmountFieldState extends State<AmountField> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final value = _current;
-    final words = amountInWords(value);
+    final idr = _cur.isRupiah;
+    final words = idr ? amountInWords(value) : '';
     final large = widget.large;
     final textColor = large && value != 0 ? (widget.accent ?? c.textPrimary) : c.textPrimary;
 
@@ -115,7 +131,7 @@ class _AmountFieldState extends State<AmountField> {
             controller: _controller,
             focusNode: _focus,
             autofocus: widget.autofocus,
-            keyboardType: TextInputType.numberWithOptions(signed: widget.allowNegative),
+            keyboardType: TextInputType.numberWithOptions(signed: widget.allowNegative, decimal: _cur.decimals > 0),
             textInputAction: widget.textInputAction,
             inputFormatters: [_formatter],
             // Keep the chips and the read-back line above the keyboard too.
@@ -131,7 +147,8 @@ class _AmountFieldState extends State<AmountField> {
             decoration: InputDecoration(
               labelText: widget.label,
               hintText: '0',
-              prefixText: 'Rp ',
+              prefixText: _cur.isGold ? null : '${_cur.symbol} ',
+              suffixText: _cur.isGold ? 'gram' : null,
               prefixStyle: large
                   ? AppTypography.numeric(size: 20, weight: FontWeight.w500, color: c.textSecondary)
                   : TextStyle(color: c.textSecondary),
@@ -146,7 +163,7 @@ class _AmountFieldState extends State<AmountField> {
                       icon: Icon(Icons.backspace_outlined, size: 20, color: c.textTertiary),
                       onPressed: () => _set(0),
                     ),
-                  if (widget.showCalculator)
+                  if (widget.showCalculator && idr)
                     IconButton(
                       tooltip: 'Kalkulator',
                       icon: Icon(Icons.calculate_outlined, color: c.primary),
@@ -164,7 +181,7 @@ class _AmountFieldState extends State<AmountField> {
                 style: TextStyle(fontSize: 12, color: c.textSecondary),
               ),
             ),
-          if (widget.showQuickChips && (large || _focus.hasFocus))
+          if (widget.showQuickChips && idr && (large || _focus.hasFocus))
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: SingleChildScrollView(

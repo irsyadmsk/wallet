@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
@@ -90,7 +91,8 @@ class AdaptiveScaffold extends StatelessWidget {
         // Berulang) sat under the bar and couldn't be tapped.
         body: Builder(builder: (context) {
           final mq = MediaQuery.of(context);
-          if (keyboardUp) return body;
+          final swipeable = _SwipePages(destinations: destinations, index: index, onSelect: onSelect, child: body);
+          if (keyboardUp) return swipeable;
           final bottom = _PhoneBar.height + mq.viewPadding.bottom;
           // Scaffold places its FAB from viewPadding, lists and SafeArea
           // read padding — set both.
@@ -99,7 +101,7 @@ class AdaptiveScaffold extends StatelessWidget {
               padding: mq.padding.copyWith(bottom: bottom > mq.padding.bottom ? bottom : mq.padding.bottom),
               viewPadding: mq.viewPadding.copyWith(bottom: bottom),
             ),
-            child: body,
+            child: swipeable,
           );
         }),
         bottomNavigationBar: _PhoneBar(
@@ -127,6 +129,43 @@ class AdaptiveScaffold extends StatelessWidget {
 }
 
 // ------------------------------------------------------------------ phone
+
+/// One-handed navigation: a quick horizontal swipe anywhere on a page moves
+/// to the neighbouring bottom-bar page (Beranda ⇄ Transaksi ⇄ Laporan).
+/// Horizontal lists, chips and swipeable rows inside the page claim their
+/// own drags first, so they keep working.
+class _SwipePages extends StatelessWidget {
+  const _SwipePages({required this.destinations, required this.index, required this.onSelect, required this.child});
+  final List<AdaptiveDestination> destinations;
+  final int index;
+  final ValueChanged<int> onSelect;
+  final Widget child;
+
+  static const _minVelocity = 450.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = [for (var i = 0; i < destinations.length; i++) if (destinations[i].showInBottomBar) i];
+    final at = pages.indexOf(index);
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (d) {
+        final v = d.primaryVelocity ?? 0;
+        if (v.abs() < _minVelocity) return;
+        // A page reached from "Lainnya": swiping right goes back home.
+        if (at < 0) {
+          if (v > 0) onSelect(pages.first);
+          return;
+        }
+        final next = at + (v < 0 ? 1 : -1);
+        if (next < 0 || next >= pages.length) return;
+        HapticFeedback.selectionClick();
+        onSelect(pages[next]);
+      },
+      child: child,
+    );
+  }
+}
 
 /// Phone navigation: one rounded pill holding the bottom-bar pages plus
 /// "Lainnya" — the current page as a raised chip with its label, the rest

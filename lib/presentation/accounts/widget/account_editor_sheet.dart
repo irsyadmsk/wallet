@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:financial_recording/data/repositories/tx_repository.dart';
+import 'package:financial_recording/data/services/currency/currency.dart';
 import 'package:financial_recording/shared/widget/form/amount_field.dart';
 import 'package:financial_recording/core.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
@@ -27,6 +29,14 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
   late int colorValue = widget.existing?.colorValue ?? 0xFF4F46E5;
   late String? iconPath = widget.existing?.iconPath;
   late int? dueDay = widget.existing?.dueDay;
+  late String currency = widget.existing?.currencyCode ?? Currency.idr;
+
+  /// An account's currency is fixed once it has transactions — changing it
+  /// would silently reinterpret every stored amount.
+  late final bool _currencyLocked =
+      widget.existing != null && TxRepository().all().any((t) => t.accountId == widget.existing!.id || t.toAccountId == widget.existing!.id);
+
+  bool get _isGoldGroup => group.code == AccountGroupType.gold.code;
 
   @override
   Widget build(BuildContext context) {
@@ -66,10 +76,62 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
                   final g = _groups.of(value as int? ?? group.code);
                   group = g;
                   if (!isEditing) isLiability = g.isLiabilityDefault;
+                  // Gold defaults to grams; leaving the gold group drops it.
+                  if (!_currencyLocked) {
+                    if (_isGoldGroup && currency == Currency.idr) currency = Currency.gold;
+                    if (!_isGoldGroup && currency == Currency.gold) currency = Currency.idr;
+                  }
                 });
               },
             ),
+            if (_isGoldGroup)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Catat emas sebagai', style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: 6),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: Currency.gold, label: Text('Gram'), icon: Icon(Icons.scale_outlined)),
+                        ButtonSegment(value: Currency.idr, label: Text('Nilai rupiah'), icon: Icon(Icons.payments_outlined)),
+                      ],
+                      selected: {currency == Currency.gold ? Currency.gold : Currency.idr},
+                      onSelectionChanged: _currencyLocked ? null : (v) => setState(() => currency = v.first),
+                      showSelectedIcon: false,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      currency == Currency.gold
+                          ? 'Saldo dicatat dalam gram; nilainya dihitung dari harga buyback emas hari ini.'
+                          : 'Saldo dicatat dalam rupiah, tidak mengikuti harga emas.',
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              )
+            else
+              QDropdownField(
+                label: 'Mata uang',
+                value: currency,
+                items: [
+                  for (final c in Currency.all)
+                    if (!c.isGold && (!_currencyLocked || c.code == currency))
+                      {'value': c.code, 'label': '${c.flag} ${c.code} · ${c.name}'},
+                ],
+                onChanged: (v, _) => setState(() => currency = v as String? ?? currency),
+              ),
+            if (_currencyLocked)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Mata uang tidak bisa diganti karena akun ini sudah punya transaksi.',
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                ),
+              ),
             AmountField(
+              currency: currency,
               label: isEditing ? 'Saldo awal' : 'Saldo saat ini',
               value: openingBalance,
               allowNegative: true,
@@ -156,7 +218,8 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
                         ..isLiability = isLiability
                         ..colorValue = colorValue
                         ..iconPath = iconPath
-                        ..dueDay = isLiability ? dueDay : null;
+                        ..dueDay = isLiability ? dueDay : null
+                        ..currencyCode = currency;
                       if (isEditing) {
                         // Opening balance used to be shown here but silently
                         // ignored on save. Shift the cached balance by the

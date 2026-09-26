@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
@@ -91,9 +92,9 @@ class TransactionsController extends GetxController {
       final day = t.date.day;
       final (inc, exp) = totals[day] ?? (0, 0);
       totals[day] = t.type == TxType.income
-          ? (inc + t.amount, exp)
+          ? (inc + t.idr, exp)
           : t.type == TxType.expense
-              ? (inc, exp + t.amount)
+              ? (inc, exp + t.idr)
               : (inc, exp);
     }
     return totals;
@@ -224,8 +225,8 @@ class TransactionsController extends GetxController {
     }
 
     final list = buckets.entries.map((e) {
-      final income = e.value.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.amount);
-      final expense = e.value.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.amount);
+      final income = e.value.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.idr);
+      final expense = e.value.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.idr);
       return TxGroup(key: e.key, label: labels[e.key] ?? e.key, items: e.value, income: income, expense: expense);
     }).toList();
 

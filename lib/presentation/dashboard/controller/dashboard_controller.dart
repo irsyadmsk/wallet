@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
@@ -62,8 +63,8 @@ class DashboardController extends GetxController {
     final to = DateTime(now.year, now.month + 1, 1);
 
     final monthTxs = _txs.query(TxQuery(from: from, to: to));
-    monthIncome.value = monthTxs.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.amount);
-    monthExpense.value = monthTxs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.amount);
+    monthIncome.value = monthTxs.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.idr);
+    monthExpense.value = monthTxs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.idr);
 
     recentTransactions.assignAll(_txs.query(TxQuery(limit: 5)));
 

@@ -1,3 +1,4 @@
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/models/budget_model/budget_model.dart';
 import 'package:financial_recording/data/repositories/budget_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
@@ -47,7 +48,7 @@ class BudgetServiceV2 {
       types: {TxType.expense},
       categoryIds: categoryIds,
     ));
-    return txs.where((t) => !t.isExcludedFromBudget).fold(0, (sum, t) => sum + t.amount);
+    return txs.where((t) => !t.isExcludedFromBudget).fold(0, (sum, t) => sum + t.idr);
   }
 
   BudgetProgress overallProgress(DateTime month) {
@@ -57,7 +58,7 @@ class BudgetServiceV2 {
     final spent = _txs
         .query(TxQuery(from: from, to: to, types: {TxType.expense}))
         .where((t) => !t.isExcludedFromBudget)
-        .fold(0, (sum, t) => sum + t.amount);
+        .fold(0, (sum, t) => sum + t.idr);
     return BudgetProgress(budget: budget, categoryId: null, limit: budget?.amount ?? 0, spent: spent, month: month);
   }
 

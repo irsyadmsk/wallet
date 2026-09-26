@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/data/repositories/tx_query.dart';
@@ -108,8 +109,8 @@ class ReportsController extends GetxController {
       final m = DateTime(now.year, now.month - i, 1);
       final next = DateTime(m.year, m.month + 1, 1);
       final txs = _txs.query(TxQuery(from: m, to: next));
-      final income = txs.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.amount);
-      final expense = txs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.amount);
+      final income = txs.where((t) => t.type == TxType.income).fold(0, (s, t) => s + t.idr);
+      final expense = txs.where((t) => t.type == TxType.expense).fold(0, (s, t) => s + t.idr);
       points.add(MonthPoint(m, income, expense));
     }
     monthly.assignAll(points);
@@ -118,13 +119,13 @@ class ReportsController extends GetxController {
 
     final (catFrom, catTo) = _categoryRange;
     final expenseTxs = _txs.query(TxQuery(from: catFrom, to: catTo, types: {TxType.expense}));
-    categoryPeriodTotal.value = expenseTxs.fold(0, (s, t) => s + t.amount);
+    categoryPeriodTotal.value = expenseTxs.fold(0, (s, t) => s + t.idr);
     final byCategory = <String, int>{};
     for (final t in expenseTxs) {
       final cat = t.categoryId == null ? null : _categories.byId(t.categoryId!);
       final parentId = cat?.parentId ?? cat?.id;
       final key = parentId ?? 'unknown';
-      byCategory[key] = (byCategory[key] ?? 0) + t.amount;
+      byCategory[key] = (byCategory[key] ?? 0) + t.idr;
     }
     final entries = byCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
     expenseByCategory.assignAll(_fold([
@@ -143,6 +144,8 @@ class ReportsController extends GetxController {
     final allTxs = _txs.all()..sort((a, b) => a.date.compareTo(b.date));
 
     final balances = <String, int>{for (final a in accounts) a.id: a.openingBalance};
+    final currencyOf = {for (final a in accounts) a.id: a.currencyCode};
+    final fx = CurrencyService.instance;
     var txIndex = 0;
     final points = <NetWorthPoint>[];
 
@@ -152,11 +155,12 @@ class ReportsController extends GetxController {
         final t = allTxs[txIndex];
         balances[t.accountId] = (balances[t.accountId] ?? 0) + t.signedAmountOnPrimaryAccount;
         if (t.isTransfer && t.toAccountId != null) {
-          balances[t.toAccountId!] = (balances[t.toAccountId!] ?? 0) + t.amount;
+          balances[t.toAccountId!] = (balances[t.toAccountId!] ?? 0) + t.receivedAmount;
         }
         txIndex++;
       }
-      final netWorth = balances.values.fold(0, (s, v) => s + v);
+      // Balances are per account currency; value them in rupiah today.
+      final netWorth = balances.entries.fold(0, (s, e) => s + fx.toIdr(e.value, currencyOf[e.key]));
       points.add(NetWorthPoint(DateTime(now.year, now.month - i, 1), netWorth));
     }
     netWorthHistory.assignAll(points);
@@ -164,12 +168,12 @@ class ReportsController extends GetxController {
 
   void _refreshComposition() {
     final accounts = _accounts.all();
-    final assets = accounts.where((a) => !a.isLiability && a.cachedBalance > 0).toList()
-      ..sort((a, b) => b.cachedBalance.compareTo(a.cachedBalance));
-    final liabilities = accounts.where((a) => a.isLiability && a.cachedBalance < 0).toList()
-      ..sort((a, b) => a.cachedBalance.compareTo(b.cachedBalance));
+    final assets = accounts.where((a) => !a.isLiability && a.balanceIdr > 0).toList()
+      ..sort((a, b) => b.balanceIdr.compareTo(a.balanceIdr));
+    final liabilities = accounts.where((a) => a.isLiability && a.balanceIdr < 0).toList()
+      ..sort((a, b) => a.balanceIdr.compareTo(b.balanceIdr));
 
-    assetComposition.assignAll(_fold([for (final a in assets) (a.name, a.cachedBalance)]));
-    liabilityComposition.assignAll(_fold([for (final l in liabilities) (l.name, -l.cachedBalance)]));
+    assetComposition.assignAll(_fold([for (final a in assets) (a.name, a.balanceIdr)]));
+    liabilityComposition.assignAll(_fold([for (final l in liabilities) (l.name, -l.balanceIdr)]));
   }
 }

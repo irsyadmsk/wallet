@@ -26,6 +26,22 @@ Future<T?> showAdaptiveSheet<T>(BuildContext context, {required WidgetBuilder bu
   );
 }
 
+/// Whether the on-screen keyboard is showing. Inside a [KeyboardInset]
+/// (which hides the inset from its child's [MediaQuery]) this reads the
+/// value it passes down, and rebuilds the caller when it changes.
+bool isKeyboardUp(BuildContext context) {
+  final scope = context.dependOnInheritedWidgetOfExactType<_KeyboardScope>();
+  return scope?.up ?? MediaQuery.viewInsetsOf(context).bottom > 0;
+}
+
+class _KeyboardScope extends InheritedWidget {
+  const _KeyboardScope({required this.up, required super.child});
+  final bool up;
+
+  @override
+  bool updateShouldNotify(_KeyboardScope old) => old.up != up;
+}
+
 /// Lifts a bottom sheet above the on-screen keyboard.
 ///
 /// The padding sits *outside* the sheet's scroll view, so the viewport ends
@@ -42,9 +58,17 @@ class KeyboardInset extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inset = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
+    // Eases the sheet up with the keyboard instead of jumping — on phones
+    // that report the inset in one step, and smooths per-frame updates on
+    // the rest.
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
       padding: EdgeInsets.only(bottom: inset),
-      child: MediaQuery.removeViewInsets(context: context, removeBottom: true, child: child),
+      child: _KeyboardScope(
+        up: inset > 0,
+        child: MediaQuery.removeViewInsets(context: context, removeBottom: true, child: child),
+      ),
     );
   }
 }

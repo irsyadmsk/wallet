@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/debt_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
@@ -48,7 +49,7 @@ class _ZakatViewState extends State<ZakatView> {
     final now = DateTime.now();
     final income = TxRepository()
         .query(TxQuery(from: DateTime(now.year, now.month, 1), to: DateTime(now.year, now.month + 1, 1), types: {TxType.income}))
-        .fold(0, (s, t) => s + t.amount);
+        .fold(0, (s, t) => s + t.idr);
     _income.text = income > 0 ? _fmt.format(income) : '';
     final assets = AccountRepository().totalAssets;
     _assets.text = assets > 0 ? _fmt.format(assets) : '';
