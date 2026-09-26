@@ -96,7 +96,7 @@ class _DashboardViewState extends State<DashboardView> {
                   index: i++,
                   child: _RecentSection(controller: c, onSeeAll: () => shell.goTo(AppPage.transactions)),
                 );
-                final accounts = Reveal(index: i++, child: _AccountsSection(controller: c));
+                final accounts = Reveal(index: i++, child: _AccountsSection(controller: c, hidden: _hidden));
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -429,8 +429,9 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _AccountsSection extends StatelessWidget {
-  const _AccountsSection({required this.controller});
+  const _AccountsSection({required this.controller, required this.hidden});
   final DashboardController controller;
+  final bool hidden;
 
   @override
   Widget build(BuildContext context) {
@@ -443,10 +444,12 @@ class _AccountsSection extends StatelessWidget {
           action: accounts.isEmpty ? null : 'Semua akun',
           onAction: () => Get.find<ShellController>().goTo(AppPage.accounts),
         ),
-        // The fanned stack is wider than its column on desktop; keep it inside.
-        ClipRect(
+        Padding(
+          // Room above for the tabs' shadows.
+          padding: const EdgeInsets.only(top: 4),
           child: AccountCardStack(
             accounts: accounts,
+            hideBalance: hidden,
             onTapAccount: (acc) async {
               await Navigator.push(context, MaterialPageRoute(builder: (_) => AccountDetailView(accountId: acc.id)));
               controller.refresh();
