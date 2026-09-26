@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:financial_recording/util/thousands_formatter/thousands_formatter.dart';
 import 'package:financial_recording/data/services/budget_service_v2.dart';
 import 'package:financial_recording/presentation/budgets/controller/budgets_controller.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
@@ -114,7 +115,7 @@ class BudgetsView extends StatelessWidget {
   }
 
   Future<void> _editBudget(BuildContext context, {required int initial, required Future<void> Function(int) onSave}) async {
-    final controller = TextEditingController(text: initial == 0 ? '' : initial.toString());
+    final controller = TextEditingController(text: initial == 0 ? '' : formatThousands(initial));
     final result = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -122,12 +123,14 @@ class BudgetsView extends StatelessWidget {
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
+          autofocus: true,
+          inputFormatters: [ThousandsFormatter()],
           decoration: const InputDecoration(prefixText: 'Rp '),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Batal')),
           FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(int.tryParse(controller.text) ?? 0),
+            onPressed: () => Navigator.of(ctx).pop(parseThousands(controller.text)),
             child: const Text('Simpan'),
           ),
         ],

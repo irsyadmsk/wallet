@@ -25,9 +25,8 @@ tertangkap sebelum merge.
 
 Diurutkan dari dampak terbesar.
 
-1. **Importer belum diuji dengan berkas `.mmbak` asli.** Semua uji memakai berkas
-   buatan dengan skema yang sama. Perlu satu kali uji dengan cadangan nyata
-   (terutama transfer antarakun dan transaksi berulang).
+1. ~~Importer `.mmbak` belum diuji dengan berkas asli.~~ Fitur impor Money
+   Manager dihapus (27 Sep 2026); cadangan & pemulihan kini hanya lewat JSON.
 2. **Setiap sinkron masih menghitung hash semua baris lokal** (≈0,1 dtk per 5.000
    baris). Cukup ringan, tetapi bisa dihilangkan dengan penanda "kotor" dari
    `box.watch()` sehingga push hanya memeriksa baris yang benar-benar berubah.

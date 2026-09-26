@@ -79,6 +79,8 @@ class AdaptiveScaffold extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
 
     if (context.isCompact) {
+      // While typing, the keyboard covers the bar; don't reserve room for it.
+      final keyboardUp = MediaQuery.viewInsetsOf(context).bottom > 0;
       return Scaffold(
         backgroundColor: c.surfaceAlt,
         extendBody: true,
@@ -88,6 +90,7 @@ class AdaptiveScaffold extends StatelessWidget {
         // Berulang) sat under the bar and couldn't be tapped.
         body: Builder(builder: (context) {
           final mq = MediaQuery.of(context);
+          if (keyboardUp) return body;
           final bottom = _PhoneBar.height + mq.viewPadding.bottom;
           // Scaffold places its FAB from viewPadding, lists and SafeArea
           // read padding — set both.

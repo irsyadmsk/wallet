@@ -13,7 +13,7 @@ import 'package:financial_recording/data/services/receipt_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
-import 'package:financial_recording/shared/widget/calculator_dialog.dart';
+import 'package:financial_recording/shared/widget/form/amount_field.dart';
 import 'package:financial_recording/shared/widget/receipt_preview_dialog.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 
@@ -103,203 +103,190 @@ class _FormTxViewState extends State<FormTxView> {
     final colors = context.colors;
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          left: AppSpacing.lg,
-          right: AppSpacing.lg,
-          top: AppSpacing.lg,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Handle bar on top of bottom sheet
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: colors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Text(
-              isEditing ? 'Ubah transaksi' : 'Transaksi baru',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Segmented Type Selector
-            SegmentedButton<TxType>(
-              segments: const [
-                ButtonSegment(value: TxType.expense, label: Text('Pengeluaran', maxLines: 1, softWrap: false)),
-                ButtonSegment(value: TxType.income, label: Text('Pemasukan', maxLines: 1, softWrap: false)),
-                ButtonSegment(value: TxType.transfer, label: Text('Transfer', maxLines: 1, softWrap: false)),
-              ],
-              selected: {type},
-              onSelectionChanged: (s) => setState(() {
-                type = s.first;
-                categoryId = null;
-              }),
-              showSelectedIcon: false,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Number field
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: QNumberField(
-                    label: 'Jumlah (Rp)',
-                    value: amount == 0 ? '' : amount.toString(),
-                    locale: 'id_ID',
-                    hideSuffix: true,
-                    onChanged: (v) => amount = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: BoxDecoration(
-                    color: colors.primaryContainer,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: IconButton(
-                    tooltip: 'Kalkulator',
-                    icon: Icon(Icons.calculate_outlined, color: colors.primary),
-                    onPressed: () async {
-                      final result = await CalculatorDialog.show(context, initial: amount);
-                      if (result != null && result >= 0) {
-                        setState(() => amount = result);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-
-            // Account picker
-            QDropdownField(
-              label: type == TxType.transfer ? 'Dari akun' : 'Akun',
-              value: accountId,
-              items: _accountItems,
-              onChanged: (v, _) => setState(() => accountId = v as String?),
-            ),
-
-            if (type == TxType.transfer)
-              QDropdownField(
-                label: 'Ke akun',
-                value: toAccountId,
-                items: [
-                  for (final item in _accountItems)
-                    if (item['value'] != accountId) item,
-                ],
-                onChanged: (v, _) => setState(() => toAccountId = v as String?),
-              )
-            else
-              QDropdownField(
-                label: 'Kategori',
-                value: categoryId,
-                items: _categoryItems,
-                onChanged: (v, _) => setState(() {
-                  categoryId = v as String?;
-                  _categoryTouched = true;
-                  _categoryAuto = false;
-                }),
-              ),
-
-            if (type == TxType.transfer)
-              QNumberField(
-                label: 'Biaya transfer (opsional)',
-                value: transferFee == 0 ? '' : transferFee.toString(),
-                locale: 'id_ID',
-                helper: 'Potongan biaya admin — akun tujuan tetap menerima jumlah penuh',
-                onChanged: (v) => transferFee = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-              ),
-
-            if (type == TxType.expense && !isEditing)
-              QDropdownField(
-                label: 'Jumlah cicilan',
-                value: installments,
-                items: [
-                  {'value': 1, 'label': 'Tidak dicicil'},
-                  for (final n in [2, 3, 6, 9, 12]) {'value': n, 'label': '$n bulan'},
-                ],
-                onChanged: (v, _) => setState(() => installments = v as int? ?? 1),
-              ),
-
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: QDatePicker(
-                    label: 'Tanggal',
-                    value: date,
-                    onChanged: (v) => date = v,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  flex: 2,
-                  child: QTimePicker(
-                    label: 'Jam',
-                    value: time,
-                    onChanged: (v) => time = v ?? time,
-                  ),
-                ),
-              ],
-            ),
-
-            QMemoField(
-              label: 'Catatan (opsional)',
-              value: memo,
-              onChanged: _onMemoChanged,
-              maxLines: 2,
-            ),
-            if (_categoryAuto && categoryId != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  children: [
-                    Icon(Icons.auto_awesome_rounded, size: 14, color: colors.primary),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Kategori dipilih otomatis dari riwayat: ${_categories.pathName(categoryId!)}',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Flexible(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Handle bar on top of bottom sheet
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: colors.border,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            if (!isEditing && _memoSuggestions.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  for (final s in _memoSuggestions)
-                    ActionChip(
-                      avatar: const Icon(Icons.history_rounded, size: 16),
-                      label: Text(s.memo ?? ''),
-                      onPressed: () => _applyMemoSuggestion(s),
+                  ),
+                  Text(
+                    isEditing ? 'Ubah transaksi' : 'Transaksi baru',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Segmented Type Selector
+                  SegmentedButton<TxType>(
+                    segments: const [
+                      ButtonSegment(value: TxType.expense, label: Text('Pengeluaran', maxLines: 1, softWrap: false)),
+                      ButtonSegment(value: TxType.income, label: Text('Pemasukan', maxLines: 1, softWrap: false)),
+                      ButtonSegment(value: TxType.transfer, label: Text('Transfer', maxLines: 1, softWrap: false)),
+                    ],
+                    selected: {type},
+                    onSelectionChanged: (s) => setState(() {
+                      type = s.first;
+                      categoryId = null;
+                    }),
+                    showSelectedIcon: false,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  AmountField(
+                    label: 'Jumlah',
+                    value: amount,
+                    large: true,
+                    // New entries open straight into the amount with the keyboard up.
+                    autofocus: !isEditing && amount == 0,
+                    accent: switch (type) {
+                      TxType.expense => colors.expense,
+                      TxType.income => colors.income,
+                      TxType.transfer => colors.transfer,
+                    },
+                    onChanged: (v) => amount = v,
+                  ),
+
+                  // Account picker
+                  QDropdownField(
+                    label: type == TxType.transfer ? 'Dari akun' : 'Akun',
+                    value: accountId,
+                    items: _accountItems,
+                    onChanged: (v, _) => setState(() => accountId = v as String?),
+                  ),
+
+                  if (type == TxType.transfer)
+                    QDropdownField(
+                      label: 'Ke akun',
+                      value: toAccountId,
+                      items: [
+                        for (final item in _accountItems)
+                          if (item['value'] != accountId) item,
+                      ],
+                      onChanged: (v, _) => setState(() => toAccountId = v as String?),
+                    )
+                  else
+                    QDropdownField(
+                      label: 'Kategori',
+                      value: categoryId,
+                      items: _categoryItems,
+                      onChanged: (v, _) => setState(() {
+                        categoryId = v as String?;
+                        _categoryTouched = true;
+                        _categoryAuto = false;
+                      }),
                     ),
+
+                  if (type == TxType.transfer)
+                    AmountField(
+                      label: 'Biaya transfer (opsional)',
+                      value: transferFee,
+                      showCalculator: false,
+                      helper: 'Akun tujuan tetap menerima jumlah penuh',
+                      onChanged: (v) => transferFee = v,
+                    ),
+
+                  if (type == TxType.expense && !isEditing)
+                    QDropdownField(
+                      label: 'Jumlah cicilan',
+                      value: installments,
+                      items: [
+                        {'value': 1, 'label': 'Tidak dicicil'},
+                        for (final n in [2, 3, 6, 9, 12]) {'value': n, 'label': '$n bulan'},
+                      ],
+                      onChanged: (v, _) => setState(() => installments = v as int? ?? 1),
+                    ),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: QDatePicker(
+                          label: 'Tanggal',
+                          value: date,
+                          onChanged: (v) => date = v,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        flex: 2,
+                        child: QTimePicker(
+                          label: 'Jam',
+                          value: time,
+                          onChanged: (v) => time = v ?? time,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  QMemoField(
+                    label: 'Catatan (opsional)',
+                    value: memo,
+                    onChanged: _onMemoChanged,
+                    maxLines: 2,
+                  ),
+                  if (_categoryAuto && categoryId != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.auto_awesome_rounded, size: 14, color: colors.primary),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Kategori dipilih otomatis dari riwayat: ${_categories.pathName(categoryId!)}',
+                              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (!isEditing && _memoSuggestions.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        for (final s in _memoSuggestions)
+                          ActionChip(
+                            avatar: const Icon(Icons.history_rounded, size: 16),
+                            label: Text(s.memo ?? ''),
+                            onPressed: () => _applyMemoSuggestion(s),
+                          ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Receipt attachment section
+                  _buildReceiptSection(context, colors),
+
                 ],
               ),
-            ],
-            const SizedBox(height: AppSpacing.sm),
-
-            // Receipt attachment section
-            _buildReceiptSection(context, colors),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // Submit and Delete buttons
-            Row(
+            ),
+          ),
+          // Pinned under the scrolling fields so "Simpan" is always one tap
+          // away — also while the keyboard is up.
+          Container(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+            decoration: BoxDecoration(border: Border(top: BorderSide(color: colors.border))),
+            child: Row(
               children: [
                 if (isEditing) ...[
                   Expanded(
@@ -321,8 +308,8 @@ class _FormTxViewState extends State<FormTxView> {
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -330,108 +317,34 @@ class _FormTxViewState extends State<FormTxView> {
   Widget _buildReceiptSection(BuildContext context, AppColors colors) {
     final hasImage = imagePath != null && imagePath!.isNotEmpty;
 
+    // Optional, so it stays one compact row until a photo is attached.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            'Bukti Struk / Foto Transaksi',
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        if (!hasImage) ...[
-          if (ReceiptOcrService.isSupported)
-            InkWell(
-              onTap: scanning ? null : _scanReceipt,
-              borderRadius: BorderRadius.circular(AppRadii.lg),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(AppRadii.lg),
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1.2),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: colors.primary, shape: BoxShape.circle),
-                      child: scanning
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.document_scanner_outlined, color: Colors.white, size: 20),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          scanning ? 'Memindai struk…' : 'Pindai Struk (OCR)',
-                          style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
-                        ),
-                        Text(
-                          'Potret struk, jumlah & tanggal terisi otomatis',
-                          style: TextStyle(color: colors.textTertiary, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          InkWell(
-            onTap: _pickImage,
-            borderRadius: BorderRadius.circular(AppRadii.lg),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-              decoration: BoxDecoration(
-                color: colors.surfaceAlt,
-                borderRadius: BorderRadius.circular(AppRadii.lg),
-                border: Border.all(
-                  color: colors.border,
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colors.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.add_a_photo_outlined, color: colors.primary, size: 20),
+        if (!hasImage)
+          Row(
+            children: [
+              if (ReceiptOcrService.isSupported) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: scanning ? null : _scanReceipt,
+                    icon: scanning
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.document_scanner_outlined, size: 18),
+                    label: Text(scanning ? 'Memindai…' : 'Pindai struk', maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Lampirkan Foto Struk / Nota',
-                        style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13),
-                      ),
-                      Text(
-                        'Klik untuk memilih gambar dari galeri/berkas',
-                        style: TextStyle(color: colors.textTertiary, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                  label: const Text('Lampirkan foto', maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
               ),
-            ),
-          ),
-        ]
+            ],
+          )
         else
           Container(
             padding: const EdgeInsets.all(12),

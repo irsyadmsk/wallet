@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/data/repositories/account_group_repository.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/util/money/money_format.dart';
@@ -59,7 +60,7 @@ class BankCardTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    account.group.label,
+                    AccountGroupRepository().of(account.groupCode).label,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,

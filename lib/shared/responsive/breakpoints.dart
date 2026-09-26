@@ -49,7 +49,10 @@ extension ResponsiveX on BuildContext {
     }
   }
 
-  EdgeInsets get pagePadding => EdgeInsets.fromLTRB(gutter, gutter, gutter, gutter + 72);
+  /// The bottom clears whatever overlays the page: on phones the shell
+  /// reports its floating bar (plus the system gesture area) as padding, so
+  /// the last row of every list can scroll fully into view.
+  EdgeInsets get pagePadding => EdgeInsets.fromLTRB(gutter, gutter, gutter, gutter + MediaQuery.paddingOf(this).bottom);
 
   double get contentMaxWidth {
     switch (windowSize) {

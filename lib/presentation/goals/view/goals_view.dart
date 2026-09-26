@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:financial_recording/util/thousands_formatter/thousands_formatter.dart';
 import 'package:financial_recording/data/models/goal_model/goal_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/presentation/goals/controller/goals_controller.dart';
+import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
@@ -122,8 +124,8 @@ class GoalsView extends StatelessWidget {
 
   void _showGoalEditor(BuildContext context, GoalsController c, {FinancialGoalModel? existing}) {
     final titleCtrl = TextEditingController(text: existing?.title ?? '');
-    final targetCtrl = TextEditingController(text: existing != null ? existing.targetAmount.toString() : '');
-    final currentCtrl = TextEditingController(text: existing != null ? existing.currentAmount.toString() : '0');
+    final targetCtrl = TextEditingController(text: existing != null ? formatThousands(existing.targetAmount) : '');
+    final currentCtrl = TextEditingController(text: existing != null ? formatThousands(existing.currentAmount) : '0');
     DateTime? selectedDate = existing?.targetDate;
     int selectedColor = existing?.colorValue ?? 0xFF0D9488;
 
@@ -131,7 +133,7 @@ class GoalsView extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
+      builder: (ctx) => KeyboardInset(child: StatefulBuilder(
         builder: (ctx, setModalState) {
           final colors = ctx.colors;
           return Container(
@@ -139,7 +141,7 @@ class GoalsView extends StatelessWidget {
               left: AppSpacing.lg,
               right: AppSpacing.lg,
               top: AppSpacing.lg,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
+              bottom: AppSpacing.xl,
             ),
             decoration: BoxDecoration(
               color: colors.surface,
@@ -176,8 +178,10 @@ class GoalsView extends StatelessWidget {
                   TextField(
                     controller: targetCtrl,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [ThousandsFormatter()],
                     decoration: const InputDecoration(
-                      labelText: 'Target Nominal (Rp)',
+                      labelText: 'Target Nominal',
+                      prefixText: 'Rp ',
                       prefixIcon: Icon(Icons.payments_outlined),
                     ),
                   ),
@@ -185,8 +189,10 @@ class GoalsView extends StatelessWidget {
                   TextField(
                     controller: currentCtrl,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [ThousandsFormatter()],
                     decoration: const InputDecoration(
-                      labelText: 'Sudah Terkumpul Saat Ini (Rp)',
+                      labelText: 'Sudah Terkumpul Saat Ini',
+                      prefixText: 'Rp ',
                       prefixIcon: Icon(Icons.account_balance_wallet_outlined),
                     ),
                   ),
@@ -242,7 +248,7 @@ class GoalsView extends StatelessWidget {
             ),
           );
         },
-      ),
+      )),
     );
   }
 
@@ -255,7 +261,7 @@ class GoalsView extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
+      builder: (ctx) => KeyboardInset(child: StatefulBuilder(
         builder: (ctx, setModalState) {
           final colors = ctx.colors;
           return Container(
@@ -263,13 +269,13 @@ class GoalsView extends StatelessWidget {
               left: AppSpacing.lg,
               right: AppSpacing.lg,
               top: AppSpacing.lg,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
+              bottom: AppSpacing.xl,
             ),
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            child: Column(
+            child: SingleChildScrollView(child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -295,8 +301,10 @@ class GoalsView extends StatelessWidget {
                   controller: amountCtrl,
                   autofocus: true,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [ThousandsFormatter()],
                   decoration: const InputDecoration(
-                    labelText: 'Nominal Tabungan (Rp)',
+                    labelText: 'Nominal Tabungan',
+                    prefixText: 'Rp ',
                     prefixIcon: Icon(Icons.savings_rounded),
                   ),
                 ),
@@ -344,10 +352,10 @@ class GoalsView extends StatelessWidget {
                   label: const Text('Tabung Sekarang'),
                 ),
               ],
-            ),
+            )),
           );
         },
-      ),
+      )),
     );
   }
 }

@@ -11,7 +11,7 @@ Future<T?> showAdaptiveSheet<T>(BuildContext context, {required WidgetBuilder bu
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: builder,
+      builder: (ctx) => KeyboardInset(child: builder(ctx)),
     );
   }
   return showDialog<T>(
@@ -24,4 +24,27 @@ Future<T?> showAdaptiveSheet<T>(BuildContext context, {required WidgetBuilder bu
       ),
     ),
   );
+}
+
+/// Lifts a bottom sheet above the on-screen keyboard.
+///
+/// The padding sits *outside* the sheet's scroll view, so the viewport ends
+/// at the top of the keyboard and a focused field scrolls into the visible
+/// part. (Padding inside the scroll view — the old pattern — made the
+/// viewport extend behind the keyboard, and Flutter happily "revealed" the
+/// field right under it.) The inset is removed from the child's
+/// [MediaQuery] so sheets that still add `viewInsets` themselves don't
+/// double it.
+class KeyboardInset extends StatelessWidget {
+  const KeyboardInset({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final inset = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: inset),
+      child: MediaQuery.removeViewInsets(context: context, removeBottom: true, child: child),
+    );
+  }
 }

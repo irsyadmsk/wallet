@@ -23,8 +23,8 @@ import 'package:financial_recording/data/services/sync/sync_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 
 /// Registers Hive adapters, opens every v2 box, and seeds a fresh install —
-/// either from a bundled `.mmbak`-derived JSON (see `tool/mmbak_to_json.dart`)
-/// when present, or with a minimal starter dataset otherwise.
+/// either from a bundled JSON backup (`assets/seed/my_data.json`) when
+/// present, or with a minimal starter dataset otherwise.
 Future<void> bootstrap() async {
   await initializeDateFormatting('id_ID', null);
   await Hive.initFlutter();

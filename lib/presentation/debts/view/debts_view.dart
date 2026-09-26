@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:financial_recording/util/thousands_formatter/thousands_formatter.dart';
 import 'package:financial_recording/data/models/debt_model/debt_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/presentation/debts/controller/debts_controller.dart';
@@ -452,7 +453,7 @@ class DebtsView extends StatelessWidget {
     bool isLoan = existing?.isLoan ?? false;
     final nameCtrl = TextEditingController(text: existing?.personName ?? '');
     final amountCtrl = TextEditingController(
-      text: existing != null ? existing.totalAmount.toString() : '',
+      text: existing != null ? formatThousands(existing.totalAmount) : '',
     );
     final notesCtrl = TextEditingController(text: existing?.notes ?? '');
     DateTime? dueDate = existing?.dueDate;
@@ -506,6 +507,7 @@ class DebtsView extends StatelessWidget {
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
+                inputFormatters: [ThousandsFormatter()],
                 decoration: const InputDecoration(
                   labelText: 'Nominal Total Pinjaman',
                   prefixText: 'Rp ',
@@ -623,7 +625,7 @@ class DebtsView extends StatelessWidget {
     DebtLoanModel debt,
   ) async {
     final colors = context.colors;
-    final payCtrl = TextEditingController(text: debt.remainingAmount.toString());
+    final payCtrl = TextEditingController(text: formatThousands(debt.remainingAmount));
     final notesCtrl = TextEditingController();
     bool syncWallet = true;
     final accounts = AccountRepository().all();
@@ -652,6 +654,7 @@ class DebtsView extends StatelessWidget {
               TextField(
                 controller: payCtrl,
                 keyboardType: TextInputType.number,
+                inputFormatters: [ThousandsFormatter()],
                 autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'Nominal Pembayaran',

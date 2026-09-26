@@ -13,9 +13,8 @@ import 'package:financial_recording/data/repositories/tx_repository.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/sync/replace_local.dart';
 
-/// Full JSON export/import of the v2 data (same shape `tool/mmbak_to_json.dart`
-/// produces), used for manual backup/restore and for seeding the app from a
-/// previously-generated `.mmbak` conversion.
+/// Full JSON export/import of the v2 data, used for manual backup/restore and
+/// for seeding the app from a bundled backup.
 class BackupService {
   BackupService({
     AccountRepository? accountRepository,

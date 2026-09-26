@@ -9,7 +9,6 @@ import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/config/app_config.dart';
 import 'package:financial_recording/presentation/auth/view/account_card.dart';
-import 'package:financial_recording/presentation/import_mmbak/view/import_mmbak_view.dart';
 import 'package:financial_recording/presentation/memo/view/memo_view.dart';
 import 'package:financial_recording/presentation/pin_lock/view/pin_setup_sheet.dart';
 import 'package:financial_recording/presentation/trash/view/trash_accounts_view.dart';
@@ -316,19 +315,10 @@ class SettingsView extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              _SectionLabel('Cadangan & Impor'),
+              _SectionLabel('Cadangan'),
               Card(
                 child: Obx(() => Column(
                       children: [
-                        ListTile(
-                          leading: const Icon(Icons.upload_file_rounded),
-                          title: const Text('Impor dari Money Manager (.mmbak)'),
-                          subtitle: const Text('Ganti atau gabungkan data dari file cadangan .mmbak'),
-                          trailing: const Icon(Icons.chevron_right_rounded),
-                          enabled: !c.busy.value,
-                          onTap: () => Get.to(() => const ImportMmbakView()),
-                        ),
-                        const Divider(height: 1),
                         ListTile(
                           leading: const Icon(Icons.save_alt_rounded),
                           title: const Text('Simpan Cadangan (JSON)'),
