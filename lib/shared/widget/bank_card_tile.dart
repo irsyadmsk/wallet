@@ -68,6 +68,7 @@ class BankCardTile extends StatelessWidget {
                       _Logo(account: account),
                       const SizedBox(width: 10),
                       Expanded(
+                        flex: 2,
                         child: Text(
                           account.name,
                           maxLines: 1,
@@ -76,9 +77,14 @@ class BankCardTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        _balance,
-                        style: TextStyle(color: muted, fontSize: 12.5, fontWeight: FontWeight.w600),
+                      // Long foreign balances give way to the name, never overflow.
+                      Flexible(
+                        child: Text(
+                          _balance,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: muted, fontSize: 12.5, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ],
                   ),
