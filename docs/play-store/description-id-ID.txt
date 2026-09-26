@@ -1,0 +1,55 @@
+Wallet — Buku Kas Keluarga membantu Anda mencatat, mengatur, dan memahami uang pribadi maupun keluarga. Sederhana, cepat, dan tanpa iklan.
+
+Rekening bank, dompet digital, uang tunai, tabungan dolar, sampai emas batangan — semuanya terkumpul dalam satu saldo total yang selalu mengikuti nilai hari ini.
+
+💳 SEMUA REKENING, SATU DOMPET
+• Kartu rekening bertumpuk seperti dompet sungguhan: ketuk atau geser untuk berganti, urutannya diingat.
+• Bank, dompet digital, tunai, tabungan, kartu prabayar, kartu kredit & PayLater.
+• Kelompok akun bisa diganti nama, diurutkan, atau dibuat sendiri.
+
+💵 DOLAR, VALAS & EMAS DENGAN NILAI HARI INI
+• Rekening dalam 18 mata uang: USD, SGD, MYR, SAR, EUR, JPY, dan lainnya.
+• Kurs dunia diperbarui otomatis; total saldo, laporan, dan anggaran dihitung dalam rupiah dengan kurs terbaru.
+• Simpan emas dalam gram atau nilai rupiah. Harga Antam per gram (jual & buyback) tampil setiap hari; emas dinilai dengan harga buyback.
+• Transfer antar mata uang dengan jumlah diterima sesuai kurs bank Anda.
+
+⚡ CATAT DALAM HITUNGAN DETIK
+• Pemasukan, pengeluaran, dan transfer dengan kategori dan catatan.
+• Titik ribuan muncul otomatis, nominal dibaca ulang ("1,25 juta"), tombol cepat +10rb/+50rb/000, dan kalkulator bawaan.
+• Catat cepat 1-tap untuk transaksi rutin, riwayat catatan terisi otomatis.
+• Pindai struk belanja untuk mengisi nominal dan tanggal.
+• Gestur satu tangan: geser untuk pindah halaman, geser transaksi untuk hapus atau catat lagi.
+
+👨‍👩‍👧‍👦 BUKU KAS KELUARGA
+Buat buku kas bersama dan undang anggota keluarga dengan kode. Semua anggota mencatat di buku yang sama, tersinkron otomatis, dan setiap transaksi menampilkan siapa yang mencatatnya.
+
+📊 ANGGARAN & LAPORAN YANG MUDAH DIPAHAMI
+• Anggaran bulanan per kategori, dengan peringatan saat mendekati batas.
+• Ringkasan bulanan dan perbandingan dengan bulan lalu.
+• Deteksi lonjakan pengeluaran, pembayaran rutin, dan proyeksi hingga akhir bulan.
+• Skor kesehatan keuangan dan rincian per anggota keluarga.
+
+🎯 RENCANAKAN KEUANGAN
+• Target tabungan dengan progres.
+• Utang & piutang beserta cicilannya.
+• Transaksi berulang seperti gaji dan tagihan.
+• Kalkulator zakat penghasilan, mal, dan fitrah.
+
+📲 CEK SALDO KARTU E-MONEY (NFC)
+Tempelkan kartu e-Money Mandiri, BRIZZI, TapCash, atau Flazz ke HP ber-NFC untuk membaca saldonya, langsung dari tombol di Beranda. Selisih saldo bisa dicatat ke akun Wallet setelah Anda periksa dan konfirmasi. Ketersediaan bergantung pada kartu dan perangkat.
+
+₿ PORTOFOLIO KRIPTO
+Catat aset kripto dan pantau estimasi nilainya dalam rupiah. Hanya untuk pencatatan, bukan jual beli.
+
+🔄 SINKRON & CADANGAN
+• Data tersinkron antarperangkat dan tetap bisa dipakai tanpa internet.
+• Ekspor transaksi ke CSV, simpan dan pulihkan cadangan JSON.
+
+🔐 PRIVASI & KEAMANAN
+• Kunci PIN untuk membuka aplikasi.
+• Tanpa iklan. Data Anda tidak dijual.
+• Akun dan seluruh data bisa dihapus kapan saja dari dalam aplikasi.
+
+Kebijakan privasi: https://wallet.irsyads.com/privasi
+
+Wallet — satu tempat untuk mencatat, mengelola, dan memahami keuangan pribadi serta keluarga.

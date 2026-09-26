@@ -18,6 +18,15 @@ void main() {
     expect(whatsNew.length, lessThanOrEqualTo(500));
   });
 
+  test('deskripsi Play dalam batas karakter (80 & 4000)', () {
+    final short = File('docs/play-store/short-description-id-ID.txt').readAsStringSync().trim();
+    final full = File('docs/play-store/description-id-ID.txt').readAsStringSync().trim();
+    expect(short.length, lessThanOrEqualTo(80));
+    expect(full.length, lessThanOrEqualTo(4000));
+    // Fitur yang sudah dihapus tidak boleh diiklankan.
+    expect(full.toLowerCase(), isNot(contains('mmbak')));
+  });
+
   test('urutan kartu tersimpan: akun terhapus dibuang, akun baru di depan', () {
     expect(CardOrderPrefs.apply(['b', 'x', 'a'], ['a', 'b', 'c']), ['c', 'b', 'a']);
     expect(CardOrderPrefs.apply([], ['a', 'b']), ['a', 'b']);

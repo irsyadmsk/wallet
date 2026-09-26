@@ -1,5 +1,9 @@
 import 'package:uuid/uuid.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
+import 'package:financial_recording/data/models/budget_model/budget_model.dart';
+import 'package:financial_recording/data/models/goal_model/goal_model.dart';
+import 'package:financial_recording/data/repositories/budget_repository.dart';
+import 'package:financial_recording/data/repositories/goal_repository.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
 import 'package:financial_recording/data/models/crypto_model/crypto_holding_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
@@ -99,6 +103,24 @@ Future<void> seedDemoData(DateTime now) async {
     imageUrl: 'https://coin-images.coingecko.com/coins/images/279/thumb/ethereum.png', note: 'Disimpan di Indodax',
   ));
   if (kDemoBig) await _seedBulk(now, [bank.id, wallet.id, savings.id], cats);
+  // A monthly budget and two savings goals, so those screens aren't empty.
+  final month = DateTime(now.year, now.month);
+  final budgets = BudgetRepository();
+  await budgets.upsert(BudgetModel(id: uuid.v4(), isTotal: true, amount: 6000000, startMonth: month));
+  for (final (name, limit) in [('Makanan', 2000000), ('Transportasi', 800000), ('Hiburan', 500000)]) {
+    await budgets.upsert(BudgetModel(id: uuid.v4(), categoryId: cat(name, 1), amount: limit, startMonth: month));
+  }
+  final goals = FinancialGoalRepository();
+  await goals.upsert(FinancialGoalModel(id: uuid.v4(), title: 'Dana Darurat', targetAmount: 30000000, currentAmount: 12500000, colorValue: 0xFF1F8A70));
+  await goals.upsert(FinancialGoalModel(
+    id: uuid.v4(),
+    title: 'Umroh Keluarga',
+    targetAmount: 60000000,
+    currentAmount: 18000000,
+    targetDate: DateTime(now.year + 1, 10),
+    colorValue: 0xFFB8892E,
+  ));
+
   await LedgerService().recomputeAllBalances();
 }
 
