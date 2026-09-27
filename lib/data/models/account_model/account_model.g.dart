@@ -34,13 +34,14 @@ class AccountModelAdapter extends TypeAdapter<AccountModel> {
       updatedAt: fields[14] as DateTime?,
       dueDay: fields[15] as int?,
       deletedAt: fields[16] as DateTime?,
+      includeInTotal: fields[17] as bool? ?? true,
     );
   }
 
   @override
   void write(BinaryWriter writer, AccountModel obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class AccountModelAdapter extends TypeAdapter<AccountModel> {
       ..writeByte(15)
       ..write(obj.dueDay)
       ..writeByte(16)
-      ..write(obj.deletedAt);
+      ..write(obj.deletedAt)
+      ..writeByte(17)
+      ..write(obj.includeInTotal);
   }
 
   @override

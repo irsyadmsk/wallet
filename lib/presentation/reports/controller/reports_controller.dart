@@ -145,6 +145,7 @@ class ReportsController extends GetxController {
 
     final balances = <String, int>{for (final a in accounts) a.id: a.openingBalance};
     final currencyOf = {for (final a in accounts) a.id: a.currencyCode};
+    final excluded = {for (final a in accounts) if (!a.includeInTotal) a.id};
     final fx = CurrencyService.instance;
     var txIndex = 0;
     final points = <NetWorthPoint>[];
@@ -160,7 +161,9 @@ class ReportsController extends GetxController {
         txIndex++;
       }
       // Balances are per account currency; value them in rupiah today.
-      final netWorth = balances.entries.fold(0, (s, e) => s + fx.toIdr(e.value, currencyOf[e.key]));
+      final netWorth = balances.entries
+          .where((e) => !excluded.contains(e.key))
+          .fold(0, (s, e) => s + fx.toIdr(e.value, currencyOf[e.key]));
       points.add(NetWorthPoint(DateTime(now.year, now.month - i, 1), netWorth));
     }
     netWorthHistory.assignAll(points);

@@ -147,10 +147,15 @@ class _AmountFieldState extends State<AmountField> {
             decoration: InputDecoration(
               labelText: widget.label,
               hintText: '0',
+              // Same size as the digits so "Rp" and the amount share one
+              // baseline (a smaller prefix sat visibly lower in hero mode).
+              hintStyle: large
+                  ? AppTypography.numeric(size: 30, weight: FontWeight.w600, color: c.textTertiary)
+                  : TextStyle(color: c.textTertiary),
               prefixText: _cur.isGold ? null : '${_cur.symbol} ',
               suffixText: _cur.isGold ? 'gram' : null,
               prefixStyle: large
-                  ? AppTypography.numeric(size: 20, weight: FontWeight.w500, color: c.textSecondary)
+                  ? AppTypography.numeric(size: 30, weight: FontWeight.w400, color: c.textSecondary)
                   : TextStyle(color: c.textSecondary),
               contentPadding: large ? const EdgeInsets.fromLTRB(16, 22, 8, 18) : null,
               floatingLabelBehavior: large ? FloatingLabelBehavior.always : null,

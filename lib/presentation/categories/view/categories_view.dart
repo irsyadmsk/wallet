@@ -14,14 +14,18 @@ import 'package:financial_recording/shared/theme/app_spacing.dart';
 /// Every list the user files things under — expense and income categories
 /// (with sub-categories) and account groups — editable in one place.
 class CategoriesView extends StatefulWidget {
-  const CategoriesView({super.key});
+  const CategoriesView({super.key, this.initialTab});
+
+  /// Set when opened on its own from a form ("Atur kategori"): 0 =
+  /// Pengeluaran, 1 = Pemasukan. Null inside the app shell.
+  final int? initialTab;
 
   @override
   State<CategoriesView> createState() => _CategoriesViewState();
 }
 
 class _CategoriesViewState extends State<CategoriesView> with SingleTickerProviderStateMixin {
-  late final tabController = TabController(length: 3, vsync: this);
+  late final tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab ?? 0);
 
   @override
   void dispose() {
@@ -47,7 +51,8 @@ class _CategoriesViewState extends State<CategoriesView> with SingleTickerProvid
     final c = Get.put(CategoriesController(), tag: 'categories');
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // Pushed as its own route there's no shell painting behind it.
+      backgroundColor: widget.initialTab == null ? Colors.transparent : null,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: const Text('Kategori'),

@@ -54,7 +54,12 @@ class _RecurringEditorSheetState extends State<RecurringEditorSheet> {
                 {'value': 'income', 'label': 'Pemasukan'},
                 {'value': 'transfer', 'label': 'Transfer'},
               ],
-              onChanged: (v, _) => setState(() => type = TxType.values.firstWhere((t) => t.name == v)),
+              onChanged: (v, _) => setState(() {
+                final next = TxType.values.firstWhere((t) => t.name == v, orElse: () => type);
+                // Expense and income have separate category lists.
+                if (next != type) categoryId = null;
+                type = next;
+              }),
             ),
             AmountField(
               label: 'Jumlah',

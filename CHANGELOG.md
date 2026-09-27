@@ -8,6 +8,32 @@ Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 [`docs/play-store/whatsnew-id-ID.txt`](docs/play-store/whatsnew-id-ID.txt)
 (maksimal 500 karakter).
 
+## 1.3.1 — 28 September 2026
+
+### Baru
+- **Tempel kartu e-money kapan saja**: saat Wallet tertutup, Android kini
+  menampilkan Wallet di pilihan *"Tag NFC terdeteksi"* dan langsung membuka
+  Cek Saldo Kartu.
+- **Opsi "Masukkan ke total"** per akun (menu ⋮ di halaman Akun, atau saat
+  mengubah akun). Akun yang dikeluarkan tetap tampil, tapi tidak dihitung
+  di total saldo, kekayaan bersih, dan grafik laporan.
+- Tombol **Atur kategori** di form transaksi, langsung ke tab Pemasukan
+  atau Pengeluaran.
+
+### Perbaikan
+- Kategori pemasukan tidak lagi berisi kategori pengeluaran (form
+  transaksi dan transaksi berulang) — daftar kini ikut berganti saat jenis
+  diubah.
+- Tombol **kembali** Android: dari halaman lain kembali ke Beranda; di
+  Beranda tekan dua kali untuk keluar.
+- Mode terang: tulisan pada tombol pilihan (filter transaksi, +10rb, dst.)
+  dan ikon status bar kini terbaca.
+- Halaman Akun: nama akun tidak lagi terpotong per huruf saat saldo
+  panjang; tombol *Bayar* pindah ke menu ⋮.
+- Transaksi Berulang: tampil jenis/kategori, frekuensi, akun, dan jumlah
+  berwarna; tidak ada lagi dua tombol + yang bertumpuk.
+- "Rp" dan angka di isian nominal kini sejajar.
+
 ## 1.3.0 — 27 September 2026
 
 Rilis pertama untuk uji tertutup Google Play.
