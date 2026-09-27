@@ -62,7 +62,7 @@ class AccountModel extends HiveObject {
 
   /// False keeps the account out of "Total saldo"/net worth (e.g. a
   /// savings pot the user doesn't want counted). Balance still shown.
-  @HiveField(17)
+  @HiveField(17, defaultValue: true)
   bool includeInTotal;
 
   AccountModel({

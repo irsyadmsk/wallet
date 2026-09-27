@@ -34,7 +34,7 @@ class AccountModelAdapter extends TypeAdapter<AccountModel> {
       updatedAt: fields[14] as DateTime?,
       dueDay: fields[15] as int?,
       deletedAt: fields[16] as DateTime?,
-      includeInTotal: fields[17] as bool? ?? true,
+      includeInTotal: fields[17] == null ? true : fields[17] as bool,
     );
   }
 
