@@ -45,7 +45,8 @@ QRIS disembunyikan otomatis bila aplikasi dipasang dari Play Store
    Shorebird" → Run workflow** (`.github/workflows/shorebird-init.yml`):
    Wallet terdaftar di Console dan `shorebird.yaml` didorong ke branch
    `chore/shorebird-init`. Gabungkan branch itu lewat pull request.
-5. Naikkan `version:` agar build berikutnya menjadi rilis Shorebird pertama.
+5. Build pertama setelah `shorebird.yaml` masuk ke `main` otomatis menjadi
+   rilis Shorebird untuk versi saat itu (belum ada tag `release-v<versi>`).
 6. Unggah `wallet.aab` dari rilis `apk-latest` ke Play Console seperti
    biasa, dan pasang ulang `wallet.apk` di HP. Mulai saat itu perbaikan
    kecil datang sendiri.
