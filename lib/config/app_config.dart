@@ -3,7 +3,7 @@
 class AppConfig {
   static const String appName = "Wallet";
   /// Must match `version:` in pubspec.yaml (guarded by test/version_test.dart).
-  static const String appVersion = "1.3.0";
+  static const String appVersion = "1.3.1";
   static const String appAuthor = "Muhammad Irsyad Sirojul Khoeir";
   static const String appAuthorEmail = "irsyad.msk@gmail.com";
 

@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/app/demo_mode.dart';
+import 'package:financial_recording/app/launch_intents.dart';
+import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/presentation/auth/view/auth_panel.dart';
@@ -62,11 +65,25 @@ class MoneyManagerApp extends StatelessWidget {
           darkTheme: AppTheme.dark(theme.seedColor.value),
           themeMode: theme.themeMode.value,
           // Tapping outside a field closes the keyboard, as on native apps.
-          builder: (context, child) => GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: child,
-          ),
+          builder: (context, child) {
+            final dark = Theme.of(context).brightness == Brightness.dark;
+            // "Ikuti sistem" can flip while the app is open; keep the old
+            // form widgets' colours in step with it.
+            theme.syncLegacyGlobals();
+            // Status-bar icons follow the app's theme, not the phone's — a
+            // dark phone with the app in light mode drew white-on-white.
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: (dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark).copyWith(
+                statusBarColor: Colors.transparent,
+                systemNavigationBarColor: Colors.transparent,
+              ),
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                child: child,
+              ),
+            );
+          },
           home: const _AuthGate(),
         ));
   }
@@ -258,6 +275,7 @@ class _HomeShellState extends State<HomeShell> {
   /// Last shown page and which way the latest page change went (+1 right).
   late int _lastIndex = _shell.selectedIndex.value;
   int _direction = 1;
+  DateTime? _lastBack;
   final _seenVersion = <int, int>{};
 
   @override
@@ -277,6 +295,7 @@ class _HomeShellState extends State<HomeShell> {
     // Rates & gold price: at most hourly; a real change re-values totals.
     CurrencyService.instance.version.addListener(_invalidate);
     CurrencyService.instance.refresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) => LaunchIntents.listen(onNfc: _openCardReader));
     for (final box in openFinancialBoxes()) {
       _boxSubs.add(box.watch().listen((_) {
         _version++;
@@ -285,8 +304,21 @@ class _HomeShellState extends State<HomeShell> {
     }
   }
 
+  /// An e-money card was tapped and Wallet chosen from Android's NFC sheet.
+  bool _cardReaderOpen = false;
+  Future<void> _openCardReader() async {
+    if (!mounted || _cardReaderOpen) return;
+    _cardReaderOpen = true;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const EmoneyNfcView()),
+    );
+    _cardReaderOpen = false;
+    if (changed == true) _invalidate();
+  }
+
   @override
   void dispose() {
+    LaunchIntents.cancel();
     CurrencyService.instance.version.removeListener(_invalidate);
     _dataWorker.dispose();
     _pageWorker.dispose();
@@ -306,7 +338,30 @@ class _HomeShellState extends State<HomeShell> {
         _lastIndex = index;
       }
       final reduceMotion = AppMotion.skipPageMotion(context);
-      return AdaptiveScaffold(
+      // Android back: another page → Beranda; on Beranda, a second press
+      // within 2 s leaves the app (a single press used to close it).
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          if (shell.selectedIndex.value != AppPage.dashboard) {
+            shell.goTo(AppPage.dashboard);
+            return;
+          }
+          final now = DateTime.now();
+          if (_lastBack != null && now.difference(_lastBack!) < const Duration(seconds: 2)) {
+            SystemNavigator.pop();
+            return;
+          }
+          _lastBack = now;
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(const SnackBar(
+              content: Text('Tekan kembali sekali lagi untuk keluar'),
+              duration: Duration(seconds: 2),
+            ));
+        },
+        child: AdaptiveScaffold(
         destinations: _destinations,
         index: index,
         onSelect: shell.goTo,
@@ -333,6 +388,7 @@ class _HomeShellState extends State<HomeShell> {
             children: [...previousChildren, if (currentChild != null) currentChild],
           ),
           child: KeyedSubtree(key: ValueKey(index), child: _screens[index]),
+        ),
         ),
       );
     });

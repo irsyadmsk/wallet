@@ -43,18 +43,21 @@ class _QDropdownFieldState extends State<QDropdownField> {
   @override
   void initState() {
     super.initState();
+    _sync();
+  }
 
-    items = [];
-    for (final item in widget.items) {
-      items.add(item);
-    }
+  // Items and value can change after the first build (e.g. switching a form
+  // from Pengeluaran to Pemasukan swaps the category list), so re-read them
+  // on every rebuild instead of only once.
+  @override
+  void didUpdateWidget(covariant QDropdownField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
 
-    final values = widget.items
-        .where((i) => i['value'] == widget.value)
-        .toList();
-    if (values.isNotEmpty) {
-      selectedValue = values.first;
-    }
+  void _sync() {
+    items = List.of(widget.items);
+    selectedValue = items.where((i) => i['value'] == widget.value).firstOrNull;
   }
 
   @override

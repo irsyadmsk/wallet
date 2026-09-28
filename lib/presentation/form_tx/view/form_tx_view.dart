@@ -10,6 +10,7 @@ import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/data/repositories/tx_repository.dart';
 import 'package:financial_recording/data/services/category_suggester.dart';
+import 'package:financial_recording/presentation/categories/view/categories_view.dart';
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/receipt_ocr_service.dart';
 import 'package:financial_recording/data/services/receipt_service.dart';
@@ -204,6 +205,20 @@ class _FormTxViewState extends State<FormTxView> {
                         _categoryTouched = true;
                         _categoryAuto = false;
                       }),
+                    ),
+
+                  if (type != TxType.transfer)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Transform.translate(
+                        offset: const Offset(0, -14),
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                          onPressed: _manageCategories,
+                          icon: const Icon(Icons.tune_rounded, size: 16),
+                          label: Text(type == TxType.income ? 'Atur kategori pemasukan' : 'Atur kategori pengeluaran'),
+                        ),
+                      ),
                     ),
 
                   if (_crossCurrency)
@@ -551,6 +566,18 @@ class _FormTxViewState extends State<FormTxView> {
       if (matches.length >= 3) break;
     }
     setState(() => _memoSuggestions = matches);
+  }
+
+  /// Opens Kategori on the matching tab; new or renamed categories show up
+  /// in the picker as soon as the user comes back.
+  Future<void> _manageCategories() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => CategoriesView(initialTab: type == TxType.income ? 1 : 0),
+    ));
+    if (!mounted) return;
+    setState(() {
+      if (categoryId != null && _categories.byId(categoryId!) == null) categoryId = null;
+    });
   }
 
   void _applyMemoSuggestion(TxModel s) {

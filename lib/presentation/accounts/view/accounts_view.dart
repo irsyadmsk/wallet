@@ -128,7 +128,7 @@ Future<void> _editAccount(BuildContext context, AccountsController c, AccountMod
   if (result?.deletedId != null) await c.deleteAccount(result!.deletedId!);
 }
 
-enum _AccountAction { edit, delete }
+enum _AccountAction { pay, toggleTotal, edit, delete }
 
 class _GroupSection extends StatelessWidget {
   const _GroupSection({required this.group, required this.accounts, required this.controller});
@@ -140,7 +140,7 @@ class _GroupSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     // Rupiah value of the group, whatever currencies its accounts hold.
-    final subtotal = accounts.fold<int>(0, (s, a) => s + a.balanceIdr);
+    final subtotal = accounts.where((a) => a.includeInTotal).fold<int>(0, (s, a) => s + a.balanceIdr);
 
     return Card(
       child: Padding(
@@ -167,74 +167,133 @@ class _GroupSection extends StatelessWidget {
             // float mid-card as it did in a half-empty two-column grid.
             Column(
               children: [
-                for (final a in accounts)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    onTap: () async {
-                      await Get.to(() => AccountDetailView(accountId: a.id));
-                      controller.refresh();
-                    },
-                    onLongPress: () => _editAccount(context, controller, a),
-                    leading: AccountAvatar(account: a, radius: 18),
-                    title: Text(a.name),
-                    subtitle: a.currencyCode != Currency.idr
-                        ? Text('≈ ${a.balanceIdr.rupiah}', style: TextStyle(fontSize: 11.5, color: colors.textSecondary))
-                        : a.isLiability && a.dueDay != null
-                            ? Text('Jatuh tempo tgl ${a.dueDay}', style: TextStyle(fontSize: 11, color: colors.warning))
-                            : null,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          a.cachedBalance.money(a.currencyCode),
-                          style: AppTypography.numeric(
-                            size: 15,
-                            weight: FontWeight.w600,
-                            color: a.cachedBalance < 0 ? colors.danger : colors.textPrimary,
-                          ),
-                        ),
-                        PopupMenuButton<_AccountAction>(
-                          tooltip: 'Opsi ${a.name}',
-                          icon: Icon(Icons.more_vert_rounded, size: 20, color: colors.textSecondary),
-                          onSelected: (action) async {
-                            switch (action) {
-                              case _AccountAction.edit:
-                                await _editAccount(context, controller, a);
-                              case _AccountAction.delete:
-                                if (await confirmDeleteAccount(context, a)) await controller.deleteAccount(a.id);
-                            }
-                          },
-                          itemBuilder: (_) => const [
-                            PopupMenuItem(
-                              value: _AccountAction.edit,
-                              child: ListTile(leading: Icon(Icons.edit_rounded), title: Text('Ubah'), contentPadding: EdgeInsets.zero),
-                            ),
-                            PopupMenuItem(
-                              value: _AccountAction.delete,
-                              child: ListTile(leading: Icon(Icons.delete_outline_rounded), title: Text('Hapus'), contentPadding: EdgeInsets.zero),
-                            ),
-                          ],
-                        ),
-                        if (a.isLiability) ...[
-                          IconButton(
-                            tooltip: 'Bayar ${a.name}',
-                            icon: Icon(Icons.payments_rounded, size: 18, color: colors.primary),
-                            onPressed: () async {
-                              final saved = await showAdaptiveSheet<bool>(
-                                context,
-                                builder: (_) => FormTxView(
-                                  initialType: TxType.transfer,
-                                  initialToAccountId: a.id,
-                                  initialMemo: 'Bayar ${a.name}',
-                                ),
-                              );
-                              if (saved == true) controller.refresh();
-                            },
-                          ),
-                        ],
-                      ],
+                for (final a in accounts) _AccountRow(account: a, controller: controller),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Avatar · name (+ hint) · balance · menu. The name takes the free width
+/// and ellipsizes; a long balance shrinks to fit instead of squeezing the
+/// name into a one-letter-per-line column.
+class _AccountRow extends StatelessWidget {
+  const _AccountRow({required this.account, required this.controller});
+  final AccountModel account;
+  final AccountsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final a = account;
+    final hints = <Widget>[
+      if (a.currencyCode != Currency.idr)
+        Text('≈ ${a.balanceIdr.rupiah}', style: TextStyle(fontSize: 11.5, color: colors.textSecondary)),
+      if (a.isLiability && a.dueDay != null)
+        Text('Jatuh tempo tgl ${a.dueDay}', style: TextStyle(fontSize: 11.5, color: colors.warning)),
+      if (!a.includeInTotal)
+        Text('Tidak masuk total', style: TextStyle(fontSize: 11.5, color: colors.textTertiary)),
+    ];
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () async {
+        await Get.to(() => AccountDetailView(accountId: a.id));
+        controller.refresh();
+      },
+      onLongPress: () => _editAccount(context, controller, a),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            AccountAvatar(account: a, radius: 18),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(a.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyLarge),
+                  ...hints,
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            // Natural width, capped so a huge balance shrinks instead of
+            // crowding the name out.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.4),
+              child: Align(
+                alignment: Alignment.centerRight,
+                widthFactor: 1,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    a.cachedBalance.money(a.currencyCode),
+                    maxLines: 1,
+                    style: AppTypography.numeric(
+                      size: 15,
+                      weight: FontWeight.w600,
+                      color: !a.includeInTotal
+                          ? colors.textSecondary
+                          : a.cachedBalance < 0
+                              ? colors.danger
+                              : colors.textPrimary,
                     ),
                   ),
+                ),
+              ),
+            ),
+            PopupMenuButton<_AccountAction>(
+              tooltip: 'Opsi ${a.name}',
+              icon: Icon(Icons.more_vert_rounded, size: 20, color: colors.textSecondary),
+              onSelected: (action) async {
+                switch (action) {
+                  case _AccountAction.pay:
+                    final saved = await showAdaptiveSheet<bool>(
+                      context,
+                      builder: (_) => FormTxView(
+                        initialType: TxType.transfer,
+                        initialToAccountId: a.id,
+                        initialMemo: 'Bayar ${a.name}',
+                      ),
+                    );
+                    if (saved == true) controller.refresh();
+                  case _AccountAction.toggleTotal:
+                    a.includeInTotal = !a.includeInTotal;
+                    a.updatedAt = DateTime.now();
+                    await controller.saveAccount(a);
+                  case _AccountAction.edit:
+                    await _editAccount(context, controller, a);
+                  case _AccountAction.delete:
+                    if (await confirmDeleteAccount(context, a)) await controller.deleteAccount(a.id);
+                }
+              },
+              itemBuilder: (_) => [
+                if (a.isLiability)
+                  const PopupMenuItem(
+                    value: _AccountAction.pay,
+                    child: ListTile(leading: Icon(Icons.payments_rounded), title: Text('Bayar'), contentPadding: EdgeInsets.zero),
+                  ),
+                PopupMenuItem(
+                  value: _AccountAction.toggleTotal,
+                  child: ListTile(
+                    leading: Icon(a.includeInTotal ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                    title: Text(a.includeInTotal ? 'Jangan masukkan ke total' : 'Masukkan ke total'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: _AccountAction.edit,
+                  child: ListTile(leading: Icon(Icons.edit_rounded), title: Text('Ubah'), contentPadding: EdgeInsets.zero),
+                ),
+                const PopupMenuItem(
+                  value: _AccountAction.delete,
+                  child: ListTile(leading: Icon(Icons.delete_outline_rounded), title: Text('Hapus'), contentPadding: EdgeInsets.zero),
+                ),
               ],
             ),
           ],

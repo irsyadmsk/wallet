@@ -90,9 +90,11 @@ class AccountRepository {
 
   // Totals are in rupiah: foreign-currency and gold balances are valued at
   // the latest rate (see CurrencyService).
-  int get netWorth => all().fold(0, (sum, a) => sum + a.balanceIdr);
-  int get totalAssets => all().where((a) => !a.isLiability).fold(0, (sum, a) => sum + a.balanceIdr);
-  int get totalLiabilities => all().where((a) => a.isLiability).fold(0, (sum, a) => sum + a.balanceIdr);
+  // Accounts switched to "Jangan masukkan ke total" are left out.
+  Iterable<AccountModel> get _counted => all().where((a) => a.includeInTotal);
+  int get netWorth => _counted.fold(0, (sum, a) => sum + a.balanceIdr);
+  int get totalAssets => _counted.where((a) => !a.isLiability).fold(0, (sum, a) => sum + a.balanceIdr);
+  int get totalLiabilities => _counted.where((a) => a.isLiability).fold(0, (sum, a) => sum + a.balanceIdr);
 }
 
 extension AccountMoney on AccountModel {

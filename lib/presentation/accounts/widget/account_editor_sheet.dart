@@ -29,6 +29,7 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
   late int colorValue = widget.existing?.colorValue ?? 0xFF4F46E5;
   late String? iconPath = widget.existing?.iconPath;
   late int? dueDay = widget.existing?.dueDay;
+  late bool includeInTotal = widget.existing?.includeInTotal ?? true;
   late String currency = widget.existing?.currencyCode ?? Currency.idr;
 
   /// An account's currency is fixed once it has transactions — changing it
@@ -148,6 +149,15 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
                 const Expanded(child: Text('Perlakukan sebagai utang / liabilitas')),
               ],
             ),
+            Row(
+              children: [
+                Checkbox(
+                  value: includeInTotal,
+                  onChanged: (v) => setState(() => includeInTotal = v ?? true),
+                ),
+                const Expanded(child: Text('Masukkan ke total saldo')),
+              ],
+            ),
             if (isLiability)
               QDropdownField(
                 label: 'Tanggal jatuh tempo (opsional)',
@@ -219,6 +229,7 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
                         ..colorValue = colorValue
                         ..iconPath = iconPath
                         ..dueDay = isLiability ? dueDay : null
+                        ..includeInTotal = includeInTotal
                         ..currencyCode = currency;
                       if (isEditing) {
                         // Opening balance used to be shown here but silently

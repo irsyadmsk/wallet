@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Indonesian e-money cards (Mandiri e-money, Brizzi, TapCash, Flazz) are
+     ISO-DEP smart cards. Listing it makes Android offer Wallet in the
+     "Tag NFC terdeteksi — pilih aplikasi" sheet when a card is tapped. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <tech-list>
+        <tech>android.nfc.tech.IsoDep</tech>
+    </tech-list>
+    <tech-list>
+        <tech>android.nfc.tech.NfcA</tech>
+    </tech-list>
+    <tech-list>
+        <tech>android.nfc.tech.NfcB</tech>
+    </tech-list>
+</resources>

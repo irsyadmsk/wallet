@@ -1,8 +1,6 @@
-• Rekening dolar & mata uang asing lain, dengan kurs dunia terbaru
-• Tabungan emas dalam gram, dinilai dengan harga Antam hari ini
-• Kartu rekening gaya dompet: ketuk atau geser untuk berganti
-• Cek saldo e-money (NFC) langsung dari Beranda
-• Gestur geser satu tangan untuk pindah halaman & membuka menu
-• Isi nominal lebih mudah: titik ribuan otomatis & tombol cepat
-• Keyboard tidak lagi menutupi isian
-• Kategori & kelompok akun bisa diubah sesuka Anda
+• Tempel kartu e-money kapan saja: pilih Wallet di pop-up NFC Android
+• Opsi "Masukkan ke total" untuk tiap akun
+• Kategori pemasukan & pengeluaran kini terpisah dengan benar
+• Tombol kembali membawa ke Beranda, bukan keluar aplikasi
+• Tulisan di mode terang kini terbaca jelas
+• Tampilan Akun & Transaksi Berulang lebih rapi

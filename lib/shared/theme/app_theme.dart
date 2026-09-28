@@ -285,10 +285,10 @@ abstract class AppTheme {
         // including ones that set their own label style.
         selectedColor: c.primaryContainer,
         secondarySelectedColor: c.primaryContainer,
-        labelStyle: WidgetStateTextStyle.resolveWith((s) => TextStyle(
-              color: c.textPrimary,
-              fontWeight: s.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500,
-            )),
+        // A plain style, not WidgetStateTextStyle: chips merge the theme
+        // style into their defaults, which drops a state-resolved color and
+        // painted unselected labels white — unreadable in light mode.
+        labelStyle: TextStyle(color: c.textPrimary, fontWeight: FontWeight.w500),
         secondaryLabelStyle: TextStyle(color: c.textPrimary, fontWeight: FontWeight.w600),
         checkmarkColor: c.primary,
         side: WidgetStateBorderSide.resolveWith((s) => BorderSide(

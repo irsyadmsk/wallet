@@ -60,6 +60,11 @@ class AccountModel extends HiveObject {
   @HiveField(16)
   DateTime? deletedAt;
 
+  /// False keeps the account out of "Total saldo"/net worth (e.g. a
+  /// savings pot the user doesn't want counted). Balance still shown.
+  @HiveField(17, defaultValue: true)
+  bool includeInTotal;
+
   AccountModel({
     required this.id,
     required this.name,
@@ -78,6 +83,7 @@ class AccountModel extends HiveObject {
     DateTime? updatedAt,
     this.dueDay,
     this.deletedAt,
+    this.includeInTotal = true,
   })  : isLiability = isLiability ?? AccountGroupType.fromCode(groupCode).isLiabilityDefault,
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
@@ -102,6 +108,7 @@ class AccountModel extends HiveObject {
         'updatedAt': updatedAt.toIso8601String(),
         'dueDay': dueDay,
         'deletedAt': deletedAt?.toIso8601String(),
+        'includeInTotal': includeInTotal,
       };
 
   factory AccountModel.fromJson(Map<String, dynamic> json) => AccountModel(
@@ -122,5 +129,6 @@ class AccountModel extends HiveObject {
         updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
         dueDay: json['dueDay'] == null ? null : int.tryParse(json['dueDay'].toString()),
         deletedAt: json['deletedAt'] == null ? null : DateTime.tryParse(json['deletedAt'].toString()),
+        includeInTotal: json['includeInTotal'] as bool? ?? true,
       );
 }
