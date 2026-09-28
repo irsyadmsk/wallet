@@ -375,7 +375,7 @@ class SettingsView extends StatelessWidget {
                     child: Icon(Icons.spa_rounded, color: colors.primary),
                   ),
                   title: Text(AppConfig.appName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: Text('v${AppConfig.appVersion} · ${AppConfig.appAuthor}'),
+                  subtitle: Text('${AppConfig.versionLabel} · ${AppConfig.appAuthor}'),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),

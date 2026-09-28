@@ -21,6 +21,10 @@ Semua otomatis lewat `.github/workflows/build-apk.yml` setiap ada merge ke
 | `version:` **sama** dengan rilis terakhir | **Patch**: dikirim ke HP pengguna tanpa Play Store. APK di GitHub tidak berubah. |
 | Versi sama, tapi ada perubahan native | Job gagal dengan pesan "naikkan version". |
 
+Setiap patch, naikkan `appPatch` di `lib/config/app_config.dart` (dan
+kembalikan ke 0 saat versi naik). Pengaturan lalu menampilkan
+*v1.3.1 (pembaruan 1)* dst., tanda patch sudah terpasang.
+
 Jadi aturannya sederhana:
 - **Perbaikan kecil** → jangan naikkan versi → otomatis jadi patch.
 - **Fitur besar / ubah Android** → naikkan versi → rilis baru ke Play Store.
