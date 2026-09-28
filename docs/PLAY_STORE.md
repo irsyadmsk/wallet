@@ -59,9 +59,12 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 - **Iklan**: Tidak ada iklan.
 - **Rating konten**: kuesioner IARC (aplikasi keuangan tanpa konten sensitif, hasilnya "Semua umur").
 - **Target audiens**: 18+ (menghindari persyaratan Families).
-- **Keamanan data (Data safety)**:
-  - Dikumpulkan: *Email*, *Nama*, *Info keuangan lain (catatan transaksi)*. Tujuan: fungsionalitas aplikasi dan manajemen akun. Tidak dibagikan ke pihak ketiga. Dienkripsi saat transit.
-  - Pengguna bisa meminta penghapusan: **Ya**, dengan URL `https://wallet.irsyads.com/hapus-akun`.
+- **Keamanan data (Data safety)** (diperbarui 28 Sep 2026, akun kini opsional):
+  - Mengumpulkan/membagikan data? **Ya** (hanya bila pengguna masuk akun; plus pengenal anonim Shorebird).
+  - Dienkripsi saat transit: **Ya**. Pengguna bisa meminta penghapusan: **Ya** (`https://wallet.irsyads.com/hapus-akun`). Pembuatan akun: **opsional**.
+  - *Info pribadi → Email*, *Nama*: dikumpulkan, **opsional**, tujuan *Fungsionalitas aplikasi* + *Pengelolaan akun*, tidak dibagikan.
+  - *Info keuangan → Info keuangan lainnya* (catatan transaksi): dikumpulkan, **opsional**, tujuan *Fungsionalitas aplikasi*, tidak dibagikan.
+  - *ID perangkat atau ID lain* (Shorebird, untuk update): dikumpulkan, **wajib**, tujuan *Fungsionalitas aplikasi*, tidak dibagikan, tidak diproses sementara.
   - Foto struk dan data NFC diproses di perangkat, tidak dikumpulkan.
 - **Aplikasi keuangan (Financial features)**: pilih *"Aplikasi tidak menyediakan layanan keuangan"*. Wallet hanya mencatat dan tidak memindahkan uang. Harga kripto hanya informasi.
 - **Pemerintah / berita / kesehatan**: Tidak.

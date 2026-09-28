@@ -27,11 +27,15 @@
 <main>
   <div class="mark" aria-hidden="true">w</div>
   <h1>Kebijakan Privasi Wallet</h1>
-  <p class="muted">Berlaku sejak 25 September 2026 · Aplikasi Android <code>com.irsyads.wallet</code> dan <a href="https://wallet.irsyads.com">wallet.irsyads.com</a></p>
+  <p class="muted">Berlaku sejak 28 September 2026 · Aplikasi Android <code>com.irsyads.wallet</code> dan <a href="https://wallet.irsyads.com">wallet.irsyads.com</a></p>
 
   <p>Wallet adalah buku kas pribadi dan keluarga buatan Muhammad Irsyad Sirojul Khoeir. Halaman ini menjelaskan data apa yang disimpan, untuk apa, dan bagaimana Anda menghapusnya.</p>
 
-  <h2>Data yang kami simpan</h2>
+  <h2>Tanpa akun atau dengan akun</h2>
+  <p>Wallet bisa dipakai <strong>tanpa akun</strong>. Selama Anda belum masuk, semua catatan keuangan hanya tersimpan di perangkat Anda (di web: di browser Anda) dan tidak dikirim ke server kami. Akibatnya, catatan itu hilang bila aplikasi dihapus atau data browser dibersihkan.</p>
+  <p>Bila Anda <strong>masuk atau mendaftar</strong>, catatan di perangkat ikut dipindahkan ke akun Anda, lalu data di bawah ini disimpan di server agar tercadang, bisa dibuka di perangkat lain, dan bisa dipakai bersama keluarga.</p>
+
+  <h2>Data yang kami simpan (hanya bila Anda memakai akun)</h2>
   <table>
     <tr><th>Data</th><th>Untuk apa</th></tr>
     <tr><td>Email dan nama tampilan</td><td>Masuk ke akun, pemulihan kata sandi, dan menampilkan nama pencatat di buku kas keluarga.</td></tr>
@@ -43,7 +47,8 @@
   <ul>
     <li>Foto struk dan hasil pindai teks (OCR) diproses di perangkat dan tidak diunggah.</li>
     <li>Data kartu e-money yang dibaca lewat NFC hanya dipakai untuk mengisi saldo akun yang Anda buat.</li>
-    <li>PIN kunci aplikasi dan preferensi tampilan disimpan di perangkat saja.</li>
+    <li>PIN kunci aplikasi dan preferensi tampilan (termasuk mata uang tampilan total) disimpan di perangkat saja.</li>
+    <li>Tanpa akun: seluruh catatan keuangan.</li>
   </ul>
 
   <h2>Penyimpanan dan keamanan</h2>
@@ -53,6 +58,9 @@
   <ul>
     <li><strong>Supabase</strong>: penyimpanan dan autentikasi.</li>
     <li><strong>CoinGecko</strong>: harga kripto. Aplikasi hanya meminta harga koin; tidak ada data pribadi yang dikirim.</li>
+    <li><strong>Currency API</strong> (lewat jsDelivr/Cloudflare): kurs mata uang. Hanya kurs yang diminta; tidak ada data pribadi yang dikirim.</li>
+    <li><strong>Galeri24</strong>: harga emas, diambil lewat server Wallet; tidak ada data pribadi yang dikirim.</li>
+    <li><strong>Shorebird</strong> (aplikasi Android): mengirim perbaikan kecil langsung ke aplikasi tanpa lewat Play Store. Untuk itu aplikasi mengirim versi aplikasi, jenis perangkat, dan pengenal perangkat acak yang tidak terhubung ke identitas atau catatan keuangan Anda.</li>
   </ul>
   <p>Kami tidak menjual data, tidak menampilkan iklan, dan tidak memakai data Anda untuk pelacakan.</p>
 
