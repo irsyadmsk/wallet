@@ -66,7 +66,7 @@ abstract class DisplayCurrency {
                   leading: Text(c.flag, style: const TextStyle(fontSize: 22)),
                   title: Text('${c.name} (${c.code})'),
                   subtitle: previewIdr == null ? null : Text(format(previewIdr, c.code)),
-                  trailing: c.code == code.value ? const Icon(Icons.check_rounded) : null,
+                  trailing: c.code == code.value ? const Icon(Icons.check) : null,
                   onTap: () => Navigator.of(ctx).pop(c.code),
                 ),
           ],
