@@ -4,15 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:financial_recording/app/demo_mode.dart';
+import 'package:financial_recording/app/guest_mode.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/data/services/current_actor.dart';
 import 'package:financial_recording/data/services/supabase_service.dart';
 import 'package:financial_recording/data/services/sync/sync_service.dart';
 
-/// Supabase email/password auth. Signing in is required to use the app —
-/// the gate in `money_manager_app.dart` shows the welcome screen until
-/// [user] is set — and every signed-in session syncs through
-/// [SyncController].
+/// Supabase email/password auth. Signing in is optional: without it the app
+/// keeps records on this device only (see [GuestMode]). A signed-in session
+/// syncs through [SyncController] and unlocks family and cloud backup.
 class AuthController extends GetxController {
   final user = Rxn<User>();
   final busy = false.obs;
@@ -129,6 +129,8 @@ class AuthController extends GetxController {
       await _sync.onSignedOut();
       await SupabaseService.auth.signOut();
       _setUser(null);
+      // Back to the welcome screen, not into an empty app without an account.
+      await GuestMode.stop();
       // Screen controllers cache the previous account's figures; drop them
       // so the next person to sign in on this device never sees them.
       // Permanent services (auth, sync, theme, shell) survive.
@@ -160,6 +162,7 @@ class AuthController extends GetxController {
         // dropped either way.
       }
       _setUser(null);
+      await GuestMode.stop();
       await Get.deleteAll();
       return null;
     } finally {

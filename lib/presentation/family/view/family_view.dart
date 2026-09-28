@@ -16,6 +16,7 @@ import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_typography.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:financial_recording/util/money/money_format.dart';
+import 'package:financial_recording/presentation/auth/view/auth_panel.dart';
 
 /// Family ledger ("akun keluarga"): create one, join by invite code, see
 /// members and what each recorded this month, or leave.
@@ -35,6 +36,7 @@ class FamilyView extends StatelessWidget {
           child: ContentShell(
             child: Obx(() {
               dataVersion.value; // rebuild after syncs
+              if (!Get.find<AuthController>().isSignedIn) return const _NeedsAccount();
               final h = sync.household.value;
               return AnimatedSwitcher(
                 duration: const Duration(milliseconds: 400),
@@ -581,4 +583,41 @@ class _Tag extends StatelessWidget {
         decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(99)),
         child: Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
       );
+}
+
+/// Keluarga shares one ledger through the cloud, so it needs an account.
+class _NeedsAccount extends StatelessWidget {
+  const _NeedsAccount();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        children: [
+          Icon(Icons.diversity_3_rounded, size: 48, color: c.textSecondary),
+          const SizedBox(height: 16),
+          Text('Masuk untuk memakai Keluarga', style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(
+            'Keluarga berbagi satu buku kas lewat cloud, jadi setiap anggota perlu akun. '
+            'Catatan yang sudah Anda buat di perangkat ini ikut dipindahkan saat Anda masuk.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: c.textSecondary),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              FilledButton(onPressed: () => showAuthPanel(context, mode: AuthMode.signUp), child: const Text('Daftar')),
+              OutlinedButton(onPressed: () => showAuthPanel(context, mode: AuthMode.signIn), child: const Text('Masuk')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

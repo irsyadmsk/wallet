@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/app/sync_controller.dart';
 import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
+import 'package:financial_recording/presentation/auth/view/auth_panel.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
 
@@ -14,6 +16,10 @@ class AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
+    return Obx(() => auth.isSignedIn ? _signedIn(context, auth) : const GuestAccountCard());
+  }
+
+  Widget _signedIn(BuildContext context, AuthController auth) {
     final sync = Get.find<SyncController>();
     final c = context.colors;
 
@@ -248,3 +254,77 @@ class _StatusRow extends StatelessWidget {
     );
   }
 }
+
+/// Settings › Akun while using Wallet without an account: where the data
+/// lives, what signing in adds, and the way in.
+class GuestAccountCard extends StatelessWidget {
+  const GuestAccountCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: c.surfaceRaised,
+                  child: Icon(Icons.person_outline_rounded, color: c.textSecondary),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tanpa akun', style: Theme.of(context).textTheme.titleMedium),
+                      Text(guestStorageText, style: TextStyle(color: c.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const _StatusRow(icon: Icons.cloud_off_outlined, color: Colors.grey, text: 'Belum dicadangkan ke cloud'),
+            const SizedBox(height: 8),
+            const _StatusRow(icon: Icons.diversity_3_outlined, color: Colors.grey, text: 'Keluarga butuh akun'),
+            const SizedBox(height: 12),
+            Text(
+              'Masuk atau daftar untuk mencadangkan catatan, memakainya di perangkat lain, '
+              'dan berbagi buku kas dengan keluarga. Catatan yang sudah ada ikut dipindahkan ke akun.',
+              style: TextStyle(color: c.textSecondary, fontSize: 13.5),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                WButton(
+                  label: 'Daftar',
+                  size: WButtonSize.small,
+                  onPressed: () => showAuthPanel(context, mode: AuthMode.signUp),
+                ),
+                WButton(
+                  label: 'Masuk',
+                  variant: WButtonVariant.outline,
+                  size: WButtonSize.small,
+                  onPressed: () => showAuthPanel(context, mode: AuthMode.signIn),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Where records live when there's no account — the browser on the web
+/// (easy to lose), the phone otherwise.
+String get guestStorageText => kIsWeb
+    ? 'Catatan hanya tersimpan di browser ini dan bisa hilang bila data browser dihapus.'
+    : 'Catatan hanya tersimpan di perangkat ini.';

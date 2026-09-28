@@ -7,6 +7,7 @@ import 'package:financial_recording/data/services/currency/currency_service.dart
 import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/app/app_events.dart';
 import 'package:financial_recording/app/demo_mode.dart';
+import 'package:financial_recording/app/guest_mode.dart';
 import 'package:financial_recording/app/launch_intents.dart';
 import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view.dart';
 import 'package:financial_recording/app/shell_controller.dart';
@@ -98,16 +99,22 @@ class _AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
     return Obx(() {
-      final signedIn = auth.isSignedIn; // always read, so Obx has a dependency
+      // Always read both, so Obx has the dependencies.
+      final signedIn = auth.isSignedIn;
+      final guest = GuestMode.started.value;
       final Widget page;
       if (kDemoMode) {
         page = const _AppLockGate(key: ValueKey('demo'));
-      } else if (!signedIn) {
-        page = const WelcomeView(key: ValueKey('welcome'));
-      } else if (auth.recoveringPassword.value) {
+      } else if (signedIn && auth.recoveringPassword.value) {
         page = const SetNewPasswordView(key: ValueKey('recover'));
+      } else if (signedIn || guest) {
+        // One key for guest and signed-in use: signing in from Settings
+        // keeps the open app (and an unlocked PIN) instead of restarting
+        // it. Two different accounts always pass the welcome screen in
+        // between (sign-out), which resets everything.
+        page = const _AppLockGate(key: ValueKey('app'));
       } else {
-        page = _AppLockGate(key: ValueKey('app-${auth.user.value!.id}'));
+        page = const WelcomeView(key: ValueKey('welcome'));
       }
       return AnimatedSwitcher(
         duration: AppMotion.of(context, const Duration(milliseconds: 600)),

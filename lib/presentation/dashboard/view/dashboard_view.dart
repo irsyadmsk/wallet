@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -25,6 +26,10 @@ import 'package:financial_recording/shared/widget/quick_template_bar.dart';
 import 'package:financial_recording/shared/widget/tx_tile.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 import 'package:financial_recording/data/services/currency/display_currency.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:financial_recording/app/demo_mode.dart';
+import 'package:financial_recording/presentation/auth/view/account_card.dart';
+import 'package:financial_recording/presentation/auth/view/auth_panel.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -72,6 +77,10 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                 );
                 final attention = <Widget>[
+                  if (!Get.find<AuthController>().isSignedIn && !kDemoMode && !_GuestNotice.dismissed.value) ...[
+                    const _GuestNotice(),
+                    const SizedBox(height: 12),
+                  ],
                   // Only for ledgers holding gold or foreign money: the rates
                   // behind the rupiah total.
                   if (CurrencyService.instance.hasForeignAccounts) ...[
@@ -205,6 +214,14 @@ class _Greeting extends StatelessWidget {
         Obx(() {
           final syncing = sync.syncing.value;
           final err = sync.errorText.value;
+          if (!Get.find<AuthController>().isSignedIn) {
+            return WIconButton(
+              icon: Icons.cloud_off_outlined,
+              tooltip: 'Belum dicadangkan — masuk untuk menyimpan ke cloud',
+              color: c.textSecondary,
+              onPressed: () => showAuthPanel(context, mode: AuthMode.signIn),
+            );
+          }
           return WIconButton(
             icon: syncing ? Icons.sync_rounded : (err == null ? Icons.cloud_done_outlined : Icons.cloud_off_outlined),
             tooltip: syncing ? 'Menyinkronkan…' : (err ?? 'Tersinkron — ketuk untuk sinkron sekarang'),
@@ -625,6 +642,83 @@ class _DebtStrip extends StatelessWidget {
         ),
       ),
       child: const SizedBox.shrink(),
+    );
+  }
+}
+
+/// A reminder, while there's no account, that records live only here and
+/// what signing in adds. Closable: for this session on the web (where a
+/// cleared browser loses everything), for good on a phone.
+class _GuestNotice extends StatelessWidget {
+  const _GuestNotice();
+
+  static const _key = 'guest_notice_dismissed';
+  static final dismissed = false.obs;
+  static bool _loaded = false;
+
+  static Future<void> _load() async {
+    if (_loaded || kIsWeb) return;
+    _loaded = true;
+    try {
+      if ((await SharedPreferences.getInstance()).getBool(_key) ?? false) dismissed.value = true;
+    } catch (_) {}
+  }
+
+  Future<void> _dismiss() async {
+    dismissed.value = true;
+    if (kIsWeb) return;
+    try {
+      await (await SharedPreferences.getInstance()).setBool(_key, true);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _load();
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(kIsWeb ? Icons.warning_amber_rounded : Icons.smartphone_rounded, size: 20, color: kIsWeb ? c.warning : c.textSecondary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(guestStorageText, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                const SizedBox(height: 2),
+                Text(
+                  'Masuk agar tercadang, bisa dibuka di perangkat lain, dan dipakai bersama keluarga.',
+                  style: TextStyle(color: c.textSecondary, fontSize: 12.5),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+                    onPressed: () => showAuthPanel(context, mode: AuthMode.signUp),
+                    child: const Text('Masuk / daftar'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Tutup',
+            icon: Icon(Icons.close_rounded, size: 18, color: c.textTertiary),
+            onPressed: _dismiss,
+          ),
+        ],
+      ),
     );
   }
 }

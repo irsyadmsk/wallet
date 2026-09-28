@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:financial_recording/app/distribution.dart';
+import 'package:financial_recording/app/guest_mode.dart';
+import 'package:financial_recording/data/services/supabase_service.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/models/app_settings_model/app_settings_model.dart';
@@ -32,6 +34,7 @@ Future<void> bootstrap() async {
   await initializeDateFormatting('id_ID', null);
   await detectDistribution();
   await DisplayCurrency.load();
+  await GuestMode.load();
   await Hive.initFlutter();
 
   Hive.registerAdapter(TxTypeAdapter());
@@ -75,6 +78,9 @@ Future<void> bootstrap() async {
   if (AccountRepository().all(includeArchived: true).isEmpty) {
     await _tryLoadBundledSeed();
   }
+  // Without an account nothing syncs, so starter data and recurring posts
+  // happen here instead of after a sync.
+  if (GuestMode.started.value && !SupabaseService.isSignedIn) await GuestMode.housekeeping();
 }
 
 /// Never runs on web: a bundled seed asset is a public, unauthenticated file

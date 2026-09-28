@@ -160,6 +160,74 @@ class SyncService {
     return written;
   }
 
+  // ------------------------------------------------------------ guest data
+
+  /// Tables whose rows only exist because the user recorded something
+  /// (starter categories, templates and tags don't count).
+  static const _personalTables = {'transactions', 'budgets', 'recurring', 'goals', 'debts', 'memos', 'crypto_holdings'};
+
+  /// Whether the local boxes hold anything the user made while using the
+  /// app without an account — beyond the untouched starter data.
+  bool localHasUserData() {
+    for (final entity in syncEntities) {
+      final items = entity.allItems();
+      if (_personalTables.contains(entity.table) && items.isNotEmpty) return true;
+      if (entity.table == 'accounts') {
+        final accounts = [for (final a in items) entity.toJson(a)];
+        if (accounts.length > 1) return true;
+        if (accounts.any((a) => ((a['openingBalance'] as num?) ?? 0) != 0)) return true;
+      }
+    }
+    return false;
+  }
+
+  /// Whether [userId]'s own ledger in the cloud already has records.
+  /// Throws when the server can't be reached.
+  Future<bool> remoteHasData(String userId) async {
+    for (final table in const ['accounts', 'transactions']) {
+      final rows = await SupabaseService.client
+          .from(table)
+          .select('id')
+          .eq('user_id', userId)
+          .isFilter('deleted_at', null)
+          .limit(1);
+      if ((rows as List).isNotEmpty) return true;
+    }
+    return false;
+  }
+
+  Map<String, List<Map<String, dynamic>>> _snapshot() => {
+        for (final entity in syncEntities) entity.table: [for (final item in entity.allItems()) entity.toJson(item)],
+      };
+
+  /// Moves what was recorded without an account into the signed-in user's
+  /// ledger: pulls the account's records, then merges the local ones in,
+  /// mapping look-alike categories, tags and untouched starter accounts
+  /// onto the account's (see [LedgerMerge]). The next sync pushes them.
+  ///
+  /// The local rows are held in memory throughout; if the pull fails they
+  /// are written back and the error returned, so nothing is lost.
+  Future<String?> adoptLocalData() async {
+    final mine = _snapshot();
+    await wipeLocal();
+    final pulled = await syncNow();
+    if (!pulled.ok) {
+      await wipeLocal();
+      await _apply(mine);
+      return pulled.error;
+    }
+    await _apply(LedgerMerge.plan(mine: mine, family: _snapshot()));
+    return null;
+  }
+
+  Future<void> _apply(Map<String, List<Map<String, dynamic>>> rows) async {
+    for (final entity in syncEntities) {
+      final r = rows[entity.table];
+      if (r != null && r.isNotEmpty) await entity.applyRemote(r, const []);
+    }
+    await LedgerService().recomputeAllBalances();
+  }
+
   static const _importedPrefix = 'imported:';
   static final _incoming = <IncomingTx>[];
 
