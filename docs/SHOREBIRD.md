@@ -6,8 +6,11 @@ perbaikan aktif saat **aplikasi dibuka berikutnya**. Cara ini diizinkan
 kebijakan Google Play.
 
 Yang **tidak bisa** dikirim lewat Shorebird dan tetap butuh rilis Play
-Store: perubahan di `android/` (izin, NFC, manifest), plugin baru, atau
-versi Flutter baru.
+Store: perubahan di `android/` (izin, NFC, manifest), plugin baru, versi
+Flutter baru, dan **aset** — termasuk **ikon Material yang belum pernah
+dipakai** di rilis itu (Flutter hanya menyertakan ikon yang dipakai ke dalam
+font). CI (`ci.yml`, langkah "Ikon baru vs rilis Shorebird") menolak PR
+semacam itu sebelum digabung.
 
 ## Cara kerjanya di repo ini
 
