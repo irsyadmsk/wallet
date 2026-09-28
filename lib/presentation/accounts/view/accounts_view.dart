@@ -19,6 +19,7 @@ import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/shared/theme/app_typography.dart';
 import 'package:financial_recording/shared/widget/account_avatar.dart';
 import 'package:financial_recording/util/money/money_format.dart';
+import 'package:financial_recording/data/services/currency/display_currency.dart';
 
 class AccountsView extends StatelessWidget {
   const AccountsView({super.key});
@@ -78,30 +79,47 @@ class AccountsView extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Total', style: Theme.of(context).textTheme.titleMedium),
-                      Text(
-                        c.netWorth.value.rupiah,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                          color: c.netWorth.value >= 0 ? colors.income : colors.expense,
-                        ),
+                  // Tap to read the total in another currency.
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => DisplayCurrency.pick(context, previewIdr: c.netWorth.value),
+                    child: ValueListenableBuilder<String>(
+                      valueListenable: DisplayCurrency.code,
+                      builder: (context, code, _) => Row(
+                        children: [
+                          Text('Total · $code', style: Theme.of(context).textTheme.titleMedium),
+                          Icon(Icons.expand_more_rounded, size: 20, color: colors.textSecondary),
+                          const Spacer(),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                DisplayCurrency.format(c.netWorth.value),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                  color: c.netWorth.value >= 0 ? colors.income : colors.expense,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(bottom: AppSpacing.lg),
-                  child: MarketCard(),
                 ),
                 for (final (group, accounts) in groups)
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                     child: _GroupSection(group: group, accounts: accounts, controller: c),
                   ),
+                // Reference prices sit under the accounts: the balances are
+                // what this page is for.
+                const Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                  child: MarketCard(),
+                ),
               ],
             );
           }),

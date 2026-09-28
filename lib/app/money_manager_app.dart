@@ -366,6 +366,7 @@ class _HomeShellState extends State<HomeShell> {
         index: index,
         onSelect: shell.goTo,
         onQuickAction: () => _openAddTransaction(context),
+        beforeFirst: AppPage.accounts,
         body: AnimatedSwitcher(
           duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 360),
           switchInCurve: AppMotion.emphasized,

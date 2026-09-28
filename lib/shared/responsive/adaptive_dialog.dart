@@ -11,7 +11,7 @@ Future<T?> showAdaptiveSheet<T>(BuildContext context, {required WidgetBuilder bu
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (ctx) => KeyboardInset(child: builder(ctx)),
+      builder: (ctx) => _PullDownToClose(child: KeyboardInset(child: builder(ctx))),
     );
   }
   return showDialog<T>(
@@ -71,4 +71,43 @@ class KeyboardInset extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// A sheet's own drag only works on its handle: over a scrolling form the
+/// list takes the gesture. This closes the sheet when the user keeps
+/// pulling down after the form is already scrolled to the top.
+class _PullDownToClose extends StatefulWidget {
+  const _PullDownToClose({required this.child});
+  final Widget child;
+
+  @override
+  State<_PullDownToClose> createState() => _PullDownToCloseState();
+}
+
+class _PullDownToCloseState extends State<_PullDownToClose> {
+  static const _threshold = 70.0;
+  double _pulled = 0;
+  bool _closing = false;
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.metrics.axis != Axis.vertical) return false;
+    if (n is ScrollStartNotification) _pulled = 0;
+    // Pulling down past the top: Android reports overscroll, iOS a
+    // negative (bouncing) offset.
+    if (n is OverscrollNotification && n.dragDetails != null && n.overscroll < 0) {
+      _pulled -= n.overscroll;
+    } else if (n is ScrollUpdateNotification && n.dragDetails != null && n.metrics.pixels < 0) {
+      _pulled = -n.metrics.pixels;
+    }
+    if (!_closing && _pulled > _threshold) {
+      _closing = true;
+      Navigator.of(context).maybePop();
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      NotificationListener<ScrollNotification>(onNotification: _onScroll, child: widget.child);
 }

@@ -63,6 +63,7 @@ class AdaptiveScaffold extends StatelessWidget {
     this.onQuickAction,
     this.appBarTitle,
     this.appBarActions,
+    this.beforeFirst,
   });
 
   final List<AdaptiveDestination> destinations;
@@ -73,6 +74,10 @@ class AdaptiveScaffold extends StatelessWidget {
   final VoidCallback? onQuickAction;
   final String? appBarTitle;
   final List<Widget>? appBarActions;
+
+  /// Phone swipe target "before" the first bottom-bar page (Beranda),
+  /// e.g. Akun: swiping toward the left edge from Beranda lands there.
+  final int? beforeFirst;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +96,13 @@ class AdaptiveScaffold extends StatelessWidget {
         // Berulang) sat under the bar and couldn't be tapped.
         body: Builder(builder: (context) {
           final mq = MediaQuery.of(context);
-          final swipeable = _SwipePages(destinations: destinations, index: index, onSelect: onSelect, child: body);
+          final swipeable = _SwipePages(
+            destinations: destinations,
+            index: index,
+            onSelect: onSelect,
+            beforeFirst: beforeFirst,
+            child: body,
+          );
           if (keyboardUp) return swipeable;
           final bottom = _PhoneBar.height + mq.viewPadding.bottom;
           // Scaffold places its FAB from viewPadding, lists and SafeArea
@@ -131,14 +142,21 @@ class AdaptiveScaffold extends StatelessWidget {
 // ------------------------------------------------------------------ phone
 
 /// One-handed navigation: a quick horizontal swipe anywhere on a page moves
-/// to the neighbouring bottom-bar page (Beranda ⇄ Transaksi ⇄ Laporan).
-/// Horizontal lists, chips and swipeable rows inside the page claim their
-/// own drags first, so they keep working.
+/// along [Akun] ⇄ Beranda ⇄ Transaksi ⇄ Laporan → Semua menu. Horizontal
+/// lists, chips and swipeable rows inside the page claim their own drags
+/// first, so they keep working.
 class _SwipePages extends StatelessWidget {
-  const _SwipePages({required this.destinations, required this.index, required this.onSelect, required this.child});
+  const _SwipePages({
+    required this.destinations,
+    required this.index,
+    required this.onSelect,
+    required this.child,
+    this.beforeFirst,
+  });
   final List<AdaptiveDestination> destinations;
   final int index;
   final ValueChanged<int> onSelect;
+  final int? beforeFirst;
   final Widget child;
 
   static const _minVelocity = 450.0;
@@ -152,15 +170,33 @@ class _SwipePages extends StatelessWidget {
       onHorizontalDragEnd: (d) {
         final v = d.primaryVelocity ?? 0;
         if (v.abs() < _minVelocity) return;
-        // A page reached from "Lainnya": swiping right goes back home.
-        if (at < 0) {
-          if (v > 0) onSelect(pages.first);
+        // Finger moving left (v < 0) goes forward, like turning a page.
+        final forward = v < 0;
+        void go(int page) {
+          HapticFeedback.selectionClick();
+          onSelect(page);
+        }
+
+        // The page left of Beranda: forward returns home.
+        if (index == beforeFirst) {
+          if (forward) go(pages.first);
           return;
         }
-        final next = at + (v < 0 ? 1 : -1);
-        if (next < 0 || next >= pages.length) return;
-        HapticFeedback.selectionClick();
-        onSelect(pages[next]);
+        // Any other page reached from "Lainnya": back goes home.
+        if (at < 0) {
+          if (!forward) go(pages.first);
+          return;
+        }
+        if (!forward && at == 0) {
+          if (beforeFirst != null) go(beforeFirst!);
+          return;
+        }
+        // Past the last bottom-bar page (Laporan): every other menu.
+        if (forward && at == pages.length - 1) {
+          _showMoreSheet(context, destinations, index, onSelect);
+          return;
+        }
+        go(pages[at + (forward ? 1 : -1)]);
       },
       child: child,
     );
@@ -236,27 +272,31 @@ class _PhoneBar extends StatelessWidget {
     );
   }
 
-  void _showMore(BuildContext context) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      sheetAnimationStyle: const AnimationStyle(
-        duration: Duration(milliseconds: 340),
-        reverseDuration: Duration(milliseconds: 240),
-        curve: Curves.easeOutCubic,
-      ),
-      builder: (ctx) => _MoreSheet(
-        destinations: destinations,
-        index: index,
-        onSelect: (i) {
-          Navigator.pop(ctx);
-          onSelect(i);
-        },
-      ),
-    );
-  }
+  void _showMore(BuildContext context) => _showMoreSheet(context, destinations, index, onSelect);
+}
+
+/// "Lainnya" — from the bar's button, a swipe up on the bar, or a forward
+/// swipe past Laporan.
+void _showMoreSheet(BuildContext context, List<AdaptiveDestination> destinations, int index, ValueChanged<int> onSelect) {
+  HapticFeedback.selectionClick();
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    sheetAnimationStyle: const AnimationStyle(
+      duration: Duration(milliseconds: 340),
+      reverseDuration: Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    ),
+    builder: (ctx) => _MoreSheet(
+      destinations: destinations,
+      index: index,
+      onSelect: (i) {
+        Navigator.pop(ctx);
+        onSelect(i);
+      },
+    ),
+  );
 }
 
 /// Fires [onOpen] once per gesture when the finger moves up over [child]
