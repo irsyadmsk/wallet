@@ -90,15 +90,10 @@ jobs:
           cache: true
 
       # Gradle downloads (~1 GB of dependencies) are the slowest part of an
-      # Android build; reuse them across runs.
-      - uses: actions/cache@v4
+      # Android build; setup-gradle caches them (saved from main, reused by
+      # pull requests) and stops the daemon so the cache can be written.
+      - uses: gradle/actions/setup-gradle@v4
         if: steps.native.outputs.perlu == 'true'
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'pubspec.lock') }}
-          restore-keys: gradle-${{ runner.os }}-
 
       - run: flutter pub get
         if: steps.native.outputs.perlu == 'true'
