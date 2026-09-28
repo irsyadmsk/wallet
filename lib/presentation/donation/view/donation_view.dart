@@ -9,7 +9,7 @@ import 'package:financial_recording/shared/theme/app_spacing.dart';
 const _qrisAsset = 'assets/donation/qris.png';
 
 /// "Dukung Pengembang": a voluntary donation through the developer's QRIS.
-/// Not shown in the Google Play build (see `kDonationsEnabled`).
+/// Not shown to Play Store installs (see `kDonationsEnabled`).
 class DonationView extends StatelessWidget {
   const DonationView({super.key});
 

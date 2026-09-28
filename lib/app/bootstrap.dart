@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:financial_recording/app/distribution.dart';
 import 'package:financial_recording/config/app_config_v2.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/models/app_settings_model/app_settings_model.dart';
@@ -28,6 +29,7 @@ import 'package:financial_recording/domain/enums/hive_enums.dart';
 /// present, or with a minimal starter dataset otherwise.
 Future<void> bootstrap() async {
   await initializeDateFormatting('id_ID', null);
+  await detectDistribution();
   await Hive.initFlutter();
 
   Hive.registerAdapter(TxTypeAdapter());
