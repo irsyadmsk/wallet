@@ -93,7 +93,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 
 Google Play mewajibkan **Google Play Billing untuk tip/donasi kepada pengembang**. QRIS di dalam aplikasi versi Play bisa membuat aplikasi ditolak atau diturunkan. Karena itu:
 
-- Build Play (`wallet.aab`, dibuat dengan `--dart-define=WALLET_CHANNEL=play`) **tidak menampilkan** halaman *Dukung Pengembang*.
+- Aplikasi yang **dipasang dari Play Store** tidak menampilkan halaman *Dukung Pengembang* (dideteksi otomatis saat aplikasi dibuka, lihat `lib/app/distribution.dart`), sehingga `wallet.aab` dan `wallet.apk` memakai kode yang sama.
 - Web (`wallet.irsyads.com`) dan APK di GitHub Releases tetap menampilkan donasi QRIS.
 - Jika kelak ingin donasi di versi Play, perlu produk *in-app* (Google Play Billing) dengan akun merchant Play. Biaya layanan Google 15%.
 
