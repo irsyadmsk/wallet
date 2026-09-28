@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/util/money/money_format.dart';
+import 'package:financial_recording/data/services/currency/display_currency.dart';
 
 /// One-shot entrance: fades in while rising [dy] px, delayed by [index]
 /// staggers. Starts from an already-visible default when the user prefers
@@ -92,7 +93,11 @@ class AnimatedMoney extends StatelessWidget {
     this.hidden = false,
     this.signed = false,
     this.compact = false,
+    this.inDisplayCurrency = false,
   });
+
+  /// [value] is rupiah; show it in the user's chosen [DisplayCurrency].
+  final bool inDisplayCurrency;
 
   final int value;
   final TextStyle style;
@@ -103,6 +108,21 @@ class AnimatedMoney extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = style.copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
+    if (inDisplayCurrency) {
+      return ValueListenableBuilder<String>(
+        valueListenable: DisplayCurrency.code,
+        builder: (context, _, _) {
+          if (hidden) return Text('${DisplayCurrency.symbol} ••••••', style: s);
+          return TweenAnimationBuilder<double>(
+            tween: Tween(end: value.toDouble()),
+            duration: AppMotion.of(context, const Duration(milliseconds: 900)),
+            curve: AppMotion.emphasized,
+            builder: (context, v, _) => Text(DisplayCurrency.format(v.round()),
+                style: s, maxLines: 1, overflow: TextOverflow.fade, softWrap: false),
+          );
+        },
+      );
+    }
     if (hidden) return Text('Rp ••••••', style: s);
     return TweenAnimationBuilder<double>(
       tween: Tween(end: value.toDouble()),

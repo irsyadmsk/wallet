@@ -24,6 +24,7 @@ import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:financial_recording/shared/widget/quick_template_bar.dart';
 import 'package:financial_recording/shared/widget/tx_tile.dart';
 import 'package:financial_recording/util/money/money_format.dart';
+import 'package:financial_recording/data/services/currency/display_currency.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -249,7 +250,27 @@ class _NetWorthCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('Saldo total', style: TextStyle(color: muted, fontSize: 13.5)),
+              // Tap to read the total in another currency (dolar, emas, ...).
+              Pressable(
+                onTap: () => DisplayCurrency.pick(context, previewIdr: m.netWorth.value),
+                semanticLabel: 'Ganti mata uang total',
+                tooltip: 'Ganti mata uang total',
+                hoverLift: 0,
+                borderRadius: BorderRadius.circular(99),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: DisplayCurrency.code,
+                    builder: (context, code, _) => Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Saldo total · $code', style: TextStyle(color: muted, fontSize: 13.5)),
+                        Icon(Icons.expand_more_rounded, size: 18, color: muted),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               const Spacer(),
               Pressable(
                 onTap: onToggle,
@@ -272,6 +293,7 @@ class _NetWorthCard extends StatelessWidget {
               child: AnimatedMoney(
                 value: m.netWorth.value,
                 hidden: hidden,
+                inDisplayCurrency: true,
                 style: AppTypography.display(size: 40, weight: FontWeight.w500, color: cream),
               ),
             ),
@@ -280,7 +302,7 @@ class _NetWorthCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(
-                'Aset ${m.totalAssets.value.rupiah} · Utang ${liabilities.rupiah}',
+                'Aset ${DisplayCurrency.format(m.totalAssets.value)} · Utang ${DisplayCurrency.format(liabilities)}',
                 style: TextStyle(color: muted, fontSize: 12.5),
               ),
             ),

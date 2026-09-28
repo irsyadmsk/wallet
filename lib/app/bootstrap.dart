@@ -23,6 +23,7 @@ import 'package:financial_recording/data/services/currency/currency_service.dart
 import 'package:financial_recording/data/services/ledger_service.dart';
 import 'package:financial_recording/data/services/sync/sync_service.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
+import 'package:financial_recording/data/services/currency/display_currency.dart';
 
 /// Registers Hive adapters, opens every v2 box, and seeds a fresh install —
 /// either from a bundled JSON backup (`assets/seed/my_data.json`) when
@@ -30,6 +31,7 @@ import 'package:financial_recording/domain/enums/hive_enums.dart';
 Future<void> bootstrap() async {
   await initializeDateFormatting('id_ID', null);
   await detectDistribution();
+  await DisplayCurrency.load();
   await Hive.initFlutter();
 
   Hive.registerAdapter(TxTypeAdapter());

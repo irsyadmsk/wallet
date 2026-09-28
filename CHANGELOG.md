@@ -10,6 +10,16 @@ Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 
 ## 1.3.1 — 28 September 2026
 
+### Pembaruan 2 (tanpa Play Store)
+- **Total dalam mata uang pilihan**: ketuk *Saldo total* di Beranda atau
+  *Total* di Akun untuk melihatnya dalam Rupiah, Dolar, emas (gram), dll.
+  Pilihan diingat di HP ini.
+- **Gestur geser**: dari Beranda geser ke kanan → Akun; dari Laporan geser
+  lagi → Semua menu.
+- Form (Transaksi baru, dll.) bisa **ditutup dengan menarik ke bawah**
+  saat sudah di posisi paling atas.
+- Kotak *Harga hari ini* pindah ke bagian bawah halaman Akun.
+
 ### Pembaruan 1 (tanpa Play Store)
 - Pengaturan menampilkan nomor pembaruan, mis. *v1.3.1 (pembaruan 1)*,
   sehingga terlihat bila perbaikan kecil sudah terpasang otomatis.
