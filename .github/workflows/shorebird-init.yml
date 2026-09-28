@@ -30,6 +30,17 @@ jobs:
             exit 1
           fi
 
+      # android/gradlew isn't committed; Flutter generates it on the first
+      # build, and `shorebird init` needs it to read the app's flavors.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate Gradle wrapper
+        run: |
+          flutter pub get
+          flutter build apk --config-only
+
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true

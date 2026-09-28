@@ -92,6 +92,8 @@ flutter:
     - assets/google_fonts/
     # Developer's QRIS for voluntary donations (hidden for Play Store installs).
     - assets/donation/
+    # Shorebird code push config (app_id, not a secret; see docs/SHOREBIRD.md).
+    - shorebird.yaml
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
