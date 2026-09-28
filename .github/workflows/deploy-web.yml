@@ -63,15 +63,13 @@ jobs:
         if: steps.secret.outputs.ada == 'true'
         with:
           channel: stable
+          cache: true
 
       - run: flutter pub get
         if: steps.secret.outputs.ada == 'true'
 
-      # Tes lebih dulu: deploy yang melewati tes hanya memindahkan kegagalan
-      # ke layar pengunjung.
-      - name: Tes
-        if: steps.secret.outputs.ada == 'true'
-        run: flutter test
+      # Tes sudah dijalankan di pull request (ci.yml) untuk kode yang sama,
+      # jadi tidak diulang di sini — menghemat menit GitHub Actions.
 
       - name: Build web
         if: steps.secret.outputs.ada == 'true'
