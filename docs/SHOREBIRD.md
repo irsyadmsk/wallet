@@ -35,16 +35,17 @@ QRIS disembunyikan otomatis bila aplikasi dipasang dari Play Store
 ## Langkah aktivasi (sekali saja)
 
 1. **Buat akun** di <https://console.shorebird.dev> (masuk dengan Google).
-2. Di Console, **buat aplikasi** bernama `Wallet`. Salin **App ID**-nya
-   (bukan rahasia) dan kirim ke Claude. Claude akan menambahkan
-   `shorebird.yaml` ke repo.
-3. Di Console buka **Account → API Keys → buat kunci baru**. Salin kuncinya
+2. Di Console buka **Account → API Keys → buat kunci baru**. Salin kuncinya
    (ini **rahasia**, jangan dikirim ke siapa pun, termasuk ke chat).
-4. Buka <https://github.com/irsyadmsk/wallet/settings/secrets/actions> →
+3. Buka <https://github.com/irsyadmsk/wallet/settings/secrets/actions> →
    **New repository secret** → Name: `SHOREBIRD_TOKEN`, Secret: tempel
    kunci tadi → **Add secret**.
-5. Beri tahu Claude. Claude akan menaikkan versi agar build berikutnya
-   menjadi rilis Shorebird pertama, lalu memeriksa hasilnya.
+4. Aplikasi tidak dibuat lewat tombol di Console, tapi lewat perintah
+   `shorebird init`. Jalankan workflow **Actions → "Daftarkan ke
+   Shorebird" → Run workflow** (`.github/workflows/shorebird-init.yml`):
+   Wallet terdaftar di Console dan `shorebird.yaml` didorong ke branch
+   `chore/shorebird-init`. Gabungkan branch itu lewat pull request.
+5. Naikkan `version:` agar build berikutnya menjadi rilis Shorebird pertama.
 6. Unggah `wallet.aab` dari rilis `apk-latest` ke Play Console seperti
    biasa, dan pasang ulang `wallet.apk` di HP. Mulai saat itu perbaikan
    kecil datang sendiri.

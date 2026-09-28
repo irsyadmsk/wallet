@@ -1,0 +1,48 @@
+name: Daftarkan ke Shorebird
+
+# One-time setup, run by hand (Actions → "Daftarkan ke Shorebird" → Run
+# workflow) after the SHOREBIRD_TOKEN secret is added. Registers Wallet in
+# the Shorebird Console and pushes the resulting shorebird.yaml (+ the
+# pubspec.yaml asset entry) to the branch `chore/shorebird-init`, ready to
+# open as a pull request. No local Shorebird install needed.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    env:
+      SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check prerequisites
+        run: |
+          if [ -z "$SHOREBIRD_TOKEN" ]; then
+            echo "::error::Secret SHOREBIRD_TOKEN belum dipasang (lihat docs/SHOREBIRD.md)."
+            exit 1
+          fi
+          if [ -f shorebird.yaml ]; then
+            echo "::error::shorebird.yaml sudah ada — Wallet sudah terdaftar."
+            exit 1
+          fi
+
+      - uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      - name: shorebird init
+        run: shorebird init --display-name Wallet
+
+      - name: Push branch chore/shorebird-init
+        run: |
+          cat shorebird.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b chore/shorebird-init
+          git add shorebird.yaml pubspec.yaml
+          git commit -m "chore: daftarkan Wallet ke Shorebird (shorebird.yaml)"
+          git push -f origin chore/shorebird-init
