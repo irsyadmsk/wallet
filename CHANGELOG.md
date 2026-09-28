@@ -10,6 +10,10 @@ Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 
 ## 1.3.1 — 28 September 2026
 
+### Pembaruan 1 (tanpa Play Store)
+- Pengaturan menampilkan nomor pembaruan, mis. *v1.3.1 (pembaruan 1)*,
+  sehingga terlihat bila perbaikan kecil sudah terpasang otomatis.
+
 ### Baru
 - **Tempel kartu e-money kapan saja**: saat Wallet tertutup, Android kini
   menampilkan Wallet di pilihan *"Tag NFC terdeteksi"* dan langsung membuka
