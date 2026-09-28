@@ -8,7 +8,7 @@ class AppConfig {
   /// Code-push updates sent to this version without a store release (see
   /// docs/SHOREBIRD.md). Bump for every patch; reset to 0 when [appVersion]
   /// changes. Shown in Pengaturan so the user can tell a patch arrived.
-  static const int appPatch = 2;
+  static const int appPatch = 3;
   static String get versionLabel => appPatch == 0 ? 'v$appVersion' : 'v$appVersion (pembaruan $appPatch)';
   static const String appAuthor = "Muhammad Irsyad Sirojul Khoeir";
   static const String appAuthorEmail = "irsyad.msk@gmail.com";

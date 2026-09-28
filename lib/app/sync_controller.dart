@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:financial_recording/util/money/money_format.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:financial_recording/app/app_events.dart';
+import 'package:financial_recording/app/guest_mode.dart';
 import 'package:financial_recording/data/services/sync/sync_registry.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
 import 'package:financial_recording/data/repositories/template_repository.dart';
@@ -76,10 +77,83 @@ class SyncController extends GetxController {
     if (previous != null && previous != user.id) {
       await _sync.wipeLocal();
       notifyDataChanged();
+    } else if (previous == null) {
+      // First sign-in on this device: the boxes hold whatever was recorded
+      // without an account (or just the starter data).
+      if (!await _adoptGuestData(user)) return;
     }
     await refreshFamily(reconcile: true);
     await syncNow();
     _startAuto();
+  }
+
+  /// Returns false when the sign-in was undone (the merge failed and the
+  /// user is back to using the app without an account, data intact).
+  Future<bool> _adoptGuestData(User user) async {
+    if (!_sync.localHasUserData()) {
+      // Only untouched starter data: drop it so it never duplicates the
+      // account's own categories; a new account gets it again from the
+      // first sync.
+      await _sync.wipeLocal();
+      notifyDataChanged();
+      return true;
+    }
+    var merge = true;
+    try {
+      if (await _sync.remoteHasData(user.id)) merge = await _askMerge(user.email ?? 'akun ini');
+    } catch (_) {
+      // Can't tell: merging is safe either way (look-alikes are mapped).
+    }
+    Get.dialog<void>(
+      const PopScope(canPop: false, child: Center(child: CircularProgressIndicator())),
+      barrierDismissible: false,
+    );
+    String? error;
+    try {
+      if (merge) {
+        error = await _sync.adoptLocalData();
+      } else {
+        await _sync.wipeLocal();
+      }
+    } finally {
+      if (Get.isDialogOpen ?? false) Get.back<void>();
+    }
+    notifyDataChanged();
+    if (error == null) return true;
+    // Keep the records on this device and go back to using the app
+    // without an account; the user can try signing in again.
+    await SupabaseService.auth.signOut();
+    Get.snackbar(
+      'Gagal masuk',
+      'Catatan di perangkat ini tetap aman, tetapi belum bisa dipindahkan ke akun: $error',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 6),
+    );
+    return false;
+  }
+
+  /// Both this device (used without an account) and the account have
+  /// records. True = merge them, false = keep only the account's.
+  Future<bool> _askMerge(String email) async {
+    final merge = await Get.dialog<bool>(
+      PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: const Text('Gabungkan catatan?'),
+          content: Text(
+            'Perangkat ini punya catatan yang dibuat tanpa akun, dan $email juga sudah berisi data.\n\n'
+            'Gabungkan: catatan di perangkat ini ditambahkan ke akun (kategori dan akun yang sama '
+            'disatukan).\n\nPakai data akun saja: catatan di perangkat ini dihapus.',
+          ),
+          actions: [
+            TextButton(onPressed: () => Get.back(result: false), child: const Text('Pakai data akun saja')),
+            FilledButton(onPressed: () => Get.back(result: true), child: const Text('Gabungkan')),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    );
+    return merge ?? true;
   }
 
   Future<void> onSignedOut() async {
@@ -142,7 +216,13 @@ class SyncController extends GetxController {
   /// starts over with the starter accounts and categories. Returns an error
   /// message, or null on success.
   Future<String?> wipeAllData() async {
-    if (_uid == null) return 'Belum login.';
+    if (_uid == null) {
+      // No account: only this device holds data. Start over locally.
+      await _sync.wipeLocal();
+      await GuestMode.housekeeping();
+      notifyDataChanged();
+      return null;
+    }
     try {
       await SupabaseService.client.rpc('wipe_my_ledger');
     } catch (e) {

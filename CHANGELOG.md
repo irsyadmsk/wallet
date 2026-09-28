@@ -10,6 +10,15 @@ Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 
 ## 1.3.1 — 28 September 2026
 
+### Pembaruan 3 (tanpa Play Store)
+- **Pakai tanpa akun**: ketuk *Mulai sekarang* di layar sambutan dan
+  langsung mencatat. Catatan tersimpan di perangkat ini saja.
+- Masuk/daftar kapan saja (Pengaturan › Akun, ikon awan di Beranda):
+  catatan yang sudah ada ikut dipindahkan ke akun. Bila akun sudah berisi
+  data, Anda memilih *Gabungkan* atau *Pakai data akun saja*.
+- **Keluarga** dan cadangan cloud tetap butuh akun.
+- Di web, pengingat bahwa catatan tanpa akun hanya tersimpan di browser.
+
 ### Pembaruan 2 (tanpa Play Store)
 - **Total dalam mata uang pilihan**: ketuk *Saldo total* di Beranda atau
   *Total* di Akun untuk melihatnya dalam Rupiah, Dolar, emas (gram), dll.

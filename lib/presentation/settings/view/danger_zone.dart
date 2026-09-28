@@ -13,6 +13,7 @@ class DangerZone extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final sync = Get.find<SyncController>();
+    final auth = Get.find<AuthController>();
 
     return Card(
       child: Column(
@@ -21,7 +22,9 @@ class DangerZone extends StatelessWidget {
             leading: Icon(Icons.delete_sweep_rounded, color: colors.danger),
             title: Text('Hapus semua data', style: TextStyle(color: colors.danger, fontWeight: FontWeight.w600)),
             subtitle: Obx(() => Text(
-                  sync.inFamily && sync.isFamilyOwner
+                  !auth.isSignedIn
+                      ? 'Semua catatan di perangkat ini dihapus dan Anda mulai dari awal.'
+                      : sync.inFamily && sync.isFamilyOwner
                       ? 'Mengosongkan buku kas keluarga untuk semua anggota. Akun tetap ada.'
                       : sync.inFamily
                           ? 'Mengosongkan buku kas pribadi Anda. Buku kas keluarga tidak terpengaruh.'
@@ -29,13 +32,13 @@ class DangerZone extends StatelessWidget {
                 )),
             onTap: () => _wipe(context, sync),
           ),
-          const Divider(height: 1),
-          ListTile(
+          Obx(() => auth.isSignedIn ? const Divider(height: 1) : const SizedBox.shrink()),
+          Obx(() => !auth.isSignedIn ? const SizedBox.shrink() : ListTile(
             leading: Icon(Icons.person_remove_rounded, color: colors.danger),
             title: Text('Hapus akun permanen', style: TextStyle(color: colors.danger, fontWeight: FontWeight.w600)),
             subtitle: const Text('Akun dan seluruh datanya dihapus dari server. Tidak bisa dibatalkan.'),
             onTap: () => _deleteAccount(context),
-          ),
+          )),
         ],
       ),
     );
@@ -46,7 +49,10 @@ class DangerZone extends StatelessWidget {
     final ok = await confirmTyped(
       context,
       title: 'Hapus semua data?',
-      body: familyBook
+      body: !Get.find<AuthController>().isSignedIn
+          ? 'Semua akun, transaksi, anggaran, target, utang, memo, dan portofolio kripto di perangkat ini '
+              'akan dihapus. Karena belum masuk akun, catatan ini tidak punya cadangan di cloud.'
+          : familyBook
           ? 'Seluruh isi buku kas keluarga akan dihapus di semua perangkat, termasuk milik anggota. '
               'Akun Anda dan keanggotaan keluarga tetap ada.'
           : 'Semua akun, transaksi, anggaran, target, utang, memo, dan portofolio kripto akan dihapus '

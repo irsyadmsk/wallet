@@ -14,6 +14,7 @@ import 'package:financial_recording/shared/ecosystem.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
+import 'package:financial_recording/app/guest_mode.dart';
 
 const _heroVideo =
     'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4';
@@ -91,7 +92,7 @@ class _WelcomeViewState extends State<WelcomeView> {
     if (mode != null) WidgetsBinding.instance.addPostFrameCallback((_) => _openAuth(mode));
   }
 
-  void _openTour(int topic) => showFeatureTour(context, initialTopic: topic, onStart: () => _openAuth(AuthMode.signUp));
+  void _openTour(int topic) => showFeatureTour(context, initialTopic: topic, onStart: GuestMode.start);
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +181,7 @@ class _WelcomeViewState extends State<WelcomeView> {
                             flex: 4,
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 24),
-                              child: _CtaGroup(onPressed: () => _openAuth(AuthMode.signUp), onSignIn: () => _openAuth(AuthMode.signIn)),
+                              child: _CtaGroup(onPressed: GuestMode.start, onSignIn: () => _openAuth(AuthMode.signIn)),
                             ),
                           ),
                         ],
@@ -191,7 +192,7 @@ class _WelcomeViewState extends State<WelcomeView> {
                         children: [
                           _Wordmark(width: size.width),
                           const SizedBox(height: 20),
-                          _CtaGroup(onPressed: () => _openAuth(AuthMode.signUp), onSignIn: () => _openAuth(AuthMode.signIn)),
+                          _CtaGroup(onPressed: GuestMode.start, onSignIn: () => _openAuth(AuthMode.signIn)),
                         ],
                       ),
               ),
@@ -322,7 +323,7 @@ class _CtaGroupState extends State<_CtaGroup> {
                 onFocusChange: (f) => setState(() => _focus = f),
                 child: Pressable(
                   onTap: widget.onPressed,
-                  semanticLabel: 'Mulai sekarang, buat akun',
+                  semanticLabel: 'Mulai sekarang tanpa akun',
                   hoverLift: 0,
                   borderRadius: BorderRadius.circular(999),
                   builder: (context, s, _) => AnimatedContainer(
@@ -367,7 +368,7 @@ class _CtaGroupState extends State<_CtaGroup> {
                   child: const SizedBox.shrink(),
                 ),
               ),
-              _GhostLink(label: 'Sudah punya akun? Masuk', onTap: widget.onSignIn, lit: lit),
+              _GhostLink(label: 'Masuk / daftar akun', onTap: widget.onSignIn, lit: lit),
               _GhostLink(label: 'irsyads.com', icon: Icons.north_east_rounded, onTap: Ecosystem.openHome, lit: false),
             ],
           ).animate().fadeIn(delay: 560.ms, duration: 850.ms, curve: curve).moveY(begin: 24, end: 0, delay: 560.ms, duration: 850.ms, curve: curve),
