@@ -3,12 +3,12 @@
 class AppConfig {
   static const String appName = "Wallet";
   /// Must match `version:` in pubspec.yaml (guarded by test/version_test.dart).
-  static const String appVersion = "1.3.1";
+  static const String appVersion = "1.4.0";
 
   /// Code-push updates sent to this version without a store release (see
   /// docs/SHOREBIRD.md). Bump for every patch; reset to 0 when [appVersion]
   /// changes. Shown in Pengaturan so the user can tell a patch arrived.
-  static const int appPatch = 3;
+  static const int appPatch = 0;
   static String get versionLabel => appPatch == 0 ? 'v$appVersion' : 'v$appVersion (pembaruan $appPatch)';
   static const String appAuthor = "Muhammad Irsyad Sirojul Khoeir";
   static const String appAuthorEmail = "irsyad.msk@gmail.com";

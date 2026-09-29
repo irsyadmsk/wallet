@@ -8,6 +8,22 @@ Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 [`docs/play-store/whatsnew-id-ID.txt`](docs/play-store/whatsnew-id-ID.txt)
 (maksimal 500 karakter).
 
+## 1.4.0 — 29 September 2026
+
+Rilis perawatan untuk Google Play, berisi semua pembaruan 1–3 dari 1.3.1.
+
+### Baru (dari pembaruan 1.3.1)
+- **Pakai tanpa akun**; masuk/daftar kapan saja dan catatan ikut pindah.
+- **Total dalam mata uang pilihan** (Rupiah, Dolar, emas, dll.).
+- Gestur geser Beranda ⇄ Akun dan Laporan → Semua menu; form ditutup
+  dengan menarik ke bawah.
+
+### Teknis
+- Komponen build Android diperbarui (Gradle 9.3.1, Android Gradle Plugin
+  9.1.0, Kotlin 2.4.0) sebelum versi lama tidak didukung Flutter.
+- Seluruh ikon ikut di aplikasi, sehingga pembaruan tanpa Play Store bisa
+  memakai ikon apa pun.
+
 ## 1.3.1 — 28 September 2026
 
 ### Pembaruan 3 (tanpa Play Store)
