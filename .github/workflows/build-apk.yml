@@ -1,9 +1,7 @@
 name: Build Android APK
 
-# Local builds on this dev machine are blocked by a Gradle daemon /
-# loopback-connection restriction (likely antivirus/firewall) — this
-# workflow builds the release APK on a clean Ubuntu runner instead, where
-# that issue doesn't exist. Each build is published as the "APK terbaru"
+# Release builds run here (signing key and Shorebird token live in repo
+# secrets); local debug builds work too — see docs/BUILD_LOKAL.md. Each build is published as the "APK terbaru"
 # GitHub Release (a plain .apk on the repo's Releases page, easy to open
 # from a phone) and also kept as a run artifact.
 on:
