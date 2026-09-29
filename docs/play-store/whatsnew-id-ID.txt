@@ -1,6 +1,7 @@
-• Tempel kartu e-money kapan saja: pilih Wallet di pop-up NFC Android
-• Opsi "Masukkan ke total" untuk tiap akun
-• Kategori pemasukan & pengeluaran kini terpisah dengan benar
-• Tombol kembali membawa ke Beranda, bukan keluar aplikasi
-• Tulisan di mode terang kini terbaca jelas
-• Tampilan Akun & Transaksi Berulang lebih rapi
+• Pakai Wallet tanpa akun; masuk kapan saja dan catatan ikut pindah
+• Lihat total saldo dalam Rupiah, Dolar, emas, dll.
+• Gestur geser: Beranda ke Akun, Laporan ke Semua menu
+• Tutup form dengan menarik ke bawah
+• Tempel kartu e-money kapan saja lewat pop-up NFC Android
+• Perbaikan kategori, tombol kembali, dan mode terang
+• Pembaruan teknis agar aplikasi tetap stabil

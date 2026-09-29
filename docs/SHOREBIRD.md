@@ -7,10 +7,10 @@ kebijakan Google Play.
 
 Yang **tidak bisa** dikirim lewat Shorebird dan tetap butuh rilis Play
 Store: perubahan di `android/` (izin, NFC, manifest), plugin baru, versi
-Flutter baru, dan **aset** — termasuk **ikon Material yang belum pernah
-dipakai** di rilis itu (Flutter hanya menyertakan ikon yang dipakai ke dalam
-font). CI (`ci.yml`, langkah "Ikon baru vs rilis Shorebird") menolak PR
-semacam itu sebelum digabung.
+Flutter baru, dan **aset** (gambar, font). Sejak 1.4.0 rilis dibangun
+dengan `--no-tree-shake-icons`, jadi seluruh font ikon Material sudah ikut
+dan patch boleh memakai ikon apa pun. (Rilis 1.3.1 masih memakai font ikon
+yang dipangkas.)
 
 ## Cara kerjanya di repo ini
 

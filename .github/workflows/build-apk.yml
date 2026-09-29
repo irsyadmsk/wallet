@@ -1,9 +1,7 @@
 name: Build Android APK
 
-# Local builds on this dev machine are blocked by a Gradle daemon /
-# loopback-connection restriction (likely antivirus/firewall) — this
-# workflow builds the release APK on a clean Ubuntu runner instead, where
-# that issue doesn't exist. Each build is published as the "APK terbaru"
+# Release builds run here (signing key and Shorebird token live in repo
+# secrets); local debug builds work too — see docs/BUILD_LOKAL.md. Each build is published as the "APK terbaru"
 # GitHub Release (a plain .apk on the repo's Releases page, easy to open
 # from a phone) and also kept as a run artifact.
 on:
@@ -123,14 +121,16 @@ jobs:
 
       # One build for both stores: the app hides the donation page itself
       # when Play installed it (lib/app/distribution.dart).
+      # --no-tree-shake-icons ships the whole Material icon font, so a patch
+      # may use any icon (a tree-shaken font is an asset patches can't change).
       - name: Shorebird release (APK & App Bundle)
         if: steps.plan.outputs.mode == 'release'
-        run: shorebird release android --artifact apk -- --build-number=${{ steps.plan.outputs.code }}
+        run: shorebird release android --artifact apk -- --build-number=${{ steps.plan.outputs.code }} --no-tree-shake-icons
 
       - name: Shorebird patch (update tanpa Play Store)
         if: steps.plan.outputs.mode == 'patch'
         run: |
-          if ! shorebird patch android --release-version=${{ steps.plan.outputs.version }}+${{ steps.plan.outputs.code }}; then
+          if ! shorebird patch android --release-version=${{ steps.plan.outputs.version }}+${{ steps.plan.outputs.code }} -- --no-tree-shake-icons; then
             echo "::error::Patch gagal. Kalau perubahan menyentuh kode native (android/, plugin, izin), naikkan 'version:' di pubspec.yaml agar menjadi rilis baru lewat Play Store."
             exit 1
           fi

@@ -46,25 +46,6 @@ jobs:
       - name: Tes
         run: flutter test
 
-      # A PR that keeps `version:` becomes a Shorebird *patch*, and patches
-      # can't ship assets. Flutter bundles only the icons the code uses, so
-      # a new Icons.x changes the icon font and the patch is rejected after
-      # merge. Catch it here instead.
-      - name: Ikon baru vs rilis Shorebird
-        run: |
-          version=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')
-          git fetch --no-tags --depth=1 origin "refs/tags/release-v$version:refs/tags/release-v$version" 2>/dev/null || true
-          if ! git rev-parse -q --verify "refs/tags/release-v$version" >/dev/null; then
-            echo "Versi $version belum dirilis lewat Shorebird: pemeriksaan ikon dilewati."
-            exit 0
-          fi
-          icons() { git grep -hoE 'Icons\.[a-zA-Z0-9_]+' "$1" -- lib | sort -u; }
-          baru=$(comm -13 <(icons "release-v$version") <(icons HEAD))
-          if [ -n "$baru" ]; then
-            echo "::error::Ikon baru belum ada di rilis $version, jadi patch Shorebird akan ditolak: $(echo $baru). Pakai ikon yang sudah ada, atau naikkan 'version:' untuk rilis baru."
-            exit 1
-          fi
-
       # Build web hanya bila bagian khusus web berubah; kesalahan kode Dart
       # biasa sudah tertangkap oleh Analisis & Tes di atas.
       - name: Perlu build web?
