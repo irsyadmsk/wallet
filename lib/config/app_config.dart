@@ -11,7 +11,7 @@ class AppConfig {
   static const int appPatch = 0;
   static String get versionLabel => appPatch == 0 ? 'v$appVersion' : 'v$appVersion (pembaruan $appPatch)';
   static const String appAuthor = "Muhammad Irsyad Sirojul Khoeir";
-  static const String appAuthorEmail = "irsyad.msk@gmail.com";
+  static const String appAuthorEmail = "hello@irsyads.com";
 
   // Mata Uang & Lokalisasi
   static const String defaultCurrency = "IDR";
