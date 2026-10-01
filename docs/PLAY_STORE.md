@@ -19,7 +19,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 
 **Yang masih perlu Anda siapkan sebelum mengisi Play Console:**
 
-1. ~~Email dukungan~~ ✅ `irsyad.msk@gmail.com` (dipakai di kebijakan privasi, halaman hapus akun, dan kolom kontak Play).
+1. ~~Email dukungan~~ ✅ `hello@irsyads.com` (dipakai di kebijakan privasi, halaman hapus akun, dan kolom kontak Play).
 2. ~~Screenshot~~ ✅ **Gambar toko berjudul** `docs/play-store/listing-1…6-*.png` (1080×1920, 9:16, layar dalam bingkai HP + judul) — pakai ini di Play Console. Dibuat ulang dengan `tool/store_listing.py <build web demo>`. Set terang "versi panjang" 8 gambar `store-1…8-*.png` (pembuka logo + HP miring, slide kepercayaan, lalu fitur) juga dibuat alat yang sama. Deskripsi toko: `description-id-ID.txt` (≤ 4000) dan `short-description-id-ID.txt` (≤ 80). Tangkapan polos lama `screenshot-*.png` (tool/store_screenshots.py) masih ada sebagai cadangan.
 3. ~~Feature graphic~~ ✅ `docs/play-store/feature-graphic.png` (1024×500), dibuat dengan `tool/make_feature_graphic.py`.
 4. **Akun uji untuk tim review Google**, karena aplikasi wajib login. Buat satu akun Supabase khusus (misalnya `review@irsyads.com`) dan isi dengan data contoh.
@@ -49,7 +49,7 @@ Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 | Deskripsi lengkap | Ambil dari bagian **Fitur** di README: akun keluarga realtime, akun & saldo, anggaran, laporan cerdas, zakat, kripto, pindai struk. |
 | Ikon | `docs/play-store/icon-512.png` |
 | Kategori | Keuangan |
-| Email kontak | `irsyad.msk@gmail.com` |
+| Email kontak | `hello@irsyads.com` |
 | Situs | `https://wallet.irsyads.com` |
 | Kebijakan privasi | `https://wallet.irsyads.com/privasi` |
 
