@@ -22,6 +22,7 @@ import 'package:financial_recording/shared/theme/app_spacing.dart';
 import 'package:financial_recording/shared/theme/art_icon_theme.dart';
 import 'package:financial_recording/shared/theme/theme_controller.dart';
 import 'package:financial_recording/shared/widget/art_icon.dart';
+import 'package:financial_recording/shared/widget/logo_pena_irsyads.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -441,7 +442,7 @@ class SettingsView extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Card(
                 child: ListTile(
-                  leading: const Icon(Icons.grid_view_rounded),
+                  leading: const LogoPenaIrsyads(height: 32),
                   title: const Text('Ruang Irsyads'),
                   subtitle: const Text('Pindah ke situs utama, Academy, Studio, atau Ruang'),
                   trailing: const Icon(Icons.chevron_right_rounded),

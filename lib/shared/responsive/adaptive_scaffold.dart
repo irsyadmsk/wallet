@@ -11,6 +11,7 @@ import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/shared/theme/app_typography.dart';
 import 'package:financial_recording/shared/theme/theme_controller.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
+import 'package:financial_recording/shared/widget/logo_pena_irsyads.dart';
 import 'package:financial_recording/shared/widget/service_brand_icon.dart';
 
 enum NavGroup {
@@ -1160,7 +1161,7 @@ class _ServiceEntry extends StatelessWidget {
         minimumSize: const Size(48, 48),
         alignment: AlignmentDirectional.centerStart,
       ),
-      icon: const Icon(Icons.grid_view_rounded, size: 20),
+      icon: const LogoPenaIrsyads(height: 22),
       label: const Text('Ruang Irsyads'),
     );
   }
