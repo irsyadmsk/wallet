@@ -16,6 +16,7 @@ abstract class AppPage {
   static const family = 10;
   static const categories = 11;
   static const settings = 12;
+  static const monthly = 13;
 }
 
 class ShellController extends GetxController {

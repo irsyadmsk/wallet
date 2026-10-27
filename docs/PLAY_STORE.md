@@ -1,5 +1,7 @@
 # Rencana rilis Wallet ke Google Play
 
+> Pembaruan 22 Oktober: baca [rekonsiliasi kunci/Console](2026-10-22_SIGNING_CONSOLE_RECONCILIATION.md). Kunci upload Play/cadangan/APK GitHub cocok; app signing Google berbeda. Wallet sudah memiliki akun developer dan berada di pengujian tertutup. Nomor run bukan lagi satu-satunya rumus versionCode; versi source/web/APK berbeda. Bagian bertanggal September di bawah adalah riwayat, bukan status atau izin menjalankan rilis saat ini. Tidak membuat akun/service account/kunci baru atau membayar biaya dari dokumen lama ini.
+
 Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 
 ## 0. Sudah disiapkan (tanpa akun developer)

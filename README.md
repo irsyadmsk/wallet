@@ -100,3 +100,29 @@ Sebelum membuka PR: `flutter analyze` dan `flutter test`. Alat bantu pengembanga
 ---
 
 Dibuat & dikembangkan oleh **Muhammad Irsyad Sirojul Khoeir** di bawah lisensi MIT.
+
+---
+
+## 🤖 Panduan untuk AI dan pengembang
+
+**Status:** Wallet **dibekukan** — ubah kode hanya bila pemilik meminta pekerjaan Wallet secara khusus. Baca `AGENTS.md` (status rilis terbaru di bagian atas, bertanggal) dan `CHANGELOG.md` sebelum bekerja. Versi saat ini `1.4.3+10403` (`pubspec.yaml`); rilis web dan Play Alpha 23 Okt 2026 sudah memakai izin yang diberikan, jadi izin itu tidak berlaku untuk rilis berikutnya.
+
+**Push ke `main` = rilis.** `deploy-web.yml` menayangkan wallet.irsyads.com dan `build-apk.yml` membangun/menandatangani APK (bisa juga patch Shorebird) secara otomatis. Jangan push, memicu workflow, upload Play Store, atau menjalankan migrasi tanpa persetujuan pemilik untuk rilis itu.
+
+| Lokasi | Isi |
+|---|---|
+| `lib/app/` | `bootstrap.dart`, `money_manager_app.dart`, `shell_controller.dart`, **`sync_controller.dart`** (jadwal sinkron + Realtime), `demo_mode.dart`, `guest_mode.dart` |
+| `lib/data/models/` | Model Hive. `typeId` terdaftar di `hive_type_ids.dart`; jangan memakai ulang/mengubah nomor yang ada (data pengguna rusak) |
+| `lib/data/repositories/` | Akses box per entitas |
+| `lib/data/services/` | `ledger_service.dart` (saldo), laporan, zakat, kripto (CoinGecko), OCR struk, NFC e-money, PIN, keluarga |
+| `lib/data/services/sync/` | `sync_registry.dart` (daftar entitas yang disinkron), `sync_service.dart`, `ledger_merge.dart`, `tombstone_service.dart` |
+| `lib/presentation/<fitur>/` | Halaman (view + controller GetX) per fitur |
+| `packages/prepaidcard_reader/` | Plugin NFC kartu prabayar (fork lokal) |
+| `worker/index.js` | Worker Cloudflare: menyajikan `build/web` + satu API `GET /api/emas` (harga emas Antam dari Galeri24, cache 1 jam) |
+| `supabase/migrations/` | Skema proyek Supabase **`wallet`** (bukan proyek irsyads). Nama berkas = versi di server |
+| `tool/` | Generator ikon (`make_icons.py` memanggil generator ikon di `../irsyads`), aset Play Store, `sinkron-lokal.ps1` |
+| `docs/` | `BUILD_LOKAL.md`, `PLAY_STORE.md`, `SHOREBIRD.md`, `TOOLING.md`, `ROADMAP.md` + catatan bertanggal (riwayat) |
+
+**Jangan:** membuat atau mengganti keystore (pembaruan APK butuh kunci yang sama), mengubah `applicationId`, uninstall/clear storage di perangkat pengguna, menebak nomor versi, atau menjalankan `dart fix` global. Validasi native di laptop 8 GB: pakai pengaturan heap kecil di `docs/2026-10-23_AG10_NATIVE_CONTINUATION.md`.
+
+**Uji lokal:** `flutter analyze` dan `flutter test` (tes di `test/`).

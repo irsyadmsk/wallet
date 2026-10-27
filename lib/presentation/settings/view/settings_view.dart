@@ -52,27 +52,73 @@ class SettingsView extends StatelessWidget {
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Obx(() => SegmentedButton<ThemeMode>(
-                        segments: const [
-                          ButtonSegment(
-                            value: ThemeMode.system,
-                            label: Text('Sistem'),
-                            icon: Icon(Icons.brightness_auto_rounded),
-                          ),
-                          ButtonSegment(
-                            value: ThemeMode.light,
-                            label: Text('Terang'),
-                            icon: Icon(Icons.light_mode_rounded),
-                          ),
-                          ButtonSegment(
-                            value: ThemeMode.dark,
-                            label: Text('Gelap'),
-                            icon: Icon(Icons.dark_mode_rounded),
-                          ),
-                        ],
-                        selected: {theme.themeMode.value},
-                        onSelectionChanged: (s) => theme.setThemeMode(s.first),
-                      )),
+                  child: Obx(() {
+                    final current = theme.themeMode.value;
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+                        final isSpacious = constraints.maxWidth >= 420 && textScale <= 1.15;
+
+                        if (isSpacious) {
+                          return SizedBox(
+                            width: double.infinity,
+                            child: SegmentedButton<ThemeMode>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: ThemeMode.system,
+                                  label: Text('Sistem'),
+                                  icon: Icon(Icons.brightness_auto_rounded),
+                                ),
+                                ButtonSegment(
+                                  value: ThemeMode.light,
+                                  label: Text('Terang'),
+                                  icon: Icon(Icons.light_mode_rounded),
+                                ),
+                                ButtonSegment(
+                                  value: ThemeMode.dark,
+                                  label: Text('Gelap'),
+                                  icon: Icon(Icons.dark_mode_rounded),
+                                ),
+                              ],
+                              selected: {current},
+                              onSelectionChanged: (s) => theme.setThemeMode(s.first),
+                            ),
+                          );
+                        }
+
+                        return Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildThemeModeItem(
+                              context: context,
+                              theme: theme,
+                              mode: ThemeMode.system,
+                              label: 'Sistem',
+                              icon: Icons.brightness_auto_rounded,
+                              isSelected: current == ThemeMode.system,
+                            ),
+                            _buildThemeModeItem(
+                              context: context,
+                              theme: theme,
+                              mode: ThemeMode.light,
+                              label: 'Terang',
+                              icon: Icons.light_mode_rounded,
+                              isSelected: current == ThemeMode.light,
+                            ),
+                            _buildThemeModeItem(
+                              context: context,
+                              theme: theme,
+                              mode: ThemeMode.dark,
+                              label: 'Gelap',
+                              icon: Icons.dark_mode_rounded,
+                              isSelected: current == ThemeMode.dark,
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -85,7 +131,7 @@ class SettingsView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pilih suasana warna yang menyejukkan mata dan pikiran:',
+                        'Pilih warna aksen utama untuk tombol, tautan, dan penanda visual antarmuka:',
                         style: TextStyle(color: colors.textSecondary, fontSize: 13),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -93,7 +139,7 @@ class SettingsView extends StatelessWidget {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _buildPaletteChip(theme, 'Tinta Hutan', AppColors.presetIrsyads),
+                              _buildPaletteChip(theme, 'Tinta Akademik', AppColors.presetIrsyads),
                               _buildPaletteChip(theme, 'Sage', AppColors.presetSage),
                               _buildPaletteChip(theme, 'Laut Senja', AppColors.presetOcean),
                               _buildPaletteChip(theme, 'Tanah Liat', AppColors.presetSand),
@@ -113,11 +159,25 @@ class SettingsView extends StatelessWidget {
                           child: Icon(Icons.palette_rounded, color: colors.primary, size: 20),
                         ),
                         title: const Text('Warna Kustom Lainnya'),
-                        trailing: Obx(() => CircleAvatar(
-                              radius: 14,
-                              backgroundColor: theme.seedColor.value,
-                              child: const Icon(Icons.colorize_rounded, size: 14, color: Colors.white),
-                            )),
+                        trailing: Obx(() {
+                          final currentColor = theme.seedColor.value;
+                          final isCustom = ![
+                            AppColors.presetIrsyads.toARGB32(),
+                            AppColors.presetSage.toARGB32(),
+                            AppColors.presetOcean.toARGB32(),
+                            AppColors.presetSand.toARGB32(),
+                            AppColors.presetLavender.toARGB32(),
+                            AppColors.presetForest.toARGB32(),
+                          ].contains(currentColor.toARGB32());
+                          final checkColor = AppColors.light(currentColor).onPrimary;
+                          return CircleAvatar(
+                            radius: 14,
+                            backgroundColor: currentColor,
+                            child: isCustom
+                                ? Icon(Icons.check_rounded, size: 16, color: checkColor)
+                                : Icon(Icons.colorize_rounded, size: 14, color: checkColor),
+                          );
+                        }),
                         onTap: () => _pickColor(context, theme),
                       ),
                     ],
@@ -422,14 +482,94 @@ class SettingsView extends StatelessWidget {
     );
   }
 
+  Widget _buildThemeModeItem({
+    required BuildContext context,
+    required ThemeController theme,
+    required ThemeMode mode,
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+  }) {
+    final colors = context.colors;
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: 'Mode $label',
+      child: Material(
+        color: isSelected
+            ? colors.primaryContainer.withValues(alpha: 0.35)
+            : colors.surfaceAlt.withValues(alpha: 0.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: isSelected ? colors.primary : colors.border.withValues(alpha: colors.border.a * 0.4),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => theme.setThemeMode(mode),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 20,
+                    color: isSelected ? colors.primary : colors.textPrimary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? colors.primary : colors.textPrimary,
+                    ),
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.check_rounded,
+                      size: 16,
+                      color: colors.primary,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPaletteChip(ThemeController theme, String label, Color color) {
     final isSelected = theme.seedColor.value.toARGB32() == color.toARGB32();
-    return FilterChip(
-      selected: isSelected,
-      label: Text(label),
-      avatar: CircleAvatar(radius: 8, backgroundColor: color),
-      onSelected: (_) => theme.setSeedColor(color),
-      showCheckmark: false,
+    final checkColor = AppColors.light(color).onPrimary;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: FilterChip(
+        selected: isSelected,
+        label: Text(
+          label,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+        avatar: CircleAvatar(
+          radius: 10,
+          backgroundColor: color,
+          child: isSelected ? Icon(Icons.check_rounded, size: 12, color: checkColor) : null,
+        ),
+        showCheckmark: false,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: 10, vertical: 8),
+        onSelected: (_) => theme.setSeedColor(color),
+      ),
     );
   }
 

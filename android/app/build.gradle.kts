@@ -15,6 +15,21 @@ val keystoreProperties = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 
+// A release must update the existing installation with its established key.
+// Debug builds remain available without private signing material.
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any { it.project == project && it.name.endsWith("Release") }
+    if (buildsRelease) {
+        val required = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+        if (required.any { keystoreProperties.getProperty(it).isNullOrBlank() }) {
+            throw GradleException("Release signing is incomplete. Configure the existing Wallet key in android/key.properties; do not replace it with a debug key.")
+        }
+        if (!file(keystoreProperties.getProperty("storeFile")).isFile) {
+            throw GradleException("Wallet release keystore is unavailable. Restore the existing private signing backup before building a release.")
+        }
+    }
+}
+
 android {
     namespace = "com.example.financial_recording"
     compileSdk = flutter.compileSdkVersion
@@ -48,9 +63,7 @@ android {
 
     buildTypes {
         release {
-            // Falls back to the debug key when no release key is configured,
-            // so `flutter run --release` keeps working on dev machines.
-            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

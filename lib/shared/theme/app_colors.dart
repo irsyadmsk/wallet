@@ -46,12 +46,14 @@ class AppColors extends ThemeExtension<AppColors> {
   Color get budgetWarn => warning;
   Color get budgetOver => danger;
 
-  /// Editorial palette — warm paper, charcoal-green ink, one quiet green
-  /// accent, and earthy signal colors (forest income, clay expense, ochre
-  /// warning). Documented in DESIGN.md at the repo root.
-  static const Color paper = Color(0xFFF6F8F5);
-  static const Color ink = Color(0xFF17272B);
-  static const Color forest = Color(0xFF19363B);
+  /// Irsyads portrait-reference palette, owner mandate 22 October 2026.
+  /// Existing named visitor palettes remain available below.
+  static const Color paper = Color(0xFFF4EADF);
+  static const Color ink = Color(0xFF141720);
+  static const Color academicBlue = Color(0xFF2D3C57);
+  static const Color powderBlue = Color(0xFF8BA2CE);
+  static const Color paperShadow = Color(0xFFCFBEAF);
+  static const Color forest = Color(0xFF134E4A);
   static const Color sage = Color(0xFF4F8B70);
   static const Color clay = Color(0xFFC2502F);
   static const Color ochre = Color(0xFFD9A441);
@@ -67,8 +69,8 @@ class AppColors extends ThemeExtension<AppColors> {
   static const Color irsyadsTeal = Color(0xFF126A5A);
 
   /// Preset palettes offered in Settings.
-  static const Color defaultSeed = forest;
-  static const Color presetIrsyads = forest;
+  static const Color defaultSeed = academicBlue;
+  static const Color presetIrsyads = academicBlue;
   static const Color presetSage = sage;
   static const Color presetOcean = Color(0xFF2E5A7A);
   static const Color presetSand = Color(0xFF9A5B1E);
@@ -76,43 +78,46 @@ class AppColors extends ThemeExtension<AppColors> {
   static const Color presetForest = Color(0xFF2F6B4F);
 
   static AppColors light(Color seed) => AppColors(
-        primary: seed,
-        onPrimary: const Color(0xFFF6F8F5),
-        primaryContainer: Color.alphaBlend(seed.withValues(alpha: 0.10), paper),
-        surface: const Color(0xFFFCFDFB),
-        surfaceAlt: paper,
-        surfaceRaised: const Color(0xFFFFFFFF),
-        border: const Color(0x1C17272B),
-        textPrimary: ink,
-        textSecondary: const Color(0xFF55615F),
-        textTertiary: const Color(0xFF7B8482),
-        success: const Color(0xFF2F7A5B),
-        danger: const Color(0xFFB4452A),
-        warning: const Color(0xFF9C6F1C),
-        info: const Color(0xFF3F6E8C),
-        income: const Color(0xFF2F7A5B),
-        expense: const Color(0xFFB4452A),
-        transfer: const Color(0xFF53679A),
-      );
+    primary: seed,
+    onPrimary: _onAccent(seed),
+    primaryContainer: Color.alphaBlend(seed.withValues(alpha: 0.10), paper),
+    surface: const Color(0xFFFBF5EE),
+    surfaceAlt: paper,
+    surfaceRaised: const Color(0xFFFFFFFF),
+    border: paperShadow,
+    textPrimary: ink,
+    textSecondary: const Color(0xFF535767),
+    textTertiary: const Color(0xFF62616A),
+    success: const Color(0xFF2F7A5B),
+    danger: const Color(0xFFB4452A),
+    warning: const Color(0xFF9C6F1C),
+    info: const Color(0xFF3F6E8C),
+    income: const Color(0xFF2F7A5B),
+    expense: const Color(0xFFB4452A),
+    transfer: const Color(0xFF53679A),
+  );
 
   static AppColors dark(Color seed) {
     // Dark seeds would disappear on a dark ground, so lift them until they
     // read as an accent (≥ ~0.45 luminance) while keeping their hue.
     var primary = seed;
     for (var i = 0; i < 8 && primary.computeLuminance() < 0.42; i++) {
-      primary = Color.lerp(primary, const Color(0xFFE8F2EC), 0.22)!;
+      primary = Color.lerp(primary, paper, 0.22)!;
     }
     return AppColors(
       primary: primary,
-      onPrimary: const Color(0xFF0D1614),
-      primaryContainer: Color.alphaBlend(primary.withValues(alpha: 0.14), const Color(0xFF111B19)),
-      surface: const Color(0xFF141E1C),
-      surfaceAlt: const Color(0xFF0D1614),
-      surfaceRaised: const Color(0xFF1A2623),
-      border: const Color(0x24E1E0CC),
-      textPrimary: const Color(0xFFECEBDD),
-      textSecondary: const Color(0xFFAFB6AE),
-      textTertiary: const Color(0xFF808A84),
+      onPrimary: _onAccent(primary),
+      primaryContainer: Color.alphaBlend(
+        primary.withValues(alpha: 0.14),
+        const Color(0xFF1D2330),
+      ),
+      surface: const Color(0xFF1D2330),
+      surfaceAlt: ink,
+      surfaceRaised: const Color(0xFF293247),
+      border: const Color(0xFF4B5262),
+      textPrimary: paper,
+      textSecondary: const Color(0xFFC2C6D0),
+      textTertiary: const Color(0xFFA9B4C7),
       success: const Color(0xFF7FC8A2),
       danger: const Color(0xFFEE9274),
       warning: const Color(0xFFE5B85C),
@@ -121,6 +126,19 @@ class AppColors extends ThemeExtension<AppColors> {
       expense: const Color(0xFFEE9274),
       transfer: const Color(0xFFA9B6DC),
     );
+  }
+
+  // A custom visitor accent may be much lighter than the default blue.
+  // Choose the stronger text contrast instead of assuming white text fits.
+  static Color _onAccent(Color accent) {
+    final luminance = accent.computeLuminance();
+    final light = (paper.computeLuminance() + 0.05) / (luminance + 0.05);
+    final dark = (luminance + 0.05) / (ink.computeLuminance() + 0.05);
+    if (light >= 4.5 || dark >= 4.5) return light >= dark ? paper : ink;
+    // Mid-tone custom accents can miss 4.5 with both warm brand inks.
+    return 1.05 / (luminance + 0.05) >= (luminance + 0.05) / 0.05
+        ? Colors.white
+        : Colors.black;
   }
 
   @override
@@ -191,5 +209,7 @@ class AppColors extends ThemeExtension<AppColors> {
 }
 
 extension AppColorsX on BuildContext {
-  AppColors get colors => Theme.of(this).extension<AppColors>() ?? AppColors.light(AppColors.defaultSeed);
+  AppColors get colors =>
+      Theme.of(this).extension<AppColors>() ??
+      AppColors.light(AppColors.defaultSeed);
 }

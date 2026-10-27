@@ -1,7 +1,4 @@
-• Pakai Wallet tanpa akun; masuk kapan saja dan catatan ikut pindah
-• Lihat total saldo dalam Rupiah, Dolar, emas, dll.
-• Gestur geser: Beranda ke Akun, Laporan ke Semua menu
-• Tutup form dengan menarik ke bawah
-• Tempel kartu e-money kapan saja lewat pop-up NFC Android
-• Perbaikan kategori, tombol kembali, dan mode terang
-• Pembaruan teknis agar aplikasi tetap stabil
+• Tema terang/gelap dan tipografi Irsyads diperbarui.
+• Navigasi ringkas dan mode fokus dengan tombol pemulihan.
+• Pengaturan tema lebih nyaman pada layar kecil dan teks besar.
+• Daftar bulanan dilengkapi pencarian, filter belum selesai, dan kelompok yang dapat dilipat.

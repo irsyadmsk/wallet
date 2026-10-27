@@ -2,11 +2,32 @@
 
 Ringkasan perubahan yang terasa bagi pengguna, terbaru di atas. Versi di sini
 sama dengan `version:` di `pubspec.yaml` dan yang tampil di **Pengaturan**.
-Nomor build (`versionCode`) naik otomatis setiap build dari GitHub Actions.
+Nomor build (`versionCode`) ditetapkan eksplisit di pubspec dan harus meningkat untuk paket native baru.
 
 Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 [`docs/play-store/whatsnew-id-ID.txt`](docs/play-store/whatsnew-id-ID.txt)
 (maksimal 500 karakter).
+
+## 1.4.3 — kandidat lokal 23 Oktober 2026
+
+- Tema terang/gelap dan font lokal mengikuti identitas terbaru Irsyads.
+- Navigasi desktop ringkas dan mode fokus dengan tombol pemulihan.
+- Pengaturan tema lebih mudah dipilih pada layar kecil dan teks besar.
+- Daftar bulanan mendukung pencarian, filter belum selesai, dan kelompok yang dapat dilipat.
+- Signing menggunakan identitas lama; kode native kandidat 10403 lebih tinggi dari maksimum 10400 yang teramati di Play. Belum dipublikasikan atau diuji update pada perangkat fisik.
+
+## 1.4.2 — pembaruan web 22 Oktober 2026
+
+Checklist bulanan, template, reserve pribadi dan impor terbatas dirilis pada web memakai build override 1.4.2+2. Ini bukan bukti pengiriman APK/AAB atau OTA 1.4.2.
+
+## 1.4.1 — 20 Oktober 2026
+
+Penyelarasan visual dan identitas dengan ekosistem irsyads.com.
+
+### Tampilan & Identitas
+- **Logo baru**: memakai logo pena Irsyads datar tanpa gradasi, hitam di atas putih untuk mode terang dan putih di atas hitam untuk mode gelap. Ikon launcher Android, adaptive icon, dan ikon web diperbarui.
+- **Warna aksen ekosistem**: warna aksen utama diselaraskan ke `#134e4a` (Forest/Teal) senada dengan ubin Wallet di ekosistem irsyads.com.
+- **Navigasi Ruang Irsyads**: pembaruan daftar ruang ekosistem ke 8 ruang utama dan tautan "Semua layanan" menuju `https://irsyads.com/apps`.
 
 ## 1.4.0 — 29 September 2026
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:financial_recording/presentation/monthly/monthly_plan_view.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -242,6 +243,7 @@ const _destinations = [
     showInBottomBar: false,
     group: NavGroup.system,
   ),
+  AdaptiveDestination(icon: Icons.checklist_rounded, selectedIcon: Icons.checklist_rounded, label: 'Rencana Bulanan', hint: 'Checklist & alokasi pribadi', showInBottomBar: false, group: NavGroup.plans),
 ];
 
 // Order must match [AppPage].
@@ -259,6 +261,7 @@ const _screens = [
   FamilyView(),
   CategoriesView(),
   SettingsView(),
+  MonthlyPlanView(),
 ];
 
 class HomeShell extends StatefulWidget {

@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
-import 'package:financial_recording/shared/theme/app_typography.dart';
+import 'package:financial_recording/shared/widget/service_brand_icon.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
 
 /// One space in the irsyads.com family.
@@ -22,6 +22,7 @@ class EcosystemSpace {
   final String label;
   final String description;
   final Uri url;
+  // Legacy metadata for existing callers; actual identity is ServiceBrandIcon.
   final String letter;
   final Color markColor;
   final Color markInk;
@@ -29,21 +30,49 @@ class EcosystemSpace {
 
 /// Wallet is one of the irsyads.com spaces. This mirrors the "Ruang Irsyads"
 /// switcher on the main site (`packages/design-tokens/src/Experience.astro`
-/// in the irsyads repo): same entries, order, letters and colours, so moving
+/// in the irsyads repo): same entries, order and service icons, so moving
 /// between the spaces feels like one product. Change both together.
 abstract class Ecosystem {
   static const currentId = 'wallet';
   static final Uri home = Uri.parse('https://irsyads.com');
+  static final Uri allServices = Uri.parse('https://irsyads.com/apps');
 
   static final List<EcosystemSpace> spaces = [
     EcosystemSpace(
       id: 'site',
-      label: 'Situs utama',
+      label: 'Irsyads',
       description: 'Karya, gagasan, dan perjumpaan',
       url: Uri.parse('https://irsyads.com/'),
       letter: 'i',
-      markColor: const Color(0xFF66D6BF),
-      markInk: const Color(0xFF1A1512),
+      markColor: const Color(0xFF0B1528),
+      markInk: const Color(0xFFFFFFFF),
+    ),
+    EcosystemSpace(
+      id: 'library',
+      label: 'Library',
+      description: 'Koleksi tulisan, esai & arsip',
+      url: Uri.parse('https://irsyads.com/library'),
+      letter: 'l',
+      markColor: const Color(0xFFB7791F),
+      markInk: const Color(0xFFFFFFFF),
+    ),
+    EcosystemSpace(
+      id: 'ruang',
+      label: 'Toolkit',
+      description: 'Alat bantu, kalkulator & utilitas',
+      url: Uri.parse('https://app.irsyads.com/'),
+      letter: 't',
+      markColor: const Color(0xFF334155),
+      markInk: const Color(0xFFFFFFFF),
+    ),
+    EcosystemSpace(
+      id: 'letters',
+      label: 'Letters',
+      description: 'Surat kabar & buletin berkala',
+      url: Uri.parse('https://letters.irsyads.com/'),
+      letter: 'l',
+      markColor: const Color(0xFF1E2A6B),
+      markInk: const Color(0xFFFFFFFF),
     ),
     EcosystemSpace(
       id: 'academy',
@@ -51,26 +80,35 @@ abstract class Ecosystem {
       description: 'Kelas dan perjalanan belajar',
       url: Uri.parse('https://academy.irsyads.com/'),
       letter: 'a',
-      markColor: const Color(0xFFF6C76B),
-      markInk: const Color(0xFF1A1512),
+      markColor: const Color(0xFFC2410C),
+      markInk: const Color(0xFFFFFFFF),
     ),
     EcosystemSpace(
-      id: 'studio',
-      label: 'Studio',
-      description: 'Kelola situs dan pembelajaran',
-      url: Uri.parse('https://irsyads.com/studio'),
-      letter: 's',
-      markColor: const Color(0xFFB7A4E5),
-      markInk: const Color(0xFF1A1512),
+      id: 'verify',
+      label: 'Verify',
+      description: 'Verifikasi dokumen & sertifikat',
+      url: Uri.parse('https://verify.irsyads.com/'),
+      letter: 'v',
+      markColor: const Color(0xFF0369A1),
+      markInk: const Color(0xFFFFFFFF),
     ),
     EcosystemSpace(
-      id: 'ruang',
-      label: 'Ruang',
-      description: 'Alat keluarga, kalkulator & modul ajar',
-      url: Uri.parse('https://app.irsyads.com/'),
-      letter: 'r',
-      markColor: const Color(0xFF192A40),
-      markInk: const Color(0xFFF7F8FA),
+      id: 'curriculum',
+      label: 'Curriculum',
+      description: 'Rencana ajar & silabus MAICN',
+      url: Uri.parse('https://curriculum.irsyads.com/'),
+      letter: 'c',
+      markColor: const Color(0xFF9D174D),
+      markInk: const Color(0xFFFFFFFF),
+    ),
+    EcosystemSpace(
+      id: 'cbt',
+      label: 'CBT',
+      description: 'Ujian berbasis komputer & asesmen',
+      url: Uri.parse('https://cbt.irsyads.com/'),
+      letter: 'c',
+      markColor: const Color(0xFF14532D),
+      markInk: const Color(0xFFFFFFFF),
     ),
     EcosystemSpace(
       id: 'wallet',
@@ -78,13 +116,16 @@ abstract class Ecosystem {
       description: 'Buku kas pribadi & keluarga',
       url: Uri.parse('https://wallet.irsyads.com/'),
       letter: 'w',
-      markColor: const Color(0xFF19363B),
-      markInk: const Color(0xFFE1E0CC),
+      markColor: const Color(0xFF134E4A),
+      markInk: const Color(0xFFFFFFFF),
     ),
   ];
 
   /// Opens irsyads.com in a new tab (web) or the external browser (mobile).
   static Future<void> openHome() => open(home);
+
+  /// Opens irsyads.com/apps in a new tab (web) or the external browser (mobile).
+  static Future<void> openAllServices() => open(allServices);
 
   static Future<void> open(Uri url) =>
       launchUrl(url, mode: LaunchMode.externalApplication, webOnlyWindowName: '_blank');
@@ -173,6 +214,10 @@ class EcosystemPanel extends StatelessWidget {
           ),
         ),
         for (final space in Ecosystem.spaces) _SpaceRow(space: space),
+        const SizedBox(height: 8),
+        Divider(height: 1, color: c.border),
+        const SizedBox(height: 6),
+        const _AllServicesRow(),
       ],
     );
   }
@@ -204,18 +249,7 @@ class _SpaceRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 40,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: space.markColor, borderRadius: BorderRadius.circular(12)),
-              child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(text: space.letter, style: AppTypography.serif(size: 27, color: space.markInk, italic: false)),
-                  TextSpan(text: '·', style: TextStyle(fontSize: 16, color: space.markInk)),
-                ]),
-              ),
-            ),
+            ServiceBrandIcon(service: space.id),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -277,6 +311,61 @@ class EcosystemPill extends StatelessWidget {
         ),
         child: const SizedBox.shrink(),
       ),
+    );
+  }
+}
+
+class _AllServicesRow extends StatelessWidget {
+  const _AllServicesRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Pressable(
+      onTap: () {
+        Navigator.of(context).maybePop();
+        Ecosystem.openAllServices();
+      },
+      semanticLabel: 'Buka Semua Layanan Irsyads',
+      hoverLift: 0,
+      borderRadius: BorderRadius.circular(12),
+      builder: (context, s, _) => AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: s.hovered ? c.surfaceAlt : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: c.surfaceAlt,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: c.border),
+              ),
+              child: Icon(Icons.grid_view_rounded, size: 20, color: c.textPrimary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Semua layanan', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: c.textPrimary)),
+                  const SizedBox(height: 3),
+                  Text('Jelajahi seluruh ekosistem di irsyads.com/apps', style: TextStyle(fontSize: 11.5, height: 1.4, color: c.textSecondary)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.north_east_rounded, size: 16, color: s.hovered ? c.textPrimary : c.textTertiary),
+          ],
+        ),
+      ),
+      child: const SizedBox.shrink(),
     );
   }
 }

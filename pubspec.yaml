@@ -14,7 +14,7 @@ publish_to: "none"
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.4.0+1
+version: 1.4.3+10403
 
 environment:
   sdk: ^3.8.1
@@ -82,14 +82,37 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Owner brand typography; bundled for offline use (OFL in brand_fonts).
+  fonts:
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/brand_fonts/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/brand_fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+    - family: Playfair Display
+      fonts:
+        - asset: assets/brand_fonts/PlayfairDisplay-SemiBold.ttf
+          weight: 600
+    - family: Libre Baskerville
+      fonts:
+        - asset: assets/brand_fonts/LibreBaskerville-Regular.ttf
+          weight: 400
+        - asset: assets/brand_fonts/LibreBaskerville-Italic.ttf
+          weight: 400
+          style: italic
+
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/brand_icons/services/
     - assets/visual/key.png
     - assets/visual/phone.png
     - assets/icon_pack/
     - assets/icon_pack/bank_logo/
     # Self-hosted typography (see assets/google_fonts/LICENSE-OFL.txt).
     - assets/google_fonts/
+    # Include copyright, OFL texts and source notes with the bundled fonts.
+    - assets/brand_fonts/
     # Developer's QRIS for voluntary donations (hidden for Play Store installs).
     - assets/donation/
     # Shorebird code push config (app_id, not a secret; see docs/SHOREBIRD.md).

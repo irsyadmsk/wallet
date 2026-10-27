@@ -1,5 +1,35 @@
 # Wallet — Design System
 
+## Current owner mandate — 22 October 2026
+
+The local Flutter candidate now uses IRSYADS Academic Editorial: paper
+`#F4EADF`, ink `#141720`, academic blue `#2D3C57`, powder blue `#8BA2CE`,
+paper shadow `#CFBEAF`. Default accent is academic blue; existing saved
+visitor accent choices and named palettes remain valid. Light surfaces are
+warm paper; dark surfaces are ink/slate-blue. Status colours keep their
+semantic meaning. Text on visitor accents chooses a readable ink (4.5:1
+minimum in the targeted palette checks), including neutral fallback when
+both warm brand inks would miss it.
+
+Playfair Display headings, Plus Jakarta Sans interface/numbers and Libre
+Baskerville quotation accents are bundled in `assets/brand_fonts`, with OFL
+licenses, so no runtime font fetch is required. Screen title styles are
+serif; dense labels and currency remain sans. Existing icon, Arabic/CJK
+fallback and reduced-motion behavior remain.
+
+Navigation supports desktop compact/expanded and reversible focus; controls
+remain 48dp. Desktop toggles retain the current form's widget state.
+Preferences are widget RAM only, not persisted. Mobile keeps its existing
+bottom navigation/More pattern. Monthly allocations use search/filter and
+collapsible groups, without changing save/CAS/actor or financial semantics.
+
+Implementation/evidence: `docs/2026-10-22_BRAND_NAVIGATION_LOCAL.md`.
+This is a local candidate; native/update delivery and owner acceptance are
+separate gates. The following design is historical, superseded for colours
+and typography by this section.
+
+## Historical direction before the owner mandate
+
 Editorial, warm, quiet. A ledger you would keep on a good paper notebook:
 ink on paper, one green accent, earthy signal colours, big confident type,
 and motion that feels physical rather than decorative.
@@ -16,7 +46,7 @@ Source of truth in code: `lib/shared/theme/` (tokens) and
 | `textPrimary` (ink) | `#17272B` | `#ECEBDD` | text, primary buttons, selected nav |
 | `textSecondary` | `#55615F` | `#AFB6AE` | supporting text (≥ 4.5:1 on paper) |
 | `textTertiary` | `#7B8482` | `#808A84` | meta only, never body copy |
-| `primary` (seed) | `#19363B` forest | lifted automatically | accent |
+| `primary` (seed) | `#134E4A` forest | lifted automatically | accent |
 | `income` / `success` | `#2F7A5B` | `#7FC8A2` | money in |
 | `expense` / `danger` | `#B4452A` clay | `#EE9274` | money out, destructive |
 | `warning` | `#9C6F1C` ochre | `#E5B85C` | spikes, near-limit |
