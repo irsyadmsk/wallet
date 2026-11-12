@@ -875,7 +875,7 @@ class _SideItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: selected
-                  ? c.textPrimary
+                  ? c.primaryContainer
                   : (s.active
                         ? c.textPrimary.withValues(alpha: 0.05)
                         : Colors.transparent),
@@ -896,7 +896,7 @@ class _SideItem extends StatelessWidget {
                   child: Icon(
                     selected ? d.selectedIcon : d.icon,
                     size: 20,
-                    color: selected ? c.surfaceAlt : c.textSecondary,
+                    color: selected ? c.primary : c.textSecondary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -907,7 +907,7 @@ class _SideItem extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                      color: selected ? c.surfaceAlt : c.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                 ),

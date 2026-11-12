@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:financial_recording/presentation/emoney_nfc/view/emoney_nfc_view.dart';
 import 'package:financial_recording/data/services/emoney_nfc_service.dart';
 import 'package:financial_recording/shared/widget/market_card.dart';
+import 'package:financial_recording/shared/widget/wallet_flow_cards.dart';
 import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/app/shell_controller.dart';
 import 'package:financial_recording/app/sync_controller.dart';
@@ -15,7 +16,6 @@ import 'package:financial_recording/presentation/auth/controller/auth_controller
 import 'package:financial_recording/presentation/dashboard/controller/dashboard_controller.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
-import 'package:financial_recording/shared/responsive/breakpoints.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
@@ -45,7 +45,6 @@ class _DashboardViewState extends State<DashboardView> {
   Widget build(BuildContext context) {
     final c = Get.put(DashboardController(), tag: 'dashboard');
     final shell = Get.find<ShellController>();
-    final wide = context.windowSize == WindowSize.expanded || context.windowSize == WindowSize.large;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -63,7 +62,9 @@ class _DashboardViewState extends State<DashboardView> {
           child: SafeArea(
             bottom: false,
             child: ContentShell(
-              child: Obx(() {
+              child: LayoutBuilder(builder: (context, constraints) {
+                final wide = constraints.maxWidth >= 900;
+                return Obx(() {
                 var i = 0;
                 // Money first, then what needs doing, then the details — the
                 // score and narrative live on Laporan.
@@ -112,7 +113,40 @@ class _DashboardViewState extends State<DashboardView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const _Greeting(),
+                    const SizedBox(height: 24),
+                    if (wide)
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 5, child: hero),
+                            const SizedBox(width: 16),
+                            Expanded(flex: 6, child: WalletFlowCards(
+                              income: c.monthIncome.value,
+                              expense: c.monthExpense.value,
+                              hidden: _hidden,
+                            )),
+                          ],
+                      )
+                    else ...[
+                      hero,
+                      const SizedBox(height: 12),
+                      WalletFlowCards(income: c.monthIncome.value,
+                        expense: c.monthExpense.value, hidden: _hidden),
+                    ],
                     const SizedBox(height: 16),
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      OutlinedButton.icon(
+                        onPressed: () => shell.goTo(AppPage.monthly),
+                        icon: const Icon(Icons.checklist_rounded, size: 18),
+                        label: const Text('Rencana bulanan'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => shell.goTo(AppPage.budgets),
+                        icon: const Icon(Icons.tune_rounded, size: 18),
+                        label: const Text('Atur anggaran'),
+                      ),
+                    ]),
+                    const SizedBox(height: 28),
                     if (wide)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +155,7 @@ class _DashboardViewState extends State<DashboardView> {
                             flex: 7,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [hero, const SizedBox(height: 24), recent],
+                              children: [recent],
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -135,8 +169,6 @@ class _DashboardViewState extends State<DashboardView> {
                         ],
                       )
                     else ...[
-                      hero,
-                      const SizedBox(height: 16),
                       ...attention,
                       ...templates,
                       recent,
@@ -145,6 +177,7 @@ class _DashboardViewState extends State<DashboardView> {
                     ],
                   ],
                 );
+              });
               }),
             ),
           ),
@@ -172,23 +205,26 @@ class _Greeting extends StatelessWidget {
     final now = DateTime.now();
     final t = Theme.of(context).textTheme;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Obx(() => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${_salam(now.hour)} · ${DateFormat('EEEE, d MMM', 'id_ID').format(now)}',
+                    '${_salam(now.hour)}, ${auth.displayName}',
                     style: TextStyle(color: c.textSecondary, fontSize: 13),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 8),
                   Text(
-                    auth.displayName,
-                    maxLines: 1,
+                    'Uang terarah, hidup lebih lega.',
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: t.headlineSmall,
+                    style: t.headlineMedium,
                   ),
+                  const SizedBox(height: 8),
+                  Text(DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(now),
+                    style: TextStyle(color: c.textSecondary, fontSize: 12)),
                 ],
               )),
         ),
@@ -249,18 +285,22 @@ class _NetWorthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    const ink = Color(0xFF17272B);
-    const cream = AppColors.cream;
-    final muted = cream.withValues(alpha: 0.68);
+    const ink = Color(0xFF0B5848);
+    const cream = Color(0xFFF4FAE9);
+    final muted = cream.withValues(alpha: 0.84);
     final m = controller;
     final liabilities = m.totalLiabilities.value.abs();
     final budget = m.overallBudget.value;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 12, 18),
+      constraints: const BoxConstraints(minHeight: 192),
+      padding: const EdgeInsets.fromLTRB(24, 20, 16, 24),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? c.surfaceRaised : ink,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
+        gradient: Theme.of(context).brightness == Brightness.dark ? null
+          : const LinearGradient(colors: [ink, Color(0xFF0A725A)],
+              begin: Alignment.topLeft, end: Alignment.bottomRight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +308,7 @@ class _NetWorthCard extends StatelessWidget {
           Row(
             children: [
               // Tap to read the total in another currency (dolar, emas, ...).
-              Pressable(
+              Expanded(child: Pressable(
                 onTap: () => DisplayCurrency.pick(context, previewIdr: m.netWorth.value),
                 semanticLabel: 'Ganti mata uang total',
                 tooltip: 'Ganti mata uang total',
@@ -281,14 +321,14 @@ class _NetWorthCard extends StatelessWidget {
                     builder: (context, code, _) => Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Saldo total · $code', style: TextStyle(color: muted, fontSize: 13.5)),
+                        Flexible(child: Text('Saldo total · $code', overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: muted, fontSize: 13.5))),
                         Icon(Icons.expand_more_rounded, size: 18, color: muted),
                       ],
                     ),
                   ),
                 ),
-              ),
-              const Spacer(),
+              )),
               Pressable(
                 onTap: onToggle,
                 semanticLabel: hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo',
@@ -323,31 +363,9 @@ class _NetWorthCard extends StatelessWidget {
                 style: TextStyle(color: muted, fontSize: 12.5),
               ),
             ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _Figure(
-                  label: 'Masuk bulan ini',
-                  icon: Icons.south_west_rounded,
-                  value: m.monthIncome.value,
-                  hidden: hidden,
-                  color: cream,
-                  muted: muted,
-                ),
-              ),
-              Expanded(
-                child: _Figure(
-                  label: 'Keluar bulan ini',
-                  icon: Icons.north_east_rounded,
-                  value: m.monthExpense.value,
-                  hidden: hidden,
-                  color: cream,
-                  muted: muted,
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 20),
+          Text('Seluruh rekening & dompet',
+            style: TextStyle(color: muted, fontSize: 12)),
           if (budget != null && budget.limit > 0) ...[
             const SizedBox(height: 14),
             _BudgetLine(budget: budget, hidden: hidden, cream: cream, muted: muted, onTap: onBudget),
@@ -356,43 +374,6 @@ class _NetWorthCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Figure extends StatelessWidget {
-  const _Figure({
-    required this.label,
-    required this.icon,
-    required this.value,
-    required this.hidden,
-    required this.color,
-    required this.muted,
-  });
-  final String label;
-  final IconData icon;
-  final int value;
-  final bool hidden;
-  final Color color;
-  final Color muted;
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: muted),
-              const SizedBox(width: 4),
-              Flexible(child: Text(label, style: TextStyle(color: muted, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            ],
-          ),
-          const SizedBox(height: 2),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: AnimatedMoney(value: value, hidden: hidden, style: AppTypography.numeric(size: 16, weight: FontWeight.w600, color: color)),
-          ),
-        ],
-      );
 }
 
 /// This month's overall budget as one line inside the hero card.

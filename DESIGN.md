@@ -1,6 +1,29 @@
 # Wallet — Design System
 
-## Current owner mandate — 22 October 2026
+## Wallet / ARUS refresh — 12 November 2026
+
+Owner requested the ARUS visual direction in the existing Wallet application.
+This supersedes the October colour/heading direction: cool ivory `#F5F6F0`,
+white cards, forest `#0C6C58`, green ink `#192E28`, and locally bundled
+Plus Jakarta Sans headings and numbers. Existing visitor accent preferences
+remain available; no stored preference is rewritten by this refresh.
+
+Dashboard balance, monthly income and monthly expense have separate cards.
+The three-card layout uses available content width (900px); smaller windows
+stack the balance above the flow cards. Flow cards stack at narrow widths or
+large text sizes. The existing hide-balance control also hides both flow totals.
+Monthly planning and budget shortcuts use the existing navigation callbacks.
+All figures continue to come from the existing ledger/controller.
+
+Default card radii are 20px; overview cards use 24px. Navigation selection uses
+a quiet accent tint. Existing keyboard, focus, reduced-motion and theme controls
+remain. Authentication, storage, CAS, imports and transaction semantics are unchanged.
+
+Web publication uses `[web-only]` in its commit message to skip APK publication;
+analysis, targeted layout/planning tests and the web build must pass before deploy.
+The published `wallet-release.json` identifies the deployed source commit.
+
+## Previous owner mandate — 22 October 2026
 
 The local Flutter candidate now uses IRSYADS Academic Editorial: paper
 `#F4EADF`, ink `#141720`, academic blue `#2D3C57`, powder blue `#8BA2CE`,

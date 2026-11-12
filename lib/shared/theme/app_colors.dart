@@ -46,14 +46,14 @@ class AppColors extends ThemeExtension<AppColors> {
   Color get budgetWarn => warning;
   Color get budgetOver => danger;
 
-  /// Irsyads portrait-reference palette, owner mandate 22 October 2026.
+  /// Wallet / ARUS palette, owner refresh 12 November 2026.
   /// Existing named visitor palettes remain available below.
-  static const Color paper = Color(0xFFF4EADF);
-  static const Color ink = Color(0xFF141720);
+  static const Color paper = Color(0xFFF5F6F0);
+  static const Color ink = Color(0xFF192E28);
   static const Color academicBlue = Color(0xFF2D3C57);
   static const Color powderBlue = Color(0xFF8BA2CE);
-  static const Color paperShadow = Color(0xFFCFBEAF);
-  static const Color forest = Color(0xFF134E4A);
+  static const Color paperShadow = Color(0xFFE1E6DC);
+  static const Color forest = Color(0xFF0C6C58);
   static const Color sage = Color(0xFF4F8B70);
   static const Color clay = Color(0xFFC2502F);
   static const Color ochre = Color(0xFFD9A441);
@@ -69,7 +69,7 @@ class AppColors extends ThemeExtension<AppColors> {
   static const Color irsyadsTeal = Color(0xFF126A5A);
 
   /// Preset palettes offered in Settings.
-  static const Color defaultSeed = academicBlue;
+  static const Color defaultSeed = forest;
   static const Color presetIrsyads = academicBlue;
   static const Color presetSage = sage;
   static const Color presetOcean = Color(0xFF2E5A7A);
@@ -81,13 +81,13 @@ class AppColors extends ThemeExtension<AppColors> {
     primary: seed,
     onPrimary: _onAccent(seed),
     primaryContainer: Color.alphaBlend(seed.withValues(alpha: 0.10), paper),
-    surface: const Color(0xFFFBF5EE),
+    surface: const Color(0xFFFFFFFF),
     surfaceAlt: paper,
     surfaceRaised: const Color(0xFFFFFFFF),
     border: paperShadow,
     textPrimary: ink,
-    textSecondary: const Color(0xFF535767),
-    textTertiary: const Color(0xFF62616A),
+    textSecondary: const Color(0xFF54645C),
+    textTertiary: const Color(0xFF627168),
     success: const Color(0xFF2F7A5B),
     danger: const Color(0xFFB4452A),
     warning: const Color(0xFF9C6F1C),
@@ -109,15 +109,15 @@ class AppColors extends ThemeExtension<AppColors> {
       onPrimary: _onAccent(primary),
       primaryContainer: Color.alphaBlend(
         primary.withValues(alpha: 0.14),
-        const Color(0xFF1D2330),
+        const Color(0xFF192B24),
       ),
-      surface: const Color(0xFF1D2330),
-      surfaceAlt: ink,
-      surfaceRaised: const Color(0xFF293247),
-      border: const Color(0xFF4B5262),
+      surface: const Color(0xFF192B24),
+      surfaceAlt: const Color(0xFF101F19),
+      surfaceRaised: const Color(0xFF223A30),
+      border: const Color(0xFF3F574A),
       textPrimary: paper,
-      textSecondary: const Color(0xFFC2C6D0),
-      textTertiary: const Color(0xFFA9B4C7),
+      textSecondary: const Color(0xFFC4D0C5),
+      textTertiary: const Color(0xFFA7BBAE),
       success: const Color(0xFF7FC8A2),
       danger: const Color(0xFFEE9274),
       warning: const Color(0xFFE5B85C),

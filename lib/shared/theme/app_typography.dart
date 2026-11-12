@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 /// Owner brand fonts, bundled locally; no runtime font request is needed.
-/// Headings: Playfair Display; interface/numbers: Plus Jakarta Sans;
+/// Headings/interface/numbers: Plus Jakarta Sans;
 /// quotations: Libre Baskerville. Flutter keeps platform glyph fallback.
 abstract class AppTypography {
   static TextTheme textTheme(Color textPrimary, Color textSecondary) {
     final body = Typography.material2021().black.apply(
       fontFamily: 'Plus Jakarta Sans',
     );
-    final display = body.apply(fontFamily: 'Playfair Display');
+    final display = body;
     TextStyle? head(TextStyle? s, double size, FontWeight w, double tracking) =>
         s?.copyWith(
           color: textPrimary,

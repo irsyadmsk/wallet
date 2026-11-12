@@ -26,6 +26,8 @@ concurrency:
 
 jobs:
   build:
+    # A web refresh must not publish an APK with the existing versionCode.
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[web-only]')
     runs-on: ubuntu-24.04
     env:
       # Shorebird code push switches on once this secret (Console → Account
