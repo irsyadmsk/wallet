@@ -1,5 +1,21 @@
 # Wallet — Design System
 
+## Video (Remotion) — 12 November 2026
+
+Owner asked for all three videos. Sources live in `motion/` (Remotion, React)
+and are not part of the Flutter build; rendered files are in `web/media/` and
+are served from the app's own origin.
+
+- `welcome.mp4` — a quiet, text-free, seamless 10 s loop of drifting currents
+  on ink. The welcome screen now loads it from the app's origin (native builds
+  from wallet.irsyads.com) instead of a third-party host; the painted backdrop
+  remains the fallback and the pause control and reduced-motion rule are
+  unchanged.
+- `tur.mp4` (portrait) and `playstore.mp4` (landscape) — intro, four scenes
+  (Rencana Bulanan, Dompet Digital, Kalender tagihan, rencana dan buku kas),
+  outro. The screens are drawn from the design tokens, not recorded from the
+  app, and use synthetic figures and no third-party logos.
+
 ## Rencana Bulanan ↔ buku kas — 12 November 2026
 
 Owner approved linking plan items to the ledger. An item may carry three
