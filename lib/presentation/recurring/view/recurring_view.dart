@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
+import 'package:financial_recording/data/repositories/debt_repository.dart';
+import 'package:financial_recording/data/services/bill_calendar.dart';
+import 'package:financial_recording/presentation/recurring/widget/bill_calendar.dart';
 import 'package:financial_recording/data/repositories/tx_category_repository.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/shared/widget/art_icon.dart';
@@ -46,7 +49,37 @@ class RecurringView extends StatelessWidget {
       body: SingleChildScrollView(
         child: ContentShell(
           child: Obx(() {
+            final calendar = BillCalendar(
+              load: (from, to) => billEvents(
+                from: from,
+                to: to,
+                rules: c.rules,
+                debts: DebtRepository().active(),
+                accounts: AccountRepository().all(),
+              ),
+            );
             if (c.rules.isEmpty) {
+              final others = billEvents(
+                from: DateTime.now().subtract(const Duration(days: 31)),
+                to: DateTime.now().add(const Duration(days: 366)),
+                debts: DebtRepository().active(),
+                accounts: AccountRepository().all(),
+              ).isNotEmpty;
+              if (others) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    calendar,
+                    const SizedBox(height: AppSpacing.lg),
+                    FilledButton.icon(
+                      onPressed: () => _add(context, c),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Tambah transaksi berulang'),
+                    ),
+                    const SizedBox(height: AppSpacing.xxxl),
+                  ],
+                );
+              }
               return EmptyState(
                 icon: Icons.event_repeat_rounded,
                 title: 'Belum ada transaksi berulang',
@@ -58,6 +91,8 @@ class RecurringView extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                calendar,
+                const SizedBox(height: AppSpacing.lg),
                 for (final r in c.rules)
                   Dismissible(
                     key: ValueKey(r.id),

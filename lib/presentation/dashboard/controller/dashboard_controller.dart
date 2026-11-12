@@ -12,6 +12,8 @@ import 'package:financial_recording/data/services/budget_service_v2.dart';
 import 'package:financial_recording/data/services/recurring_service.dart';
 import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
 import 'package:financial_recording/data/repositories/debt_repository.dart';
+import 'package:financial_recording/data/repositories/recurring_repository.dart';
+import 'package:financial_recording/data/services/bill_calendar.dart';
 import 'package:financial_recording/domain/enums/hive_enums.dart';
 
 class DashboardController extends GetxController {
@@ -31,6 +33,9 @@ class DashboardController extends GetxController {
   final RxList<TxModel> recentTransactions = <TxModel>[].obs;
   final RxList<BudgetProgress> topBudgets = <BudgetProgress>[].obs;
   final RxList<RecurringRuleModel> upcomingRecurring = <RecurringRuleModel>[].obs;
+
+  /// Due by tomorrow or already late; see [billReminders].
+  final RxList<BillEvent> reminders = <BillEvent>[].obs;
   final Rx<BudgetProgress?> overallBudget = Rx<BudgetProgress?>(null);
   final RxList<QuickTemplateModel> templates = <QuickTemplateModel>[].obs;
   final RxList<AccountModel> accountsList = <AccountModel>[].obs;
@@ -76,6 +81,14 @@ class DashboardController extends GetxController {
     );
 
     accountsList.assignAll(_accounts.all());
+
+    final activeDebtList = _debts.active();
+    reminders.assignAll(billReminders(
+      today: now,
+      rules: RecurringRepository().all(),
+      debts: activeDebtList,
+      accounts: accountsList,
+    ));
     templates.assignAll(_templates.all());
 
     final activeDebts = _debts.active();

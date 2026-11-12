@@ -1,3 +1,5 @@
+import 'package:financial_recording/data/services/bill_calendar.dart';
+import 'package:financial_recording/presentation/recurring/widget/bill_calendar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -90,6 +92,13 @@ class _DashboardViewState extends State<DashboardView> {
                   ],
                   if (c.upcomingRecurring.isNotEmpty) ...[
                     Reveal(index: i++, child: _UpcomingCard(controller: c)),
+                    const SizedBox(height: 12),
+                  ],
+                  if (c.reminders.isNotEmpty) ...[
+                    Reveal(index: i++, child: _ReminderCard(
+                      events: c.reminders.toList(),
+                      onOpen: () => shell.goTo(AppPage.recurring),
+                    )),
                     const SizedBox(height: 12),
                   ],
                   if (c.activeDebtCount.value > 0) ...[
@@ -576,6 +585,36 @@ class _UpcomingCard extends StatelessWidget {
                   ],
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Due by tomorrow or already late. Display only; the calendar on
+/// Transaksi Berulang has the whole month.
+class _ReminderCard extends StatelessWidget {
+  const _ReminderCard({required this.events, required this.onOpen});
+  final List<BillEvent> events;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pengingat jatuh tempo', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 6),
+            for (final e in events.take(4)) BillEventRow(event: e, today: today, showDate: true),
+            TextButton(
+              onPressed: onOpen,
+              child: Text(events.length > 4 ? 'Lihat ${events.length} jatuh tempo di kalender' : 'Buka kalender tagihan'),
+            ),
           ],
         ),
       ),
