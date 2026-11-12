@@ -1,5 +1,15 @@
 # Wallet — Design System
 
+## Motion on the other screens — 12 November 2026
+
+The primitives from the Rencana Bulanan redesign now cover the remaining
+money screens. Every determinate bar is an `AnimatedProgress` (Beranda budget
+line, Anggaran cards, Tujuan summary and goal cards, Utang cards), and the
+headline totals on Tujuan, Utang & Piutang and each Akun group tween through
+`AnimatedMoney`. Indeterminate spinners are unchanged. Values, colours and
+layout are the same as before; only the transition between values is new, and
+it collapses to an instant change under reduced motion.
+
 ## Kalender tagihan dan pengingat — 12 November 2026
 
 Transaksi Berulang opens with "Kalender tagihan": one month of expected

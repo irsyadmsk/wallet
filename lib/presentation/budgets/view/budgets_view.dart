@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:financial_recording/util/thousands_formatter/thousands_formatter.dart';
@@ -167,11 +168,11 @@ class _BudgetCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               ClipRRect(
                 borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
+                child: AnimatedProgress(
                   value: p == null || p.limit == 0 ? 0 : p.percent.clamp(0, 1).toDouble(),
-                  minHeight: 8,
-                  backgroundColor: colors.border,
-                  valueColor: AlwaysStoppedAnimation(color),
+                  track: colors.border,
+                  color: color,
+                  semanticsLabel: 'Pemakaian anggaran $title',
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),

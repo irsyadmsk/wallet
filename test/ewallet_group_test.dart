@@ -10,10 +10,16 @@ import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_theme.dart';
 import 'package:financial_recording/shared/widget/account_avatar.dart';
 import 'package:financial_recording/shared/widget/bank_logo_picker.dart';
+import 'package:financial_recording/util/db_service/db_service.dart';
 
 void main() {
-  // QButton's double-tap guard reads SharedPreferences.
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  // QButton's double-tap guard keeps the last tap time in SharedPreferences
+  // behind a cached instance. Reset both, or a Simpan tap that lands within
+  // 500 ms of the previous test's tap is swallowed as a double tap.
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    DBService.prefs = null;
+  });
 
   test('e-wallet is a built-in group with a stable, unique code', () {
     expect(AccountGroupType.ewallet.code, 14);
