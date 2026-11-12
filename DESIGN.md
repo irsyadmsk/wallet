@@ -1,5 +1,24 @@
 # Wallet — Design System
 
+## Kalender tagihan dan pengingat — 12 November 2026
+
+Transaksi Berulang opens with "Kalender tagihan": one month of expected
+movements from three existing sources — active recurring rules (projected
+forward without advancing them), unsettled debts with a due date, and
+liability accounts with a due day and an outstanding balance. Monday-first
+grid, up to three dots per day, today ringed, the selected day filled; the
+list below shows that day or the whole month. It is a read-only projection
+(`lib/data/services/bill_calendar.dart`): nothing is posted and no rule,
+schema or stored field changes. Monthly-plan subscriptions are not included
+because the plan stores no billing date.
+
+Beranda shows "Pengingat jatuh tempo" for anything due by tomorrow (H-1) or
+already late. Recurring rules awaiting manual confirmation stay in the
+existing "Jatuh tempo 7 hari ke depan" card, which can post them. Urgency is
+written out ("Besok", "Terlambat 3 hari"), not carried by colour alone.
+Reminders appear when the app is open; there are no push or system
+notifications.
+
 ## Dompet Digital — 12 November 2026
 
 Owner-approved new built-in account group `ewallet` (code 14, "Dompet
