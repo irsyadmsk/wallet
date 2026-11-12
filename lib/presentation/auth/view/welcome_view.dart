@@ -16,8 +16,12 @@ import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:financial_recording/app/guest_mode.dart';
 
-const _heroVideo =
-    'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4';
+/// Wallet's own loop, rendered from `motion/` (Remotion) and served beside
+/// the web app, so no third-party host is contacted. The web build loads it
+/// from its own origin; native builds fetch it from the site.
+Uri get _heroVideo => kIsWeb
+    ? Uri.base.resolve('/media/welcome.mp4')
+    : Uri.parse('https://wallet.irsyads.com/media/welcome.mp4');
 
 /// Full-bleed cinematic welcome screen shown until the user signs in.
 /// Video background (muted, looping, inline) under dark gradients, a black
@@ -51,7 +55,7 @@ class _WelcomeViewState extends State<WelcomeView> {
 
   Future<void> _initVideo() async {
     final v = VideoPlayerController.networkUrl(
-      Uri.parse(_heroVideo),
+      _heroVideo,
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     _video = v;
