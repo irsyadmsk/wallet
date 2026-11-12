@@ -1,5 +1,32 @@
 # Wallet — Design System
 
+## One Wallet planner — 12 November 2026
+
+ARUS is a visual reference, not another navigation destination. All personal
+planning remains in Rencana Bulanan: fixed allocations, subscription prices
+(IDR/USD, tax included or added, monthly/annual), flexible savings priorities
+and weighted surplus, actual allocations and carried fund balances. Anggaran
+continues tracking real category spending limits; Transaksi remains the only
+ledger recording path. Do not duplicate those features under an ARUS tab.
+
+Salary received overrides estimated net salary, and bonus is added once.
+Fixed items remain fixed. Automatic savings receive base targets by priority,
+then surplus by normalized weights; integer remainders are allocated stably.
+Deficits are visible and automatic allocations never become negative.
+
+Months store their own prices, FX and rules. A new month uses the saved template
+(or prior month when no template exists), resets actual/checks/bonus/spending,
+and snapshots matching funds' balances from the previous month. Corrections to
+older months do not silently rewrite later opening balances. Salin ke template
+creates a reviewable personal draft; an existing pending template is preserved.
+
+The existing personal_monthly_plans namespace, RLS and revision-checked RPC are
+retained; no new database, schema or ledger writes. New JSON properties are
+additive, and old documents load with defaults. Older native clients do not
+understand the added planner metadata: use the updated web planner for these
+fields until native delivery is separately prepared. Financial records remain
+private runtime data; never add the owner's salary or allocation examples here.
+
 ## Wallet / ARUS refresh — 12 November 2026
 
 Owner requested the ARUS visual direction in the existing Wallet application.

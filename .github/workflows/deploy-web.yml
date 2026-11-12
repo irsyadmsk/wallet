@@ -75,7 +75,7 @@ jobs:
 
       - name: Uji tampilan dan rencana
         if: steps.secret.outputs.ada == 'true'
-        run: flutter test test/wallet_arus_layout_test.dart test/wallet_brand_navigation_test.dart test/settings_theme_responsive_test.dart test/monthly_plan_test.dart test/monthly_plan_storage_test.dart test/monthly_plan_widget_test.dart
+        run: flutter test test/wallet_arus_layout_test.dart test/wallet_brand_navigation_test.dart test/settings_theme_responsive_test.dart test/monthly_plan_test.dart test/monthly_plan_rules_test.dart test/monthly_plan_sheet_test.dart test/monthly_plan_storage_test.dart test/monthly_plan_widget_test.dart
 
       - name: Build web
         if: steps.secret.outputs.ada == 'true'

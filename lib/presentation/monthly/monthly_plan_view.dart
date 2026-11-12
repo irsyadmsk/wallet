@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:financial_recording/data/services/currency/currency_service.dart';
+import 'package:financial_recording/presentation/monthly/plan_item_sheet.dart';
 import 'package:financial_recording/util/browser/unsaved_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -99,14 +101,14 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
         try {
           result = await widget.service.remote(key);
           if (result == null && tab == 'month') {
-            final template = await widget.service.remote('template');
+            final next = await newMonthPlan(key);
             result = PlanSnapshot(
-              template?.plan.forNewMonth() ?? MonthlyPlan(),
+              next,
               0,
               pending: true,
             );
             status =
-                'Bulan baru. Status centang dimulai kosong; simpan untuk membuat riwayat bulan ini.';
+                'Bulan baru: ceklis, bonus, dan aktual dikosongkan. Saldo dana disalin dari bulan sebelumnya; simpan ke akun.';
           }
           result ??= PlanSnapshot(MonthlyPlan(), 0, pending: true);
           await widget.service.store(key, result);
@@ -116,10 +118,9 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
             result = cache;
             status = 'Salinan perangkat. Server belum dapat diperiksa.';
           } else if (tab == 'month') {
-            final template = await widget.service.cached('template');
-            if (template == null) rethrow;
+            final next = await newMonthPlan(key, offline: true);
             result = PlanSnapshot(
-              template.plan.forNewMonth(),
+              next,
               0,
               pending: true,
             );
@@ -149,10 +150,31 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
     }
   }
 
+  Future<MonthlyPlan> newMonthPlan(String key, {bool offline = false}) async {
+    final date = DateTime.parse('$key-01');
+    final previousKey = DateFormat('yyyy-MM').format(DateTime(date.year, date.month - 1));
+    final read = offline ? widget.service.cached : widget.service.remote;
+    var previous = await read(previousKey);
+    final pending = await widget.service.cached(previousKey);
+    if (pending?.pending == true) previous = pending;
+    final template = await read('template');
+    if (offline && template == null && previous == null) {
+      throw StateError('Belum ada salinan rencana.');
+    }
+    return (template?.plan ?? previous?.plan ?? MonthlyPlan())
+      .forNewMonth(previous: previous?.plan);
+  }
+
   Future<void> change(MonthlyPlan plan) async {
     final current = snapshot;
     if (busy || current == null) return;
     final request = epoch, key = period;
+    try {
+      plan = MonthlyPlan.fromJson(MonthlyPlan.fromJson(plan.toJson()).recalculate().toJson());
+    } on FormatException catch (e) {
+      setState(() => message = e.message);
+      return;
+    }
     final next = PlanSnapshot(plan, current.revision, pending: true);
     guardClosing(true);
     setState(() {
@@ -233,12 +255,18 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Perubahan di layar tetap dipertahankan. Catat perbedaan sebelum menggabungkan secara manual.',
+                  'Versi server ditampilkan di bawah. Gunakan versi layar akan menggantinya dengan rencana di layar; perubahan layar tetap ada sampai penyimpanan berhasil.',
                 ),
                 Text('Bruto: ${money.format(remote.plan.gross)}'),
+                Text('Bonus: ${money.format(remote.plan.bonus)} · kurs: ${remote.plan.fx}'),
+                Text('Dana tersedia: ${money.format(remote.plan.available)}'),
                 for (final item in remote.plan.items)
                   Text(
-                    '${item.done ? "✓" : "—"} ${item.name}: ${money.format(item.amount)}',
+                    '${item.done ? "✓" : "—"} ${item.name}: ${money.format(item.amount)}'
+                    '${item.actual != null ? " · aktual ${money.format(item.actual)}" : ""}'
+                    '${item.rollover ? " · saldo dana ${money.format(item.balance)}" : ""}'
+                    '${item.rule?.kind == "saving" ? " · prioritas ${item.rule!.priority}, porsi ${item.rule!.weight}" : ""}'
+                    '${item.rule?.kind == "subscription" ? " · ${item.rule!.currency} ${item.rule!.price / (item.rule!.currency == "USD" ? 100 : 1)}, pajak ${item.rule!.taxBps / 100}% (${item.rule!.taxIncluded ? "termasuk" : "ditambah"}), ${item.rule!.months} bulan" : ""}',
                   ),
               ],
             ),
@@ -250,7 +278,7 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Simpan salinan layar sebagai hasil gabungan'),
+              child: const Text('Gunakan versi layar dan simpan'),
             ),
           ],
         ),
@@ -279,61 +307,77 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
 
   Future<void> editIncome() async {
     final plan = snapshot!.plan, request = epoch;
-    var gross = '${plan.gross}';
-    var received = plan.received?.toString() ?? '';
+    var gross = '${plan.gross}', received = plan.received?.toString() ?? '';
+    var bonus = '${plan.bonus}';
+    var fxText = '${plan.fx}', fxRevision = 0;
     final form = GlobalKey<FormState>();
-    final result = await showAdaptiveSheet<bool>(
-      context,
-      builder: (ctx) => SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: form,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Pendapatan bulan ini',
-                style: Theme.of(ctx).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: gross,
-                onChanged: (value) => gross = value,
-                decoration: const InputDecoration(labelText: 'Bruto (rupiah)'),
-                keyboardType: TextInputType.number,
-                validator: amountError,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: received,
-                onChanged: (value) => received = value,
-                decoration: const InputDecoration(
-                  labelText: 'Benar-benar diterima (opsional)',
-                ),
-                keyboardType: TextInputType.number,
-                validator: (v) => v?.isEmpty == true ? null : amountError(v),
-              ),
+    var checking = false, rateNote = '';
+    final result = await showAdaptiveSheet<bool>(context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, updateForm) =>
+        SingleChildScrollView(padding: const EdgeInsets.all(24),
+          child: Form(key: form, child: Column(mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text('Pendapatan & kurs', style: Theme.of(ctx).textTheme.titleLarge),
               const SizedBox(height: 20),
-              FilledButton(
-                onPressed: () {
-                  if (form.currentState!.validate()) Navigator.pop(ctx, true);
-                },
-                child: const Text('Terapkan'),
-              ),
-            ],
-          ),
-        ),
-      ),
+              TextFormField(initialValue: gross, onChanged: (v) => gross = v,
+                decoration: const InputDecoration(labelText: 'Bruto (rupiah)'),
+                keyboardType: TextInputType.number, validator: amountError),
+              const SizedBox(height: 16),
+              TextFormField(initialValue: received, onChanged: (v) => received = v,
+                decoration: const InputDecoration(labelText: 'Benar-benar diterima (opsional)',
+                  helperText: 'Gaji bersih sebelum bonus. Kosongkan untuk memakai bruto − Potongan gaji.',
+                  helperMaxLines: 3),
+                keyboardType: TextInputType.number,
+                validator: (v) => v!.isEmpty ? null : amountError(v)),
+              const SizedBox(height: 16),
+              TextFormField(initialValue: bonus, onChanged: (v) => bonus = v,
+                decoration: const InputDecoration(labelText: 'Bonus bersih (rupiah)'),
+                keyboardType: TextInputType.number, validator: amountError),
+              const SizedBox(height: 16),
+              TextFormField(key: ValueKey('fx-$fxRevision'), initialValue: fxText,
+                onChanged: (v) => fxText = v,
+                decoration: const InputDecoration(labelText: 'Kurs USD/IDR bulan ini',
+                  helperText: 'Isi kurs pembayaran, atau gunakan referensi Wallet. Periode lain tetap.', helperMaxLines: 3),
+                keyboardType: TextInputType.number, validator: (v) {
+                  final n = int.tryParse(v ?? '');
+                  if (n == null || n < 0 || n > 1000000) return 'Isi 0–1000000 rupiah per dolar.';
+                  if (n == 0 && plan.items.any((i) => i.rule?.kind == 'subscription' &&
+                      i.rule!.enabled && i.rule!.currency == 'USD')) return 'Kurs diperlukan untuk langganan dolar.';
+                  return null;
+                }),
+              TextButton.icon(onPressed: checking ? null : () async {
+                updateForm(() { checking = true; rateNote = ''; });
+                try {
+                  final service = CurrencyService.instance;
+                  final ok = await service.refresh(force: true);
+                  if (!ctx.mounted) return;
+                  final rate = service.rate('USD');
+                  updateForm(() {
+                    if (ok && rate != null && rate.isFinite && rate > 0 && rate <= 1000000) {
+                      fxText = '${rate.round()}';
+                      fxRevision++;
+                      rateNote = 'Referensi ${service.ratesDate ?? "terbaru"}; terapkan untuk bulan ini.';
+                    } else { rateNote = 'Kurs belum dapat diperbarui. Isian sebelumnya dipertahankan.'; }
+                  });
+                } catch (_) {
+                  if (ctx.mounted) updateForm(() => rateNote = 'Kurs belum tersedia. Isi manual.');
+                } finally {
+                  if (ctx.mounted) updateForm(() => checking = false);
+                }
+              }, icon: const Icon(Icons.currency_exchange),
+                label: Text(checking ? 'Memeriksa kurs…' : 'Gunakan kurs Wallet')),
+              if (rateNote.isNotEmpty) Text(rateNote, style: Theme.of(ctx).textTheme.bodySmall),
+              const SizedBox(height: 20),
+              FilledButton(onPressed: checking ? null : () {
+                if (form.currentState!.validate()) Navigator.pop(ctx, true);
+              }, child: const Text('Terapkan')),
+            ]))),
+      )),
     );
+    final fxValue = int.tryParse(fxText) ?? plan.fx;
     if (result == true && mounted && request == epoch) {
-      await change(
-        plan.copy(
-          gross: int.parse(gross),
-          received: int.tryParse(received),
-          clearReceived: received.isEmpty,
-        ),
-      );
+      await change(plan.copy(gross: int.parse(gross), bonus: int.parse(bonus),
+        received: int.tryParse(received), clearReceived: received.isEmpty, fx: fxValue));
     }
   }
 
@@ -344,102 +388,50 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
         : null;
   }
 
+  Future<void> copyToTemplate() async {
+    if (busy || snapshot == null) return;
+    final request = epoch, plan = snapshot!.plan;
+    setState(() => busy = true);
+    try {
+      final draft = await widget.service.cached('template');
+      if (draft?.pending == true) {
+        if (mounted && request == epoch) setState(() => message =
+          'Template memiliki draf. Buka Template berikutnya dan selesaikan draf dahulu.');
+        return;
+      }
+      final remote = await widget.service.remote('template');
+      if (!mounted || request != epoch) return;
+      final template = plan.forNewMonth().copy(items: plan.forNewMonth().items
+        .map((i) => i.copy(opening: 0)).toList());
+      await widget.service.store('template', PlanSnapshot(template,
+        remote?.revision ?? 0, pending: true));
+      if (!mounted || request != epoch) return;
+      setState(() => tab = 'template');
+      await load();
+      if (mounted) setState(() => message =
+        'Draf template dari bulan ini. Tinjau lalu Simpan ke akun untuk bulan baru.');
+    } catch (_) {
+      if (mounted && request == epoch) setState(() => message =
+        'Template belum dapat disalin. Rencana bulan ini tetap tersimpan.');
+    } finally {
+      if (mounted && request == epoch) setState(() => busy = false);
+    }
+  }
+
   Future<void> editItem([AllocationItem? item]) async {
     final plan = snapshot!.plan, request = epoch;
-    var name = item?.name ?? '';
-    var group =
-        item?.group ?? (tab == 'reserves' ? 'Persiapan rekening' : 'Rutin');
-    var amount = '${item?.amount ?? 0}';
-    var note = item?.note ?? '';
-    final form = GlobalKey<FormState>();
-    final result = await showAdaptiveSheet<bool>(
-      context,
-      builder: (ctx) => SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: form,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                item == null ? 'Tambah pos' : 'Ubah pos',
-                style: Theme.of(ctx).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: name,
-                onChanged: (value) => name = value,
-                maxLength: 200,
-                decoration: const InputDecoration(labelText: 'Nama pos'),
-                validator: (v) => v!.trim().isEmpty ? 'Isi nama pos.' : null,
-              ),
-              TextFormField(
-                initialValue: group,
-                onChanged: (value) => group = value,
-                maxLength: 100,
-                decoration: const InputDecoration(
-                  labelText: 'Kelompok (potongan: Potongan gaji)',
-                ),
-                validator: (v) => v!.trim().isEmpty ? 'Isi kelompok.' : null,
-              ),
-              TextFormField(
-                initialValue: amount,
-                onChanged: (value) => amount = value,
-                decoration: const InputDecoration(
-                  labelText: 'Rencana nominal (rupiah)',
-                ),
-                keyboardType: TextInputType.number,
-                validator: amountError,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: note,
-                onChanged: (value) => note = value,
-                maxLength: 2000,
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Catatan'),
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () {
-                  if (form.currentState!.validate()) Navigator.pop(ctx, true);
-                },
-                child: const Text('Terapkan'),
-              ),
-              if (item != null)
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Hapus pos'),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (result == false && item != null && mounted && request == epoch) {
-      await change(
-        plan.copy(items: plan.items.where((i) => i.id != item.id).toList()),
-      );
-    }
-    if (result == true && mounted && request == epoch) {
-      final updated = AllocationItem(
-        id: item?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
-        group: group.trim(),
-        name: name.trim(),
-        amount: int.parse(amount),
-        note: note,
-        done: item?.done ?? false,
-      );
-      await change(
-        plan.copy(
-          items: [
-            for (final i in plan.items)
-              if (i.id == updated.id) updated else i,
-            if (item == null) updated,
-          ],
-        ),
-      );
+    final result = await showAdaptiveSheet<PlanItemEdit>(context,
+      builder: (_) => PlanItemSheet(item: item,
+        group: tab == 'reserves' ? 'Persiapan rekening' : 'Rutin',
+        fx: plan.fx, allowRules: tab != 'reserves', allowActual: tab == 'month'));
+    if (result == null || !mounted || request != epoch) return;
+    if (result.delete && item != null) {
+      await change(plan.copy(items: plan.items.where((i) => i.id != item.id).toList()));
+    } else if (result.item != null) {
+      final updated = result.item!;
+      await change(plan.copy(items: [for (final i in plan.items)
+        if (i.id == updated.id) updated else i,
+        if (item == null) updated]));
     }
   }
 
@@ -466,12 +458,12 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Rencana pribadi',
+                'Pendapatan & alokasi',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
               const Text(
-                'Checklist alokasi terpisah dari transaksi dan buku keluarga. Centang menandai rencana selesai; saldo dan laporan pengeluaran tidak berubah.',
+                'Atur pendapatan, langganan, dan tabungan di sini. Ceklis tidak mencatat transaksi atau mengubah saldo rekening.',
               ),
               const SizedBox(height: 20),
               Wrap(
@@ -574,6 +566,10 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                       onPressed: busy ? null : reviewServer,
                       child: const Text('Tinjau versi server'),
                     ),
+                    if (tab == 'month')
+                      OutlinedButton.icon(onPressed: busy ? null : copyToTemplate,
+                        icon: const Icon(Icons.content_copy_outlined),
+                        label: const Text('Salin ke template')),
                     OutlinedButton.icon(
                       onPressed: busy || plan.items.length >= 200
                           ? null
@@ -591,7 +587,8 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                     children: [
                       _summary('Bruto', money.format(plan.gross)),
                       _summary('Potongan', money.format(plan.deductions)),
-                      _summary('Neto rencana', money.format(plan.net)),
+                      _summary('Dana tersedia + bonus', money.format(plan.available)),
+                      _summary('Langganan / bulan', money.format(plan.digital)),
                       _summary(
                         'Diterima',
                         plan.received == null
@@ -608,8 +605,15 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                     ),
                   ),
                   Text(
-                    'Alokasi ${money.format(plan.planned)} · Belum dialokasikan ${money.format(plan.net - plan.planned)}',
+                    'Alokasi ${money.format(plan.planned)} · ${plan.unallocated < 0 ? 'Defisit' : 'Belum dialokasikan'} ${money.format(plan.unallocated.abs())}',
+                    style: TextStyle(color: plan.unallocated < 0 ? colors.danger : colors.textSecondary),
                   ),
+                  const SizedBox(height: 8),
+                  Text('Aktual tercatat ${money.format(plan.actual)}',
+                    style: Theme.of(context).textTheme.bodySmall),
+                  if (plan.items.any((i) => i.rule?.kind == 'saving'))
+                    const Padding(padding: EdgeInsets.only(top: 8), child: Text(
+                      'Tabungan otomatis mengikuti prioritas dan porsi sisa; pos tetap dipertahankan.')),
                   const SizedBox(height: 12),
                 ],
                 Text(
@@ -626,7 +630,7 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Text(
-                      'Belum ada pos. Tambahkan rencana Anda, lalu simpan ke akun.',
+                      'Tambah pos tetap, langganan, atau tabungan otomatis. Simpan ke akun agar tersedia di perangkat lain.',
                     ),
                   ),
                 if (plan.items.isNotEmpty) ...[
@@ -802,6 +806,20 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                             padding: const EdgeInsets.only(top: 5),
                             child: amount,
                           ),
+                        if (item.rule != null)
+                          Padding(padding: const EdgeInsets.only(top: 5), child: Text(
+                            item.rule!.kind == 'subscription'
+                              ? '${item.rule!.enabled ? "Langganan aktif" : "Dijeda dalam rencana"} · ${item.rule!.months == 12 ? "cadangan tahunan ÷ 12" : "bulanan"} · pajak ${item.rule!.taxIncluded ? "termasuk" : "${item.rule!.taxBps / 100}%"}'
+                              : 'Tabungan otomatis · prioritas ${item.rule!.priority} · porsi ${item.rule!.weight}',
+                            style: TextStyle(color: colors.textSecondary, fontSize: 12))),
+                        if (item.actual != null)
+                          Padding(padding: const EdgeInsets.only(top: 5), child: Text(
+                            'Aktual ${money.format(item.actual)}',
+                            style: TextStyle(color: colors.textSecondary))),
+                        if (item.rollover)
+                          Padding(padding: const EdgeInsets.only(top: 5), child: Text(
+                            'Saldo dana ${money.format(item.balance)} · dibawa ke bulan berikutnya',
+                            style: TextStyle(color: item.balance < 0 ? colors.danger : colors.primary))),
                         if (item.note.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 5),

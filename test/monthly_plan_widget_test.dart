@@ -225,6 +225,7 @@ void main() {
         find.widgetWithText(TextFormField, 'Rencana nominal (rupiah)'),
         '25',
       );
+      await t.ensureVisible(find.text('Terapkan'));
       await t.tap(find.text('Terapkan'));
       await t.pumpAndSettle();
       final key = service.local.keys.firstWhere(
@@ -243,4 +244,57 @@ void main() {
       addTearDown(t.view.resetDevicePixelRatio);
     },
   );
+  testWidgets('bonus recalculates savings without changing fixed allocations', (t) async {
+    final service = FakePlans();
+    service.server['template'] = PlanSnapshot(MonthlyPlan(gross: 1000, items: const [
+      AllocationItem(id: 'home', group: 'Rutin', name: 'Rumah contoh', amount: 400),
+      AllocationItem(id: 'saving', group: 'Tabungan', name: 'Tujuan contoh', amount: 0,
+        rule: PlanRule(kind: 'saving', weight: 1)),
+    ]), 1);
+    await open(t, service);
+    await t.ensureVisible(find.text('Ubah pendapatan'));
+    await t.tap(find.text('Ubah pendapatan'));
+    await t.pumpAndSettle();
+    await t.enterText(find.widgetWithText(TextFormField, 'Bonus bersih (rupiah)'), '200');
+    await t.ensureVisible(find.text('Terapkan'));
+    await t.tap(find.text('Terapkan'));
+    await t.pumpAndSettle();
+    final current = service.local.values.firstWhere((p) => p.plan.bonus == 200).plan;
+    expect(current.items.first.amount, 400);
+    expect(current.items.last.amount, 800);
+    expect(service.server['template']!.plan.bonus, 0);
+    expect(t.takeException(), isNull);
+    addTearDown(t.view.resetPhysicalSize); addTearDown(t.view.resetDevicePixelRatio);
+  });
+  testWidgets('actual holiday deposit rolls once into the next month', (t) async {
+    final service = FakePlans();
+    service.server['template'] = PlanSnapshot(MonthlyPlan(gross: 1000, items: const [
+      AllocationItem(id: 'trip', group: 'Dana', name: 'Liburan contoh', amount: 500,
+        opening: 500, rollover: true),
+    ]), 1);
+    await open(t, service);
+    await t.ensureVisible(find.byTooltip('Ubah Liburan contoh'));
+    await t.tap(find.byTooltip('Ubah Liburan contoh'));
+    await t.pumpAndSettle();
+    await t.ensureVisible(find.text('Realisasi & saldo dana'));
+    await t.tap(find.text('Realisasi & saldo dana'));
+    await t.pumpAndSettle();
+    await t.ensureVisible(find.widgetWithText(TextFormField, 'Alokasi aktual (rupiah)'));
+    await t.enterText(find.widgetWithText(TextFormField, 'Alokasi aktual (rupiah)'), '500');
+    await t.ensureVisible(find.widgetWithText(TextFormField, 'Dana dipakai bulan ini (rupiah)'));
+    await t.enterText(find.widgetWithText(TextFormField, 'Dana dipakai bulan ini (rupiah)'), '200');
+    await t.ensureVisible(find.text('Terapkan'));
+    await t.tap(find.text('Terapkan'));
+    await t.pumpAndSettle();
+    await t.ensureVisible(find.byTooltip('Bulan berikutnya'));
+    await t.tap(find.byTooltip('Bulan berikutnya'));
+    await t.pumpAndSettle();
+    final next = service.local.values.where((p) => p.plan.items.single.opening == 800).first.plan;
+    expect(next.items.single.actual, isNull);
+    expect(next.items.single.spent, 0);
+    expect(next.items.single.balance, 800);
+    expect(t.takeException(), isNull);
+    addTearDown(t.view.resetPhysicalSize); addTearDown(t.view.resetDevicePixelRatio);
+  });
+
 }

@@ -243,7 +243,7 @@ const _destinations = [
     showInBottomBar: false,
     group: NavGroup.system,
   ),
-  AdaptiveDestination(icon: Icons.checklist_rounded, selectedIcon: Icons.checklist_rounded, label: 'Rencana Bulanan', hint: 'Checklist & alokasi pribadi', showInBottomBar: false, group: NavGroup.plans),
+  AdaptiveDestination(icon: Icons.checklist_rounded, selectedIcon: Icons.checklist_rounded, label: 'Rencana Bulanan', hint: 'Gaji, langganan & tabungan', showInBottomBar: false, group: NavGroup.plans),
 ];
 
 // Order must match [AppPage].
