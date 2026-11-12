@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
@@ -105,8 +106,8 @@ class DebtsView extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        totalDebt.rupiah,
+                      AnimatedMoney(
+                        value: totalDebt,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -149,8 +150,8 @@ class DebtsView extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          totalLoan.rupiah,
+                        AnimatedMoney(
+                          value: totalLoan,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -171,8 +172,9 @@ class DebtsView extends StatelessWidget {
                   'Saldo Bersih Pinjaman',
                   style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                 ),
-                Text(
-                  net >= 0 ? '+${net.rupiah}' : '-${(-net).rupiah}',
+                AnimatedMoney(
+                  value: net,
+                  signed: true,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -327,13 +329,12 @@ class DebtsView extends StatelessWidget {
             // Progress Bar
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
+              child: AnimatedProgress(
                 value: debt.progress,
-                minHeight: 6,
-                backgroundColor: colors.surfaceAlt,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  isSettled ? colors.success : color,
-                ),
+                height: 6,
+                track: colors.surfaceAlt,
+                color: isSettled ? colors.success : color,
+                semanticsLabel: 'Bagian yang sudah terbayar',
               ),
             ),
             const SizedBox(height: 8),

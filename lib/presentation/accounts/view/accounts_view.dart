@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:get/get.dart';
 import 'package:financial_recording/shared/widget/market_card.dart';
 import 'package:financial_recording/data/repositories/account_repository.dart';
@@ -171,8 +172,8 @@ class _GroupSection extends StatelessWidget {
                 Text(group.icon, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(child: Text(group.label, style: Theme.of(context).textTheme.titleMedium)),
-                Text(
-                  subtotal.rupiah,
+                AnimatedMoney(
+                  value: subtotal,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: subtotal < 0 ? colors.danger : colors.textPrimary,

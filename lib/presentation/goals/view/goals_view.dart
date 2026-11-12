@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:financial_recording/shared/widget/motion/motion.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:financial_recording/util/thousands_formatter/thousands_formatter.dart';
@@ -419,8 +420,8 @@ class _GoalsSummaryBanner extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            saved.rupiah,
+          AnimatedMoney(
+            value: saved,
             style: TextStyle(
               color: colors.onPrimary,
               fontSize: 26,
@@ -434,11 +435,11 @@ class _GoalsSummaryBanner extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
+            child: AnimatedProgress(
               value: progress,
-              backgroundColor: Colors.white24,
-              valueColor: AlwaysStoppedAnimation(colors.onPrimary),
-              minHeight: 8,
+              track: Colors.white24,
+              color: colors.onPrimary,
+              semanticsLabel: 'Kemajuan seluruh tujuan',
             ),
           ),
         ],
@@ -568,11 +569,11 @@ class _GoalCard extends StatelessWidget {
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(5),
-            child: LinearProgressIndicator(
+            child: AnimatedProgress(
               value: goal.progress,
-              backgroundColor: colors.border.withValues(alpha: colors.border.a * 0.4),
-              valueColor: AlwaysStoppedAnimation(isDone ? colors.income : color),
-              minHeight: 8,
+              track: colors.border.withValues(alpha: colors.border.a * 0.4),
+              color: isDone ? colors.income : color,
+              semanticsLabel: 'Kemajuan ${goal.title}',
             ),
           ),
           if (onDeposit != null && !isDone) ...[

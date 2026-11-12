@@ -427,11 +427,12 @@ class _BudgetLine extends StatelessWidget {
             const SizedBox(height: 6),
             ClipRRect(
               borderRadius: BorderRadius.circular(3),
-              child: LinearProgressIndicator(
+              child: AnimatedProgress(
                 value: b.percent.clamp(0, 1).toDouble(),
-                minHeight: 5,
+                height: 5,
                 color: bar,
-                backgroundColor: cream.withValues(alpha: 0.14),
+                track: cream.withValues(alpha: 0.14),
+                semanticsLabel: 'Pemakaian anggaran bulan ini',
               ),
             ),
           ],
