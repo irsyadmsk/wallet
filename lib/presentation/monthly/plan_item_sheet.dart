@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:financial_recording/data/models/monthly_plan.dart';
+import 'package:financial_recording/presentation/monthly/plan_ledger.dart';
 
 class PlanItemEdit {
   final AllocationItem? item;
@@ -9,7 +10,12 @@ class PlanItemEdit {
 
 class PlanItemSheet extends StatefulWidget {
   const PlanItemSheet({super.key, this.item, required this.group,
-    required this.fx, this.allowRules = true, this.allowActual = true});
+    required this.fx, this.allowRules = true, this.allowActual = true,
+    this.categories = const [], this.accounts = const [], this.goals = const []});
+
+  /// Ledger records the item may be linked to. Empty lists hide the section
+  /// and leave any existing link untouched.
+  final List<PlanLinkOption> categories, accounts, goals;
   final AllocationItem? item;
   final String group;
   final int fx;
@@ -24,6 +30,8 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
   late String kind, currency;
   late bool included, enabled, rollover;
   late int months;
+  late String? categoryId = widget.item?.categoryId,
+      accountId = widget.item?.accountId, goalId = widget.item?.goalId;
   TextEditingController field(String key) => fields[key]!;
   @override
   void initState() {
@@ -68,6 +76,19 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
       decoration: InputDecoration(labelText: label, helperText: help, helperMaxLines: 4),
       validator: validate ?? (text ? null : (v) => whole(v))),
   );
+  Widget linkField(String label, String help, List<PlanLinkOption> options,
+      String? value, void Function(String?) onChanged) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: DropdownButtonFormField<String?>(isExpanded: true,
+      // A link whose record was deleted shows as unlinked but is kept until
+      // the user picks something else.
+      initialValue: options.any((o) => o.id == value) ? value : null,
+      decoration: InputDecoration(labelText: label, helperText: help, helperMaxLines: 3),
+      items: [const DropdownMenuItem<String?>(value: null, child: Text('Tidak ditautkan')),
+        for (final o in options) DropdownMenuItem<String?>(value: o.id,
+          child: Text(o.label, overflow: TextOverflow.ellipsis))],
+      onChanged: (v) => setState(() => onChanged(v))),
+  );
   void submit() {
     if (!form.currentState!.validate()) return;
     PlanRule? rule;
@@ -90,6 +111,7 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
       rule: rule, actual: int.tryParse(field('actual').text),
       opening: int.parse(field('opening').text), spent: int.parse(field('spent').text),
       rollover: rollover,
+      categoryId: categoryId, accountId: accountId, goalId: goalId,
     );
     Navigator.pop(context, PlanItemEdit(updated));
   }
@@ -173,6 +195,22 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
               input('spent', 'Dana dipakai bulan ini (rupiah)'),
             ],
           ]),
+        if (widget.group != 'Persiapan rekening' && (widget.categories.isNotEmpty ||
+            widget.accounts.isNotEmpty || widget.goals.isNotEmpty))
+          ExpansionTile(tilePadding: EdgeInsets.zero,
+            title: const Text('Tautan ke buku kas'),
+            subtitle: const Text('Hanya menampilkan data; tidak mencatat transaksi.'),
+            children: [
+              if (widget.categories.isNotEmpty) linkField('Kategori pengeluaran',
+                'Pengeluaran kategori ini pada bulan berjalan tampil di samping rencana.',
+                widget.categories, categoryId, (v) => categoryId = v),
+              if (widget.accounts.isNotEmpty) linkField('Akun',
+                'Saldo akun ini tampil sebagai pembanding.',
+                widget.accounts, accountId, (v) => accountId = v),
+              if (widget.goals.isNotEmpty) linkField('Tujuan',
+                'Kemajuan tujuan ini tampil pada pos.',
+                widget.goals, goalId, (v) => goalId = v),
+            ]),
         const SizedBox(height: 16),
         input('note', 'Catatan', text: true),
         FilledButton(onPressed: submit, child: const Text('Terapkan')),
