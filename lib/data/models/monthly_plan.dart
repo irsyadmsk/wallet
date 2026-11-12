@@ -49,9 +49,16 @@ class AllocationItem {
   final int? actual;
   final bool done, rollover;
   final PlanRule? rule;
+
+  /// Optional read-only links to the ledger: an expense category whose
+  /// spending is shown beside the plan, an account whose balance is shown,
+  /// and a goal whose progress is shown. They never post or change anything
+  /// and take no part in [MonthlyPlan.recalculate].
+  final String? categoryId, accountId, goalId;
   const AllocationItem({required this.id, required this.group,
     required this.name, required this.amount, this.note = '', this.done = false,
-    this.rule, this.actual, this.opening = 0, this.spent = 0, this.rollover = false});
+    this.rule, this.actual, this.opening = 0, this.spent = 0, this.rollover = false,
+    this.categoryId, this.accountId, this.goalId});
 
   int get balance => opening + (actual ?? 0) - spent;
   AllocationItem copy({String? group, String? name, String? note, int? amount,
@@ -62,19 +69,31 @@ class AllocationItem {
         done: done ?? this.done, rule: clearRule ? null : rule ?? this.rule,
         actual: clearActual ? null : actual ?? this.actual,
         opening: opening ?? this.opening, spent: spent ?? this.spent,
-        rollover: rollover ?? this.rollover);
+        rollover: rollover ?? this.rollover, categoryId: categoryId,
+        accountId: accountId, goalId: goalId);
   Map<String, dynamic> toJson() => {'id': id, 'group': group, 'name': name,
     'note': note, 'amount': amount, 'done': done,
     if (rule != null) 'rule': rule!.toJson(),
     if (actual != null) 'actual': actual,
     if (rollover || opening != 0 || spent != 0) ...{
-      'opening': opening, 'spent': spent, 'rollover': rollover}};
+      'opening': opening, 'spent': spent, 'rollover': rollover},
+    if (categoryId != null) 'categoryId': categoryId,
+    if (accountId != null) 'accountId': accountId,
+    if (goalId != null) 'goalId': goalId};
   factory AllocationItem.fromJson(Map<String, dynamic> j) {
     String text(String key, int max) {
       final value = j[key];
       if (value is! String || value.length > max ||
           (key != 'note' && value.trim().isEmpty)) {
         throw const FormatException('Format pos tidak valid.');
+      }
+      return value;
+    }
+    String? link(String key) {
+      final value = j[key];
+      if (value == null) return null;
+      if (value is! String || value.isEmpty || value.length > 100) {
+        throw const FormatException('Tautan pos tidak valid.');
       }
       return value;
     }
@@ -91,7 +110,9 @@ class AllocationItem {
       amount: planMoney(j['amount']), done: j['done'] as bool, rule: rule,
       actual: j['actual'] == null ? null : planMoney(j['actual']),
       opening: signedPlanMoney(j['opening'] ?? 0),
-      spent: planMoney(j['spent'] ?? 0), rollover: j['rollover'] == true);
+      spent: planMoney(j['spent'] ?? 0), rollover: j['rollover'] == true,
+      categoryId: link('categoryId'), accountId: link('accountId'),
+      goalId: link('goalId'));
   }
 }
 

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:financial_recording/data/services/currency/currency_service.dart';
+import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/presentation/monthly/plan_item_sheet.dart';
+import 'package:financial_recording/presentation/monthly/plan_ledger.dart';
 import 'package:financial_recording/util/browser/unsaved_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -38,7 +40,16 @@ class MonthlyPlanView extends StatelessWidget {
 
 class MonthlyPlanEditor extends StatefulWidget {
   final MonthlyPlanService service;
-  const MonthlyPlanEditor({super.key, required this.service});
+
+  /// Read-only view of the ledger for linked items. Defaults to the app's
+  /// own ledger when it is open.
+  final PlanLedger? ledger;
+
+  /// Opens the transaction form for an item. Defaults to the ordinary form;
+  /// the planner itself never writes a transaction.
+  final Future<void> Function(BuildContext context, AllocationItem item)? onRecord;
+  const MonthlyPlanEditor({super.key, required this.service, this.ledger,
+    this.onRecord});
   @override
   State<MonthlyPlanEditor> createState() => MonthlyPlanEditorState();
 }
@@ -54,6 +65,22 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
   String _query = '';
   bool _onlyOpen = false;
   PlanKind? _kind;
+  late final PlanLedger ledger = widget.ledger ?? HivePlanLedger.ifOpen();
+
+  Future<void> record(AllocationItem item) async {
+    final open = widget.onRecord ?? (context, item) => showAdaptiveSheet<bool>(
+      context,
+      builder: (_) => FormTxView(
+        initialMemo: item.name,
+        initialAmount: item.actual ?? item.amount,
+        initialCategoryId: item.categoryId,
+        initialAccountId: item.accountId,
+      ),
+    );
+    await open(context, item);
+    // Linked spending may have changed; the plan document has not.
+    if (mounted) setState(() {});
+  }
   final Set<String> _collapsedGroups = {};
   void Function()? _removeGuard;
   void guardClosing(bool enabled) {
@@ -429,7 +456,9 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
     final result = await showAdaptiveSheet<PlanItemEdit>(context,
       builder: (_) => PlanItemSheet(item: item,
         group: tab == 'reserves' ? 'Persiapan rekening' : 'Rutin',
-        fx: plan.fx, allowRules: tab != 'reserves', allowActual: tab == 'month'));
+        fx: plan.fx, allowRules: tab != 'reserves', allowActual: tab == 'month',
+        categories: ledger.categories(), accounts: ledger.accounts(),
+        goals: ledger.goals()));
     if (result == null || !mounted || request != epoch) return;
     if (result.delete && item != null) {
       await change(plan.copy(items: plan.items.where((i) => i.id != item.id).toList()));
@@ -833,6 +862,15 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                                     ),
                                   ),
                             onEdit: busy ? null : () => editItem(item),
+                            links: ledger.linksFor(
+                              item,
+                              tab == 'month' ? month : null,
+                            ),
+                            onRecord: ledger.available &&
+                                    tab == 'month' &&
+                                    item.group != 'Potongan gaji'
+                                ? () => record(item)
+                                : null,
                           ),
                         ),
                       ],

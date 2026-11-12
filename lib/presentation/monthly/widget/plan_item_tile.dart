@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:financial_recording/data/models/monthly_plan.dart';
+import 'package:financial_recording/presentation/monthly/plan_ledger.dart';
 import 'package:financial_recording/presentation/monthly/widget/plan_kind.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
@@ -15,7 +16,15 @@ class PlanItemTile extends StatelessWidget {
     required this.money,
     required this.onToggle,
     required this.onEdit,
+    this.links = const PlanItemLinks(),
+    this.onRecord,
   });
+
+  /// Ledger figures for this item's links; display only.
+  final PlanItemLinks links;
+
+  /// Opens the ordinary transaction form, prefilled. The user still saves it.
+  final VoidCallback? onRecord;
 
   final AllocationItem item;
   final String Function(int) money;
@@ -83,6 +92,17 @@ class PlanItemTile extends StatelessWidget {
             if (item.note.isNotEmpty)
               Padding(padding: const EdgeInsets.only(top: 6), child: Text(item.note,
                 style: TextStyle(color: c.textSecondary, fontSize: 13))),
+            if (!links.isEmpty)
+              Padding(padding: const EdgeInsets.only(top: 8), child: _LedgerLinks(
+                links: links, planned: item.amount, money: money)),
+            if (onRecord != null)
+              Align(alignment: AlignmentDirectional.centerStart, child: TextButton.icon(
+                onPressed: onRecord,
+                style: TextButton.styleFrom(minimumSize: const Size(48, 44),
+                  padding: const EdgeInsetsDirectional.only(end: 12)),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                label: Text('Catat transaksi', semanticsLabel:
+                  'Catat ${item.name} sebagai transaksi'))),
           ]),
         )),
         if (wide) SizedBox(width: 150, child: Padding(
@@ -145,5 +165,61 @@ class _FundBalance extends StatelessWidget {
         Text('Awal ${money(item.opening)} · terpakai ${money(item.spent)}',
           style: TextStyle(color: c.textSecondary, fontSize: 12)),
     ]);
+  }
+}
+
+/// What the ledger shows for the linked category, account and goal.
+class _LedgerLinks extends StatelessWidget {
+  const _LedgerLinks({required this.links, required this.planned, required this.money});
+  final PlanItemLinks links;
+  final int planned;
+  final String Function(int) money;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final small = TextStyle(color: c.textSecondary, fontSize: 12);
+    final spent = links.ledgerSpent;
+    final over = spent != null && spent > planned;
+    final target = links.goalTarget ?? 0, current = links.goalCurrent ?? 0;
+    Widget line(IconData icon, String text, {Color? color, bool strong = false}) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 14, color: color ?? c.textSecondary)),
+        const SizedBox(width: 6),
+        Expanded(child: Text(text, style: small.copyWith(color: color,
+          fontWeight: strong ? FontWeight.w600 : null))),
+      ]);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: c.surfaceAlt,
+        borderRadius: BorderRadius.circular(12)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (links.categoryLabel != null) ...[
+          line(over ? Icons.warning_amber_rounded : Icons.receipt_long_outlined,
+            spent == null ? 'Kategori ${links.categoryLabel}'
+                : over ? 'Buku kas: ${links.categoryLabel} terpakai ${money(spent)}, '
+                    'melebihi rencana ${money(spent - planned)}'
+                : 'Buku kas: ${links.categoryLabel} terpakai ${money(spent)} '
+                    'dari ${money(planned)}',
+            color: over ? c.danger : null, strong: over),
+          if (spent != null) Padding(padding: const EdgeInsets.only(top: 6, bottom: 2),
+            child: AnimatedProgress(
+              value: planned <= 0 ? (spent > 0 ? 1 : 0) : spent / planned,
+              color: over ? c.danger : c.primary, track: c.border, height: 6,
+              semanticsLabel: 'Pengeluaran tercatat dibanding rencana')),
+        ],
+        if (links.accountLabel != null) Padding(
+          padding: EdgeInsets.only(top: links.categoryLabel != null ? 6 : 0),
+          child: line(Icons.account_balance_wallet_outlined,
+            'Saldo ${links.accountLabel}: ${money(links.accountBalance ?? 0)}')),
+        if (links.goalLabel != null) Padding(
+          padding: EdgeInsets.only(
+            top: links.categoryLabel != null || links.accountLabel != null ? 6 : 0),
+          child: line(Icons.flag_outlined,
+            'Tujuan ${links.goalLabel}: ${money(current)} dari ${money(target)}'
+            '${target > 0 ? ' (${(current * 100 / target).clamp(0, 100).round()}%)' : ''}')),
+      ]),
+    );
   }
 }

@@ -1,5 +1,24 @@
 # Wallet — Design System
 
+## Rencana Bulanan ↔ buku kas — 12 November 2026
+
+Owner approved linking plan items to the ledger. An item may carry three
+optional ids — `categoryId`, `accountId`, `goalId` — added to the personal plan
+JSON. They are additive: documents without them load unchanged, an item
+without links writes none, and the links take no part in any calculation.
+A client that predates them ignores them and drops them if it saves that
+month; edit linked months on the web until native delivery is prepared.
+
+The planner only reads (`lib/presentation/monthly/plan_ledger.dart`): for the
+open month it shows the linked category's recorded expenses (children
+included) against the planned amount, the linked account's balance, and the
+linked goal's progress. Overspending is written out with an icon. A link whose
+record was deleted shows nothing. "Catat transaksi" opens the ordinary
+transaction form prefilled with the item's name, amount, category and account;
+the user still saves it there, so Transaksi stays the only recording path and
+the plan document is not changed by recording. Manual "terpakai" and "aktual"
+fields remain and are not overwritten. Recurring rules are not linked yet.
+
 ## Motion on the other screens — 12 November 2026
 
 The primitives from the Rencana Bulanan redesign now cover the remaining
