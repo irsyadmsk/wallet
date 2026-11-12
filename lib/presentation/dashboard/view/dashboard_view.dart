@@ -212,7 +212,9 @@ class _Greeting extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${_salam(now.hour)}, ${auth.displayName}',
+                    auth.displayName.trim().isEmpty
+                        ? _salam(now.hour)
+                        : '${_salam(now.hour)}, ${auth.displayName}',
                     style: TextStyle(color: c.textSecondary, fontSize: 13),
                   ),
                   const SizedBox(height: 8),
