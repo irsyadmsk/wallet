@@ -6,6 +6,7 @@ import 'package:financial_recording/shared/widget/form/amount_field.dart';
 import 'package:financial_recording/core.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/repositories/account_group_repository.dart';
+import 'package:financial_recording/domain/account_presets.dart';
 import 'package:financial_recording/domain/enums/account_group_type.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_spacing.dart';
@@ -85,6 +86,38 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
                 });
               },
             ),
+            if (!isEditing && accountPresetsFor(group.code).isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Pilihan cepat', style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final p in accountPresetsFor(group.code))
+                          ChoiceChip(
+                            label: Text(p.name),
+                            selected: name == p.name,
+                            onSelected: (_) => setState(() {
+                              name = p.name;
+                              colorValue = p.color;
+                              iconPath = p.logo == null ? null : bankLogoPath(p.logo!);
+                            }),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Saldo tetap dicatat sendiri; Wallet tidak terhubung ke bank atau dompet digital.',
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
             if (_isGoldGroup)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -181,7 +214,7 @@ class _AccountEditorSheetState extends State<AccountEditorSheet> {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                for (final c in _palette)
+                for (final c in [if (!_palette.contains(colorValue)) colorValue, ..._palette])
                   GestureDetector(
                     onTap: () => setState(() => colorValue = c),
                     child: CircleAvatar(

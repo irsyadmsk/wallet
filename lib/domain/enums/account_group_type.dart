@@ -4,6 +4,9 @@
 enum AccountGroupType {
   cash(11, 'Tunai', isLiabilityDefault: false, icon: '💵'),
   bank(1, 'Bank', isLiabilityDefault: false, icon: '🏦'),
+  /// Added November 2026. Clients that predate it show these accounts under
+  /// "Lainnya" until they update; the stored code is kept either way.
+  ewallet(14, 'Dompet Digital', isLiabilityDefault: false, icon: '📱'),
   card(2, 'Kartu / PayLater', isLiabilityDefault: true, icon: '💳'),
   debitCard(3, 'Kartu Debit', isLiabilityDefault: false, icon: '💳'),
   savings(4, 'Tabungan', isLiabilityDefault: false, icon: '🐷'),
@@ -39,6 +42,7 @@ enum AccountGroupType {
   static const List<AccountGroupType> displayOrder = [
     cash,
     bank,
+    ewallet,
     debitCard,
     savings,
     prepaid,
