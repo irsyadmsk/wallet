@@ -1,5 +1,26 @@
 # Wallet — Design System
 
+## Rencana Bulanan layout — 12 November 2026
+
+Owner approved a redesign of the existing page (own design; ARUS stays a
+reference). Presentation only: model, storage, RLS, revision checks and every
+calculation are unchanged, and ticking an item still never posts a transaction.
+
+Order: period tabs → month switcher → save status → three summary cards
+(available on ink, allocated with its share bar, remainder or a named deficit)
+→ "Arus alokasi", one bar split into Tetap / Langganan / Tabungan otomatis /
+Dana bergulir / Sisa → actions → item list in one card per user group.
+The kind is derived from the stored rule and rollover flag
+(`widget/plan_kind.dart`); it is never persisted. Choosing a part in the flow
+legend filters the list; the chip "Bagian: …" clears it. Salary deductions have
+no kind and stay out of the bar.
+
+Motion: amounts tween (`AnimatedMoney`), bars grow (`AnimatedProgress`), the
+flow bar animates five fixed slots together so it cannot overflow mid-change,
+groups fold with `AnimatedSize`. All of it is in-surface and honours
+`AppMotion.reduced`; page-level motion on the web stays off. Segment colours
+differ in lightness as well as hue, and a deficit carries an icon and label.
+
 ## One Wallet planner — 12 November 2026
 
 ARUS is a visual reference, not another navigation destination. All personal

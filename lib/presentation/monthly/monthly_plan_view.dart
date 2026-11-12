@@ -9,7 +9,12 @@ import 'package:financial_recording/data/services/monthly_plan_service.dart';
 import 'package:financial_recording/data/services/supabase_service.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
+import 'package:financial_recording/presentation/monthly/widget/plan_item_tile.dart';
+import 'package:financial_recording/presentation/monthly/widget/plan_kind.dart';
+import 'package:financial_recording/presentation/monthly/widget/plan_overview.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
+import 'package:financial_recording/shared/theme/app_motion.dart';
+import 'package:financial_recording/shared/widget/motion/motion.dart';
 
 class MonthlyPlanView extends StatelessWidget {
   const MonthlyPlanView({super.key});
@@ -48,6 +53,7 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
   final _search = TextEditingController();
   String _query = '';
   bool _onlyOpen = false;
+  PlanKind? _kind;
   final Set<String> _collapsedGroups = {};
   void Function()? _removeGuard;
   void guardClosing(bool enabled) {
@@ -435,15 +441,28 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
     }
   }
 
+  void _switchTab(String next) {
+    setState(() => tab = next);
+    unawaited(load());
+  }
+
+  void _shiftMonth(int by) {
+    setState(() => month = DateTime(month.year, month.month + by));
+    unawaited(load());
+  }
+
   @override
   Widget build(BuildContext context) {
     final plan = snapshot?.plan, colors = context.colors;
+    final kind = tab == 'reserves' ? null : _kind;
     final visible =
         plan?.items.where((item) {
           final matches = '${item.group} ${item.name} ${item.note}'
               .toLowerCase()
               .contains(_query.trim().toLowerCase());
-          return matches && (!_onlyOpen || !item.done);
+          return matches &&
+              (!_onlyOpen || !item.done) &&
+              (kind == null || planKindOf(item) == kind);
         }).toList() ??
         <AllocationItem>[];
     return Scaffold(
@@ -462,8 +481,9 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Atur pendapatan, langganan, dan tabungan di sini. Ceklis tidak mencatat transaksi atau mengubah saldo rekening.',
+                style: TextStyle(color: colors.textSecondary),
               ),
               const SizedBox(height: 20),
               Wrap(
@@ -480,79 +500,48 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                       selected: tab == entry.key,
                       onSelected: busy || unsafe
                           ? null
-                          : (_) {
-                              setState(() => tab = entry.key);
-                              unawaited(load());
-                            },
+                          : (_) => _switchTab(entry.key),
                     ),
                 ],
               ),
-              if (tab == 'month')
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      tooltip: 'Bulan sebelumnya',
-                      onPressed: busy || unsafe
-                          ? null
-                          : () {
-                              setState(
-                                () => month = DateTime(
-                                  month.year,
-                                  month.month - 1,
-                                ),
-                              );
-                              unawaited(load());
-                            },
-                      icon: const Icon(Icons.chevron_left),
-                    ),
-                    Flexible(
-                      child: Text(
-                        DateFormat('MMMM yyyy', 'id_ID').format(month),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Bulan berikutnya',
-                      onPressed: busy || unsafe
-                          ? null
-                          : () {
-                              setState(
-                                () => month = DateTime(
-                                  month.year,
-                                  month.month + 1,
-                                ),
-                              );
-                              unawaited(load());
-                            },
-                      icon: const Icon(Icons.chevron_right),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 12),
+              if (tab == 'month') _monthSwitcher(colors),
               if (tab != 'month')
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(
                     tab == 'template'
                         ? 'Perubahan template hanya dipakai saat membuat bulan baru. Riwayat bulan yang sudah ada tetap utuh.'
                         : 'Persiapan dan batas saldo yang diperiksa sekali, berlaku lintas bulan. Centang bukan bukti saldo bank dan bukan pengeluaran.',
                   ),
                 ),
-              if (busy) const LinearProgressIndicator(),
               const SizedBox(height: 12),
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  message,
-                  style: TextStyle(
-                    color: unsafe ? colors.danger : colors.textSecondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              _status(colors),
+              const SizedBox(height: 16),
               if (plan == null && !busy)
                 OutlinedButton(onPressed: load, child: const Text('Coba lagi')),
               if (plan != null) ...[
+                if (tab != 'reserves') ...[
+                  PlanOverview(
+                    plan: plan,
+                    money: money.format,
+                    selected: kind,
+                    onSelect: (next) => setState(() => _kind = next),
+                    onEditIncome: busy ? null : editIncome,
+                  ),
+                  if (plan.items.any((i) => i.rule?.kind == 'saving'))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        'Tabungan otomatis mengikuti prioritas dan porsi sisa; pos tetap dipertahankan.',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                ],
                 Wrap(
                   spacing: 10,
                   runSpacing: 8,
@@ -562,14 +551,6 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                       icon: const Icon(Icons.cloud_upload_outlined),
                       label: const Text('Simpan ke akun'),
                     ),
-                    OutlinedButton(
-                      onPressed: busy ? null : reviewServer,
-                      child: const Text('Tinjau versi server'),
-                    ),
-                    if (tab == 'month')
-                      OutlinedButton.icon(onPressed: busy ? null : copyToTemplate,
-                        icon: const Icon(Icons.content_copy_outlined),
-                        label: const Text('Salin ke template')),
                     OutlinedButton.icon(
                       onPressed: busy || plan.items.length >= 200
                           ? null
@@ -577,54 +558,47 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                       icon: const Icon(Icons.add),
                       label: const Text('Tambah pos'),
                     ),
+                    if (tab == 'month')
+                      OutlinedButton.icon(
+                        onPressed: busy ? null : copyToTemplate,
+                        icon: const Icon(Icons.content_copy_outlined),
+                        label: const Text('Salin ke template'),
+                      ),
+                    OutlinedButton(
+                      onPressed: busy ? null : reviewServer,
+                      child: const Text('Tinjau versi server'),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
-                if (tab != 'reserves') ...[
-                  Wrap(
-                    spacing: 28,
-                    runSpacing: 16,
-                    children: [
-                      _summary('Bruto', money.format(plan.gross)),
-                      _summary('Potongan', money.format(plan.deductions)),
-                      _summary('Dana tersedia + bonus', money.format(plan.available)),
-                      _summary('Langganan / bulan', money.format(plan.digital)),
-                      _summary(
-                        'Diterima',
-                        plan.received == null
-                            ? 'Belum diisi'
-                            : money.format(plan.received),
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: TextButton(
-                      onPressed: busy ? null : editIncome,
-                      child: const Text('Ubah pendapatan'),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.end,
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      'Daftar pos',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                  Text(
-                    'Alokasi ${money.format(plan.planned)} · ${plan.unallocated < 0 ? 'Defisit' : 'Belum dialokasikan'} ${money.format(plan.unallocated.abs())}',
-                    style: TextStyle(color: plan.unallocated < 0 ? colors.danger : colors.textSecondary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('Aktual tercatat ${money.format(plan.actual)}',
-                    style: Theme.of(context).textTheme.bodySmall),
-                  if (plan.items.any((i) => i.rule?.kind == 'saving'))
-                    const Padding(padding: EdgeInsets.only(top: 8), child: Text(
-                      'Tabungan otomatis mengikuti prioritas dan porsi sisa; pos tetap dipertahankan.')),
-                  const SizedBox(height: 12),
-                ],
-                Text(
-                  '${plan.items.where((i) => i.done).length}/${plan.items.length} pos ditandai selesai',
+                    Text(
+                      '${plan.items.where((i) => i.done).length}/${plan.items.length} pos ditandai selesai',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
+                const SizedBox(height: 10),
+                AnimatedProgress(
                   value: plan.items.isEmpty
                       ? 0
                       : plan.items.where((i) => i.done).length /
                             plan.items.length,
+                  color: colors.primary,
+                  track: colors.border,
+                  semanticsLabel: 'Pos yang ditandai selesai',
                 ),
                 if (plan.items.isEmpty)
                   const Padding(
@@ -634,7 +608,7 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                     ),
                   ),
                 if (plan.items.isNotEmpty) ...[
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: _search,
                     decoration: InputDecoration(
@@ -665,6 +639,12 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                         onSelected: (value) =>
                             setState(() => _onlyOpen = value),
                       ),
+                      if (kind != null)
+                        InputChip(
+                          label: Text('Bagian: ${kind.label}'),
+                          deleteButtonTooltipMessage: 'Tampilkan semua bagian',
+                          onDeleted: () => setState(() => _kind = null),
+                        ),
                       Text(
                         '${visible.length} dari ${plan.items.length} pos',
                         style: Theme.of(context).textTheme.bodySmall,
@@ -680,51 +660,8 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                     ),
                   for (final group
                       in visible.map((item) => item.group).toSet()) ...[
-                    const SizedBox(height: 20),
-                    Semantics(
-                      expanded: !_collapsedGroups.contains(group),
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size(48, 48),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          backgroundColor: colors.primaryContainer,
-                        ),
-                        onPressed: () => setState(() {
-                          if (!_collapsedGroups.add(group)) {
-                            _collapsedGroups.remove(group);
-                          }
-                        }),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                group,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '${plan.items.where((item) => item.group == group && item.done).length}/${plan.items.where((item) => item.group == group).length}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            const SizedBox(width: 12),
-                            Icon(
-                              _collapsedGroups.contains(group)
-                                  ? Icons.expand_more
-                                  : Icons.expand_less,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (!_collapsedGroups.contains(group))
-                      for (final item in visible.where(
-                        (item) => item.group == group,
-                      ))
-                        _allocationRow(plan, item),
+                    const SizedBox(height: 12),
+                    _groupCard(plan, group, visible, colors),
                   ],
                 ],
                 const SizedBox(height: 36),
@@ -736,131 +673,173 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
     );
   }
 
-  Widget _summary(String label, String value) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: Theme.of(context).textTheme.bodySmall),
-      const SizedBox(height: 5),
-      Text(value, style: Theme.of(context).textTheme.titleMedium),
-    ],
+  Widget _monthSwitcher(AppColors colors) => Container(
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: colors.surface,
+      border: Border.all(color: colors.border),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Row(
+      children: [
+        IconButton(
+          tooltip: 'Bulan sebelumnya',
+          onPressed: busy || unsafe ? null : () => _shiftMonth(-1),
+          icon: const Icon(Icons.chevron_left),
+        ),
+        Expanded(
+          child: Center(
+            child: AnimatedSwitcher(
+              duration: AppMotion.of(context, AppMotion.base),
+              switchInCurve: AppMotion.emphasized,
+              child: Text(
+                DateFormat('MMMM yyyy', 'id_ID').format(month),
+                key: ValueKey(month),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Bulan berikutnya',
+          onPressed: busy || unsafe ? null : () => _shiftMonth(1),
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
+    ),
   );
 
-  Widget _allocationRow(MonthlyPlan plan, AllocationItem item) {
-    final colors = context.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colors.border)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 600;
-            final amount = Text(
-              money.format(item.amount),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontFeatures: const [FontFeature.tabularFigures()],
+  Widget _status(AppColors colors) {
+    final tone = unsafe ? colors.danger : colors.textSecondary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (busy) const LinearProgressIndicator(),
+        if (busy) const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(
+                unsafe ? Icons.error_outline : Icons.cloud_done_outlined,
+                size: 16,
+                color: tone,
               ),
-            );
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Checkbox(
-                    semanticLabel: 'Selesai: ${item.name}',
-                    value: item.done,
-                    onChanged: busy || tab == 'template'
-                        ? null
-                        : (value) => change(
-                            plan.copy(
-                              items: plan.items
-                                  .map(
-                                    (other) => other.id == item.id
-                                        ? other.copy(done: value)
-                                        : other,
-                                  )
-                                  .toList(),
-                            ),
-                          ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      0,
-                      12,
-                      12,
-                      12,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.name,
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        if (!wide)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 5),
-                            child: amount,
-                          ),
-                        if (item.rule != null)
-                          Padding(padding: const EdgeInsets.only(top: 5), child: Text(
-                            item.rule!.kind == 'subscription'
-                              ? '${item.rule!.enabled ? "Langganan aktif" : "Dijeda dalam rencana"} · ${item.rule!.months == 12 ? "cadangan tahunan ÷ 12" : "bulanan"} · pajak ${item.rule!.taxIncluded ? "termasuk" : "${item.rule!.taxBps / 100}%"}'
-                              : 'Tabungan otomatis · prioritas ${item.rule!.priority} · porsi ${item.rule!.weight}',
-                            style: TextStyle(color: colors.textSecondary, fontSize: 12))),
-                        if (item.actual != null)
-                          Padding(padding: const EdgeInsets.only(top: 5), child: Text(
-                            'Aktual ${money.format(item.actual)}',
-                            style: TextStyle(color: colors.textSecondary))),
-                        if (item.rollover)
-                          Padding(padding: const EdgeInsets.only(top: 5), child: Text(
-                            'Saldo dana ${money.format(item.balance)} · dibawa ke bulan berikutnya',
-                            style: TextStyle(color: item.balance < 0 ? colors.danger : colors.primary))),
-                        if (item.note.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 5),
-                            child: Text(
-                              item.note,
-                              style: TextStyle(color: colors.textSecondary),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (wide)
-                  SizedBox(
-                    width: 150,
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        4,
-                        12,
-                        12,
-                        12,
-                      ),
-                      child: Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: amount,
-                      ),
-                    ),
-                  ),
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: IconButton(
-                    tooltip: 'Ubah ${item.name}',
-                    onPressed: busy ? null : () => editItem(item),
-                    icon: const Icon(Icons.edit_outlined),
-                  ),
-                ),
-              ],
-            );
-          },
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Semantics(
+                liveRegion: true,
+                child: Text(message, style: TextStyle(color: tone)),
+              ),
+            ),
+          ],
         ),
+      ],
+    );
+  }
+
+  Widget _groupCard(
+    MonthlyPlan plan,
+    String group,
+    List<AllocationItem> visible,
+    AppColors colors,
+  ) {
+    final all = plan.items.where((item) => item.group == group).toList();
+    final rows = visible.where((item) => item.group == group).toList();
+    final collapsed = _collapsedGroups.contains(group);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            expanded: !collapsed,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 52),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                shape: const RoundedRectangleBorder(),
+                foregroundColor: colors.textPrimary,
+              ),
+              onPressed: () => setState(() {
+                if (!_collapsedGroups.add(group)) {
+                  _collapsedGroups.remove(group);
+                }
+              }),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      group,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${all.where((item) => item.done).length}/${all.length}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: collapsed ? 0 : .5,
+                    duration: AppMotion.of(context, AppMotion.base),
+                    curve: AppMotion.standard,
+                    child: const Icon(Icons.expand_more),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: AppMotion.of(context, AppMotion.base),
+            curve: AppMotion.morph,
+            alignment: Alignment.topCenter,
+            child: collapsed
+                ? const SizedBox(width: double.infinity)
+                : Column(
+                    children: [
+                      for (final item in rows) ...[
+                        Divider(height: 1, color: colors.border),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          child: PlanItemTile(
+                            key: ValueKey(item.id),
+                            item: item,
+                            money: money.format,
+                            onToggle: busy || tab == 'template'
+                                ? null
+                                : (value) => change(
+                                    plan.copy(
+                                      items: plan.items
+                                          .map(
+                                            (other) => other.id == item.id
+                                                ? other.copy(done: value)
+                                                : other,
+                                          )
+                                          .toList(),
+                                    ),
+                                  ),
+                            onEdit: busy ? null : () => editItem(item),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }
