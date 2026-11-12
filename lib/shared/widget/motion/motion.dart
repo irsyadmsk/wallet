@@ -1,3 +1,4 @@
+export 'animated_progress.dart';
 export 'inertia_tile.dart';
 export 'pill_tabs.dart';
 export 'pressable.dart';
