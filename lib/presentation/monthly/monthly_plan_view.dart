@@ -372,7 +372,7 @@ class MonthlyPlanEditorState extends State<MonthlyPlanEditor> {
                 if (form.currentState!.validate()) Navigator.pop(ctx, true);
               }, child: const Text('Terapkan')),
             ]))),
-      )),
+      ),
     );
     final fxValue = int.tryParse(fxText) ?? plan.fx;
     if (result == true && mounted && request == epoch) {
