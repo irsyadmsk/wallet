@@ -42,7 +42,7 @@ Future<void> seedDemoData(DateTime now) async {
 
   const uuid = Uuid();
   final bank = AccountModel(id: uuid.v4(), name: 'Bank Syariah', groupCode: AccountGroupType.bank.code, openingBalance: 12500000, colorValue: 0xFF1F8A70);
-  final wallet = AccountModel(id: uuid.v4(), name: 'Dompet digital', groupCode: AccountGroupType.prepaid.code, openingBalance: 850000, colorValue: 0xFF2F74C8);
+  final wallet = AccountModel(id: uuid.v4(), name: 'Dompet digital', groupCode: AccountGroupType.ewallet.code, openingBalance: 850000, colorValue: 0xFF2F74C8);
   final savings = AccountModel(id: uuid.v4(), name: 'Tabungan pendidikan', groupCode: AccountGroupType.savings.code, openingBalance: 18000000, colorValue: 0xFFD8612F);
   // Shows off foreign-currency and gold accounts in store screenshots.
   final dollars = AccountModel(id: uuid.v4(), name: 'Tabungan Dolar', groupCode: AccountGroupType.bank.code, openingBalance: 125000, currencyCode: 'USD', colorValue: 0xFF3B4FB8);

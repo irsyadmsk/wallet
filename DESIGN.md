@@ -1,5 +1,23 @@
 # Wallet — Design System
 
+## Dompet Digital — 12 November 2026
+
+Owner-approved new built-in account group `ewallet` (code 14, "Dompet
+Digital"), listed after Bank. The code is additive and synced like every other
+group code; clients older than this change show such accounts under "Lainnya"
+and keep the stored code. No schema, RLS or ledger change.
+
+New accounts in Bank or Dompet Digital offer "Pilihan cepat"
+(`lib/domain/account_presets.dart`): GoPay, OVO, DANA, ShopeePay, LinkAja,
+JakOne Pay, Bank DKI, Bank Jakarta and four large banks. A pick fills name,
+colour and the bundled logo. Presets without a bundled logo (JakOne Pay, Bank
+DKI, Bank Jakarta) show a two-letter monogram in the account colour instead of
+an unlicensed mark; brand colours are approximations. Bank and e-wallet
+accounts without a logo use the same monogram.
+
+Balances stay manual: Wallet does not connect to banks or e-wallets. A top-up
+is an ordinary transfer, whose existing fee field records the admin charge.
+
 ## Rencana Bulanan layout — 12 November 2026
 
 Owner approved a redesign of the existing page (own design; ARUS stays a
