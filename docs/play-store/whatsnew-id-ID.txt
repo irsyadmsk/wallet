@@ -1,4 +1,5 @@
-• Tema terang/gelap dan tipografi Irsyads diperbarui.
-• Navigasi ringkas dan mode fokus dengan tombol pemulihan.
-• Pengaturan tema lebih nyaman pada layar kecil dan teks besar.
-• Daftar bulanan dilengkapi pencarian, filter belum selesai, dan kelompok yang dapat dilipat.
+• Rencana Bulanan baru: ringkasan dana, arus alokasi, langganan, tabungan otomatis, dan dana bergulir.
+• Pos rencana dapat ditautkan ke kategori, akun, dan tujuan di buku kas.
+• Kelompok akun Dompet Digital dengan pilihan cepat bank dan dompet digital.
+• Kalender tagihan dan pengingat jatuh tempo.
+• Tampilan dan animasi diperbarui.
