@@ -8,6 +8,37 @@ Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 [`docs/play-store/whatsnew-id-ID.txt`](docs/play-store/whatsnew-id-ID.txt)
 (maksimal 500 karakter).
 
+## 1.5.0 — 13 November 2026
+
+Rilis penuh untuk web dan Android (versionCode 10500). Paket Android dibangun
+oleh CI dengan kunci unggah yang sama; AAB diunggah ke Play Console secara
+manual oleh pemilik.
+
+### Baru
+- **Rencana Bulanan baru**: kartu ringkasan, batang "Arus alokasi" yang
+  menyaring daftar, pendapatan dan bonus, langganan rupiah atau dolar,
+  tabungan otomatis berprioritas, dan dana bergulir antarbulan.
+- **Tautan ke buku kas**: pos rencana dapat ditautkan ke kategori, akun, dan
+  tujuan; pengeluaran tercatat tampil di samping rencananya, dan ikon catat
+  membuka formulir transaksi yang sudah terisi.
+- **Dompet Digital**: kelompok akun sendiri, pilihan cepat untuk bank dan
+  dompet digital (termasuk JakOne Pay, Bank DKI, Bank Jakarta), dan inisial
+  untuk akun tanpa logo.
+- **Kalender tagihan** di Transaksi Berulang dan **pengingat jatuh tempo** di
+  Beranda untuk tagihan berulang, utang, dan kartu.
+
+### Tampilan
+- Warna dan tipografi arah ARUS; kartu saldo, pemasukan, dan pengeluaran
+  terpisah di Beranda.
+- Batang kemajuan dan nominal utama beranimasi di Beranda, Anggaran, Tujuan,
+  Utang, dan Akun; mengikuti pengaturan gerak-dikurangi.
+- Latar layar Selamat Datang kini video milik sendiri.
+
+### Kompatibilitas
+- Versi 1.4.3 dan sebelumnya menampilkan akun Dompet Digital sebagai
+  "Lainnya" dan menghapus tautan rencana bila menyimpan bulan itu. Versi ini
+  memahami keduanya.
+
 ## 1.4.3 — kandidat lokal 23 Oktober 2026
 
 - Tema terang/gelap dan font lokal mengikuti identitas terbaru Irsyads.

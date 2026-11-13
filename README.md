@@ -116,7 +116,7 @@ Dibuat & dikembangkan oleh **Muhammad Irsyad Sirojul Khoeir** di bawah lisensi M
 
 ## 🤖 Panduan untuk AI dan pengembang
 
-**Status:** Wallet **dibekukan** — ubah kode hanya bila pemilik meminta pekerjaan Wallet secara khusus. Baca `AGENTS.md` (status rilis terbaru di bagian atas, bertanggal) dan `CHANGELOG.md` sebelum bekerja. Versi saat ini `1.4.3+10403` (`pubspec.yaml`); rilis web dan Play Alpha 23 Okt 2026 sudah memakai izin yang diberikan, jadi izin itu tidak berlaku untuk rilis berikutnya.
+**Status:** Wallet **dibekukan** — ubah kode hanya bila pemilik meminta pekerjaan Wallet secara khusus. Baca `AGENTS.md` (status rilis terbaru di bagian atas, bertanggal) dan `CHANGELOG.md` sebelum bekerja. Versi saat ini `1.5.0+10500` (`pubspec.yaml`), dinaikkan 13 Nov 2026 atas permintaan pemilik; izin rilis berlaku per permintaan dan tidak terbawa ke rilis berikutnya.
 
 **Push ke `main` = rilis.** `deploy-web.yml` menayangkan wallet.irsyads.com dan `build-apk.yml` membangun/menandatangani APK (bisa juga patch Shorebird) secara otomatis. Jangan push, memicu workflow, upload Play Store, atau menjalankan migrasi tanpa persetujuan pemilik untuk rilis itu.
 
