@@ -30,6 +30,9 @@ Buat buku kas bersama dan undang anggota keluarga dengan kode. Semua anggota men
 • Skor kesehatan keuangan dan rincian per anggota keluarga.
 
 🎯 RENCANAKAN KEUANGAN
+• Rencana Bulanan: bagi gaji dan bonus ke pos tetap, langganan (rupiah atau dolar), tabungan otomatis, dan dana bergulir, lalu lihat arusnya dalam satu batang.
+• Tautkan pos rencana ke kategori, akun, dan tujuan: pengeluaran yang tercatat tampil di samping rencananya.
+• Kalender tagihan dan pengingat jatuh tempo untuk tagihan berulang, utang, dan kartu.
 • Target tabungan dengan progres.
 • Utang & piutang beserta cicilannya.
 • Transaksi berulang seperti gaji dan tagihan.
