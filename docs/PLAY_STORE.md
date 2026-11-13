@@ -2,6 +2,8 @@
 
 > Pembaruan 22 Oktober: baca [rekonsiliasi kunci/Console](2026-10-22_SIGNING_CONSOLE_RECONCILIATION.md). Kunci upload Play/cadangan/APK GitHub cocok; app signing Google berbeda. Wallet sudah memiliki akun developer dan berada di pengujian tertutup. Nomor run bukan lagi satu-satunya rumus versionCode; versi source/web/APK berbeda. Bagian bertanggal September di bawah adalah riwayat, bukan status atau izin menjalankan rilis saat ini. Tidak membuat akun/service account/kunci baru atau membayar biaya dari dokumen lama ini.
 
+> Pembaruan 13 November 2026: gambar toko, grafik fitur, deskripsi, dan panduan video untuk versi 1.5.0 ada di [`docs/play-store/README.md`](play-store/README.md). Daftar berkas di bagian bawah dokumen ini adalah riwayat.
+
 Status per 25 September 2026. Paket aplikasi: **`com.irsyads.wallet`**.
 
 ## 0. Sudah disiapkan (tanpa akun developer)

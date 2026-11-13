@@ -1,7 +1,7 @@
 """Google Play listing images: app screens in a phone frame with a headline.
 
 Two sets are written:
-- listing-*.png: dark brand-green backdrop, 6 slides;
+- listing-*.png: dark brand-green backdrop, 8 slides;
 - store-*.png: the "long" light set in the style of the big finance apps —
   an intro slide (logo + tilted phone), a trust slide, then feature slides.
 
@@ -31,11 +31,13 @@ SCALE = 1080 / W          # -> 1080 x 2160 captures
 # (file, headline, subline). Headlines stay short: they're read at thumbnail size.
 SLIDES = [
     ('beranda', 'Semua uang keluarga,\nsatu tempat', 'Saldo, pemasukan & anggaran bulan ini\nsekali lihat'),
-    ('kartu', 'Kartu rekening\nala dompet', 'Ketuk atau geser untuk berganti rekening'),
+    ('rencana', 'Lihat ke mana\nuang mengalir', 'Gaji, langganan, tabungan & dana bergulir\ndalam satu arus'),
+    ('rencana-pos', 'Rencana bertemu\nkenyataan', 'Tautkan pos ke kategori: pengeluaran\ntercatat tampil di sampingnya'),
+    ('kalender', 'Tahu sebelum\njatuh tempo', 'Tagihan, utang & kartu dalam satu kalender,\ndengan pengingat sehari sebelumnya'),
+    ('akun', 'Bank, dompet digital,\ndolar & emas', 'Semua saldo dalam kelompoknya,\ndengan nilai hari ini'),
     ('catat', 'Catat dalam\nhitungan detik', 'Titik ribuan otomatis, tombol cepat\n& kalkulator bawaan'),
-    ('akun', 'Dolar & emas,\nnilai hari ini', 'Kurs dunia dan harga Antam per gram,\ndiperbarui otomatis'),
     ('laporan', 'Laporan yang\nmudah dipahami', 'Ke mana uang pergi, dan apa\nlangkah berikutnya'),
-    ('kategori', 'Rapi sesuai\ncara Anda', 'Kategori & kelompok akun\nbisa diubah sesukanya'),
+    ('target', 'Wujudkan target\ntabungan', 'Dana darurat, umroh, sekolah anak —\npantau progresnya'),
 ]
 
 
@@ -48,16 +50,22 @@ def capture(root):
     os.makedirs(RAW, exist_ok=True)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        # WALLET_CHROMIUM points at an already-installed browser when the one
+        # Playwright would download is unavailable.
+        browser = p.chromium.launch(executable_path=os.environ.get('WALLET_CHROMIUM') or None)
         ctx = browser.new_context(viewport={'width': W, 'height': H}, device_scale_factor=SCALE,
                                   color_scheme='light', locale='id-ID')
         page = ctx.new_page()
 
         def tap(label):
             box = page.evaluate("""(label) => {
-                const el = [...document.querySelectorAll('[role="button"], [role="tab"]')]
-                    .find(e => (e.innerText || e.getAttribute('aria-label') || '').trim().startsWith(label));
-                if (!el) return null;
+                const text = (e) => (e.getAttribute('aria-label') || e.innerText || '').trim();
+                const hits = [...document.querySelectorAll('[role="button"], [role="tab"], flt-semantics')]
+                    .filter(e => text(e).startsWith(label));
+                if (!hits.length) return null;
+                // The innermost match: a wrapper also starts with the label.
+                const area = (e) => { const r = e.getBoundingClientRect(); return r.width * r.height; };
+                const el = hits.sort((a, b) => area(a) - area(b))[0];
                 const r = el.getBoundingClientRect();
                 return {x: r.x + r.width / 2, y: r.y + r.height / 2};
             }""", label)
@@ -122,6 +130,33 @@ def capture(root):
         tap('Target')
         save('target')
 
+        # The demo build opens an illustrative in-memory plan (DemoPlanService).
+        tap('Lainnya')
+        tap('Rencana Bulanan')
+        page.wait_for_timeout(2500)
+        def scroll(by):
+            # save() parks the pointer in a corner; the wheel only scrolls
+            # the list when the pointer is back over it.
+            page.mouse.move(W / 2, H / 2)
+            page.wait_for_timeout(300)
+            for _ in range(abs(by) // 200):
+                page.mouse.wheel(0, 200 if by > 0 else -200)
+                page.wait_for_timeout(120)
+            page.wait_for_timeout(1200)
+
+        # Flutter smooths wheel input, so each step moves the list by a
+        # fraction of its delta; these totals land on the flow card and on
+        # the linked item in the demo plan.
+        scroll(4200)
+        save('rencana')
+        scroll(6400)
+        save('rencana-pos')
+
+        tap('Lainnya')
+        tap('Transaksi Berulang')
+        page.wait_for_timeout(1500)
+        save('kalender')
+
         ctx.close()
         browser.close()
     server.shutdown()
@@ -130,8 +165,9 @@ def capture(root):
 # ---------------------------------------------------------------- compose
 
 CW, CH = 1080, 1920
-FOREST_TOP = (27, 58, 62)
-FOREST_BOTTOM = (13, 32, 35)
+# Ink of the Wallet / ARUS refresh (#192E28), darkening downwards.
+FOREST_TOP = (25, 46, 40)
+FOREST_BOTTOM = (12, 24, 21)
 CREAM = (236, 235, 221)
 MINT = (127, 200, 162)
 
@@ -150,7 +186,7 @@ def backdrop():
     glow = Image.new('L', (CW, CH), 0)
     ImageDraw.Draw(glow).ellipse([CW * 0.1, CH * 0.38, CW * 0.9, CH * 1.05], fill=70)
     glow = glow.filter(ImageFilter.GaussianBlur(160))
-    img.paste(Image.new('RGB', (CW, CH), (60, 120, 110)), mask=glow)
+    img.paste(Image.new('RGB', (CW, CH), (12, 108, 88)), mask=glow)
     return img
 
 
@@ -218,12 +254,12 @@ BG_BOTTOM = (221, 229, 224)
 LIGHT_SLIDES = [
     ('intro', 'beranda', None, None),
     ('trust', 'kartu', 'Tanpa iklan,\ntanpa jual data', None),
+    ('feature', 'rencana', 'Lihat ke mana\nuang mengalir', 'Gaji, langganan, tabungan & dana\nbergulir dalam satu arus'),
+    ('feature', 'kalender', 'Tahu sebelum\njatuh tempo', 'Tagihan, utang & kartu\ndalam satu kalender'),
+    ('feature', 'akun', 'Bank, dompet digital,\ndolar & emas', 'Semua saldo dalam kelompoknya,\ndengan nilai hari ini'),
     ('feature', 'catat', 'Catat dalam\nhitungan detik', 'Titik ribuan otomatis, tombol cepat\n& kalkulator bawaan'),
-    ('feature', 'akun', 'Dolar & emas,\nnilai hari ini', 'Kurs dunia & harga Antam per gram,\ndiperbarui otomatis'),
-    ('feature', 'anggaran', 'Atur anggaran,\ntanpa kaget', 'Peringatan dini sebelum\npengeluaran melewati batas'),
     ('feature', 'laporan', 'Laporan yang\nmudah dipahami', 'Ke mana uang pergi, dan apa\nlangkah berikutnya'),
     ('feature', 'keluarga', 'Satu buku kas\nuntuk seisi rumah', 'Undang keluarga dengan kode,\ncatat bersama secara langsung'),
-    ('feature', 'target', 'Wujudkan target\ntabungan', 'Dana darurat, umroh, sekolah anak —\npantau progresnya'),
 ]
 
 
