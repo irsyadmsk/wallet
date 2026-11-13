@@ -1,5 +1,14 @@
 # Wallet — Design System
 
+## Demo build as the visual check — 13 November 2026
+
+`--dart-define=WALLET_DEMO=true` now also seeds three upcoming recurring
+rules and one debt, and Rencana Bulanan opens an in-memory illustrative plan
+(`DemoPlanService`) instead of asking for sign-in. That makes the plan page,
+the bill calendar and the reminders reviewable in a real browser without an
+account. Demo branches are compile-time constants and are tree-shaken from
+ordinary builds; the demo plan is never stored or synced.
+
 ## Video (Remotion) — 12 November 2026
 
 Owner asked for all three videos. Sources live in `motion/` (Remotion, React)
@@ -29,8 +38,8 @@ The planner only reads (`lib/presentation/monthly/plan_ledger.dart`): for the
 open month it shows the linked category's recorded expenses (children
 included) against the planned amount, the linked account's balance, and the
 linked goal's progress. Overspending is written out with an icon. A link whose
-record was deleted shows nothing. "Catat transaksi" opens the ordinary
-transaction form prefilled with the item's name, amount, category and account;
+record was deleted shows nothing. The "catat" icon beside each item's edit
+button opens the ordinary transaction form prefilled with the item's name, amount, category and account;
 the user still saves it there, so Transaksi stays the only recording path and
 the plan document is not changed by recording. Manual "terpakai" and "aktual"
 fields remain and are not overwritten. Recurring rules are not linked yet.

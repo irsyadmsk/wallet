@@ -1,7 +1,13 @@
 import 'package:uuid/uuid.dart';
 import 'package:financial_recording/data/models/account_model/account_model.dart';
 import 'package:financial_recording/data/models/budget_model/budget_model.dart';
+import 'package:financial_recording/data/models/debt_model/debt_model.dart';
 import 'package:financial_recording/data/models/goal_model/goal_model.dart';
+import 'package:financial_recording/data/models/monthly_plan.dart';
+import 'package:financial_recording/data/models/recurring_model/recurring_model.dart';
+import 'package:financial_recording/data/repositories/debt_repository.dart';
+import 'package:financial_recording/data/repositories/recurring_repository.dart';
+import 'package:financial_recording/data/services/monthly_plan_service.dart';
 import 'package:financial_recording/data/repositories/budget_repository.dart';
 import 'package:financial_recording/data/repositories/goal_repository.dart';
 import 'package:financial_recording/data/models/tx_model/tx_model.dart';
@@ -42,7 +48,7 @@ Future<void> seedDemoData(DateTime now) async {
 
   const uuid = Uuid();
   final bank = AccountModel(id: uuid.v4(), name: 'Bank Syariah', groupCode: AccountGroupType.bank.code, openingBalance: 12500000, colorValue: 0xFF1F8A70);
-  final wallet = AccountModel(id: uuid.v4(), name: 'Dompet digital', groupCode: AccountGroupType.ewallet.code, openingBalance: 850000, colorValue: 0xFF2F74C8);
+  final wallet = AccountModel(id: uuid.v4(), name: 'Dompet digital', groupCode: AccountGroupType.ewallet.code, openingBalance: 3500000, colorValue: 0xFF2F74C8);
   final savings = AccountModel(id: uuid.v4(), name: 'Tabungan pendidikan', groupCode: AccountGroupType.savings.code, openingBalance: 18000000, colorValue: 0xFFD8612F);
   // Shows off foreign-currency and gold accounts in store screenshots.
   final dollars = AccountModel(id: uuid.v4(), name: 'Tabungan Dolar', groupCode: AccountGroupType.bank.code, openingBalance: 125000, currencyCode: 'USD', colorValue: 0xFF3B4FB8);
@@ -121,7 +127,73 @@ Future<void> seedDemoData(DateTime now) async {
     colorValue: 0xFFB8892E,
   ));
 
+  // Upcoming bills and a debt, so the bill calendar and the reminders have
+  // something to show. Dates stay in the future: nothing is auto-posted.
+  DateTime ahead(int days) => DateTime(now.year, now.month, now.day + days, 8);
+  final recurring = RecurringRepository();
+  for (final (memo, type, amount, category, days, auto) in [
+    ('Internet rumah', TxType.expense, 350000, 'Kebutuhan harian', 1, true),
+    ('SPP sekolah', TxType.expense, 750000, 'Pendidikan', 6, false),
+    ('Langganan film', TxType.expense, 120000, 'Hiburan', 12, true),
+  ]) {
+    await recurring.upsert(RecurringRuleModel(
+      id: uuid.v4(), type: type, amount: amount, accountId: bank.id,
+      categoryId: cat(category, 1), memo: memo, startDate: ahead(days), autoPost: auto,
+    ));
+  }
+  await DebtRepository().upsert(DebtLoanModel(
+    id: uuid.v4(), isLoan: false, personName: 'Koperasi sekolah',
+    totalAmount: 3000000, remainingAmount: 1800000, dueDate: ahead(3),
+  ));
+
   await LedgerService().recomputeAllBalances();
+}
+
+/// An illustrative plan for the demo build, kept in memory: it is never
+/// stored or synced, and its links point at the demo ledger above.
+class DemoPlanService extends MonthlyPlanService {
+  DemoPlanService() : super('demo');
+  final _saved = <String, PlanSnapshot>{};
+
+  @override
+  Future<PlanSnapshot?> cached(String period) async => _saved[period];
+  @override
+  Future<PlanSnapshot?> remote(String period) async =>
+      period == 'template' ? PlanSnapshot(_template(), 1) : _saved[period];
+  @override
+  Future<void> store(String period, PlanSnapshot snapshot) async => _saved[period] = snapshot;
+  @override
+  Future<PlanSnapshot> save(String period, PlanSnapshot snapshot) async =>
+      _saved[period] = PlanSnapshot(snapshot.plan, snapshot.revision + 1);
+
+  MonthlyPlan _template() {
+    String? id<T>(Iterable<T> all, bool Function(T) test, String Function(T) of) {
+      for (final e in all) {
+        if (test(e)) return of(e);
+      }
+      return null;
+    }
+    final food = id(TxCategoryRepository().byType(1), (c) => c.name == 'Makanan', (c) => c.id);
+    final wallet = id(AccountRepository().all(), (a) => a.name == 'Dompet digital', (a) => a.id);
+    final goal = id(FinancialGoalRepository().all(), (g) => g.title == 'Dana Darurat', (g) => g.id);
+    return MonthlyPlan(gross: 9500000, fx: 16500, items: [
+      const AllocationItem(id: 'cut', group: 'Potongan gaji', name: 'Iuran koperasi', amount: 500000),
+      const AllocationItem(id: 'rent', group: 'Rumah', name: 'Sewa rumah', amount: 1800000, done: true),
+      const AllocationItem(id: 'power', group: 'Rumah', name: 'Listrik dan air', amount: 450000),
+      AllocationItem(id: 'food', group: 'Rumah', name: 'Belanja dapur', amount: 2000000,
+        categoryId: food, accountId: wallet),
+      const AllocationItem(id: 'film', group: 'Langganan', name: 'Langganan film', amount: 0,
+        rule: PlanRule(kind: 'subscription', price: 120000, taxIncluded: true)),
+      const AllocationItem(id: 'cloud', group: 'Langganan', name: 'Penyimpanan awan', amount: 0,
+        rule: PlanRule(kind: 'subscription', currency: 'USD', price: 1000, taxBps: 1100)),
+      AllocationItem(id: 'safe', group: 'Tabungan', name: 'Dana darurat', amount: 0, goalId: goal,
+        rule: const PlanRule(kind: 'saving', target: 800000, weight: 4, priority: 1)),
+      const AllocationItem(id: 'school', group: 'Tabungan', name: 'Pendidikan', amount: 0,
+        rule: PlanRule(kind: 'saving', target: 600000, weight: 3, priority: 2)),
+      const AllocationItem(id: 'trip', group: 'Dana', name: 'Liburan', amount: 300000,
+        opening: 900000, rollover: true),
+    ]);
+  }
 }
 
 Future<void> _seedBulk(DateTime now, List<String> baseAccounts, TxCategoryRepository cats) async {
