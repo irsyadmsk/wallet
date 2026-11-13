@@ -95,19 +95,16 @@ class PlanItemTile extends StatelessWidget {
             if (!links.isEmpty)
               Padding(padding: const EdgeInsets.only(top: 8), child: _LedgerLinks(
                 links: links, planned: item.amount, money: money)),
-            if (onRecord != null)
-              Align(alignment: AlignmentDirectional.centerStart, child: TextButton.icon(
-                onPressed: onRecord,
-                style: TextButton.styleFrom(minimumSize: const Size(48, 44),
-                  padding: const EdgeInsetsDirectional.only(end: 12)),
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-                label: Text('Catat transaksi', semanticsLabel:
-                  'Catat ${item.name} sebagai transaksi'))),
           ]),
         )),
         if (wide) SizedBox(width: 150, child: Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(4, 13, 12, 12),
           child: Align(alignment: AlignmentDirectional.centerEnd, child: amount))),
+        // An icon beside "edit" rather than a text button under every row:
+        // in a long plan the repeated label cost a line per item.
+        if (onRecord != null) SizedBox(width: 44, height: 48, child: IconButton(
+          tooltip: 'Catat ${item.name} sebagai transaksi', onPressed: onRecord,
+          icon: const Icon(Icons.add_circle_outline_rounded))),
         SizedBox(width: 48, height: 48, child: IconButton(
           tooltip: 'Ubah ${item.name}', onPressed: onEdit,
           icon: const Icon(Icons.edit_outlined))),

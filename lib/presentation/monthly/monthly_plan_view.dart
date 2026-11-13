@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:financial_recording/app/demo_mode.dart';
 import 'package:financial_recording/data/services/currency/currency_service.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
 import 'package:financial_recording/presentation/monthly/plan_item_sheet.dart';
@@ -18,10 +19,15 @@ import 'package:financial_recording/shared/theme/app_colors.dart';
 import 'package:financial_recording/shared/theme/app_motion.dart';
 import 'package:financial_recording/shared/widget/motion/motion.dart';
 
+final _demoPlans = DemoPlanService();
+
 class MonthlyPlanView extends StatelessWidget {
   const MonthlyPlanView({super.key});
   @override
-  Widget build(BuildContext context) => StreamBuilder(
+  Widget build(BuildContext context) => kDemoMode
+      // Design review only: an in-memory illustrative plan, nothing synced.
+      ? MonthlyPlanEditor(service: _demoPlans)
+      : StreamBuilder(
     stream: SupabaseService.onAuthStateChange,
     builder: (context, _) {
       final uid = SupabaseService.currentUser?.id;

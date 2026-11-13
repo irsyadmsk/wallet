@@ -105,7 +105,8 @@ void main() {
       expect(find.textContaining('(25%)'), findsOneWidget);
       expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
       // Salary deductions cannot be recorded as a transaction from here.
-      expect(find.text('Catat transaksi'), findsOneWidget);
+      expect(find.byTooltip('Catat Dapur sebagai transaksi'), findsOneWidget);
+      expect(find.byTooltip('Catat Potongan contoh sebagai transaksi'), findsNothing);
       expect(t.takeException(), isNull);
     });
   }
@@ -126,8 +127,8 @@ void main() {
         })));
     await t.pumpAndSettle();
     final before = service.local.values.map((s) => s.plan.toJson().toString()).toList();
-    await t.ensureVisible(find.text('Catat transaksi'));
-    await t.tap(find.text('Catat transaksi'));
+    await t.ensureVisible(find.byTooltip('Catat Dapur sebagai transaksi'));
+    await t.tap(find.byTooltip('Catat Dapur sebagai transaksi'));
     await t.pumpAndSettle();
     expect(recorded?.id, 'a');
     expect(find.textContaining('melebihi rencana'), findsOneWidget);
