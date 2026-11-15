@@ -29,7 +29,7 @@ import 'package:financial_recording/presentation/dashboard/controller/dashboard_
 import 'package:financial_recording/presentation/dashboard/view/dashboard_view.dart';
 import 'package:financial_recording/presentation/debts/controller/debts_controller.dart';
 import 'package:financial_recording/presentation/debts/view/debts_view.dart';
-import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
+import 'package:financial_recording/presentation/form_tx/view/quick_tx_sheet.dart';
 import 'package:financial_recording/presentation/goals/controller/goals_controller.dart';
 import 'package:financial_recording/presentation/goals/view/goals_view.dart';
 import 'package:financial_recording/presentation/recurring/view/recurring_view.dart';
@@ -42,7 +42,6 @@ import 'package:financial_recording/presentation/crypto/view/crypto_view.dart';
 import 'package:financial_recording/presentation/settings/view/settings_view.dart';
 import 'package:financial_recording/presentation/transactions/controller/transactions_controller.dart';
 import 'package:financial_recording/presentation/transactions/view/transactions_view.dart';
-import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/shared/responsive/adaptive_scaffold.dart';
 import 'package:financial_recording/shared/theme/app_theme.dart';
 import 'package:financial_recording/shared/theme/theme_controller.dart';
@@ -406,8 +405,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Future<void> _openAddTransaction(BuildContext context) async {
-    final saved = await showAdaptiveSheet<bool>(context, builder: (_) => const FormTxView());
-    if (saved == true) _invalidate();
+    if (await QuickTxSheet.open(context)) _invalidate();
   }
 
   void _invalidate() {

@@ -17,6 +17,8 @@ import 'package:financial_recording/presentation/accounts/widget/account_editor_
 import 'package:financial_recording/presentation/auth/controller/auth_controller.dart';
 import 'package:financial_recording/presentation/dashboard/controller/dashboard_controller.dart';
 import 'package:financial_recording/presentation/form_tx/view/form_tx_view.dart';
+import 'package:financial_recording/presentation/form_tx/view/quick_tx_sheet.dart';
+import 'package:financial_recording/domain/enums/hive_enums.dart';
 import 'package:financial_recording/shared/responsive/adaptive_dialog.dart';
 import 'package:financial_recording/shared/responsive/content_shell.dart';
 import 'package:financial_recording/shared/theme/app_colors.dart';
@@ -68,6 +70,9 @@ class _DashboardViewState extends State<DashboardView> {
                 final wide = constraints.maxWidth >= 900;
                 return Obx(() {
                 var i = 0;
+                Future<void> record(TxType type) async {
+                  if (await QuickTxSheet.open(context, type: type)) c.refresh();
+                }
                 // Money first, then what needs doing, then the details — the
                 // score and narrative live on Laporan.
                 final hero = Reveal(
@@ -75,6 +80,7 @@ class _DashboardViewState extends State<DashboardView> {
                   child: _NetWorthCard(
                     controller: c,
                     hidden: _hidden,
+                    compact: !wide,
                     onToggle: () => setState(() => _hidden = !_hidden),
                     onBudget: () => shell.goTo(AppPage.budgets),
                   ),
@@ -117,13 +123,25 @@ class _DashboardViewState extends State<DashboardView> {
                   child: _RecentSection(controller: c, onSeeAll: () => shell.goTo(AppPage.transactions)),
                 );
                 final accounts = Reveal(index: i++, child: _AccountsSection(controller: c, hidden: _hidden));
+                final planLinks = Wrap(spacing: 8, runSpacing: 8, children: [
+                  OutlinedButton.icon(
+                    onPressed: () => shell.goTo(AppPage.monthly),
+                    icon: const Icon(Icons.checklist_rounded, size: 18),
+                    label: const Text('Rencana bulanan'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => shell.goTo(AppPage.budgets),
+                    icon: const Icon(Icons.tune_rounded, size: 18),
+                    label: const Text('Atur anggaran'),
+                  ),
+                ]);
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const _Greeting(),
-                    const SizedBox(height: 24),
-                    if (wide)
+                    _Greeting(compact: !wide),
+                    SizedBox(height: wide ? 24 : 12),
+                    if (wide) ...[
                       Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -135,27 +153,36 @@ class _DashboardViewState extends State<DashboardView> {
                               hidden: _hidden,
                             )),
                           ],
-                      )
-                    else ...[
+                      ),
+                      const SizedBox(height: 16),
+                      planLinks,
+                    ] else ...[
+                      // Recording comes first on a phone: it is why the app
+                      // gets opened most of the time.
+                      _RecordButtons(onRecord: record),
+                      const SizedBox(height: 10),
+                      QuickTemplateBar(
+                        templates: c.templates,
+                        onRecorded: c.refresh,
+                        showHeader: false,
+                        trailing: [
+                          ActionChip(
+                            avatar: const Icon(Icons.swap_horiz_rounded, size: 18),
+                            label: const Text('Transfer'),
+                            onPressed: () => record(TxType.transfer),
+                          ),
+                          if (EmoneyNfcService.isSupported)
+                            ActionChip(
+                              avatar: const Icon(Icons.contactless_rounded, size: 18),
+                              label: const Text('Cek kartu'),
+                              onPressed: () => _openCardCheck(context),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
                       hero,
-                      const SizedBox(height: 12),
-                      WalletFlowCards(income: c.monthIncome.value,
-                        expense: c.monthExpense.value, hidden: _hidden),
                     ],
-                    const SizedBox(height: 16),
-                    Wrap(spacing: 8, runSpacing: 8, children: [
-                      OutlinedButton.icon(
-                        onPressed: () => shell.goTo(AppPage.monthly),
-                        icon: const Icon(Icons.checklist_rounded, size: 18),
-                        label: const Text('Rencana bulanan'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => shell.goTo(AppPage.budgets),
-                        icon: const Icon(Icons.tune_rounded, size: 18),
-                        label: const Text('Atur anggaran'),
-                      ),
-                    ]),
-                    const SizedBox(height: 28),
+                    SizedBox(height: wide ? 28 : 16),
                     if (wide)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,8 +206,9 @@ class _DashboardViewState extends State<DashboardView> {
                       )
                     else ...[
                       ...attention,
-                      ...templates,
                       recent,
+                      const SizedBox(height: 16),
+                      planLinks,
                       const SizedBox(height: 24),
                       accounts,
                     ],
@@ -196,8 +224,74 @@ class _DashboardViewState extends State<DashboardView> {
   }
 }
 
+Future<void> _openCardCheck(BuildContext context) async {
+  final created = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const EmoneyNfcView()));
+  if (created == true && Get.isRegistered<DashboardController>(tag: 'dashboard')) {
+    Get.find<DashboardController>(tag: 'dashboard').refresh();
+  }
+}
+
+/// The two actions the app is opened for, as large as a thumb needs.
+class _RecordButtons extends StatelessWidget {
+  const _RecordButtons({required this.onRecord});
+  final ValueChanged<TxType> onRecord;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    Widget button(String label, IconData icon, Color tone, TxType type) => Expanded(
+          child: Semantics(
+            button: true,
+            label: 'Catat ${label.toLowerCase()}',
+            child: Material(
+              color: tone.withValues(alpha: .10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: tone.withValues(alpha: .45)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => onRecord(type),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 60),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: ExcludeSemantics(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(icon, size: 20, color: tone),
+                              const SizedBox(width: 8),
+                              Text(label, style: TextStyle(color: tone, fontWeight: FontWeight.w700, fontSize: 15)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+    return Row(
+      children: [
+        button('Pengeluaran', Icons.remove_rounded, c.expense, TxType.expense),
+        const SizedBox(width: 10),
+        button('Pemasukan', Icons.add_rounded, c.income, TxType.income),
+      ],
+    );
+  }
+}
+
 class _Greeting extends StatelessWidget {
-  const _Greeting();
+  const _Greeting({this.compact = false});
+
+  /// One line (date and the two status icons) instead of the tagline block.
+  final bool compact;
 
   static String _salam(int h) {
     if (h < 11) return 'Selamat pagi';
@@ -214,8 +308,18 @@ class _Greeting extends StatelessWidget {
     final now = DateTime.now();
     final t = Theme.of(context).textTheme;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: compact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
+        if (compact)
+          Expanded(
+            child: Text(
+              DateFormat('EEEE, d MMM', 'id_ID').format(now),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: t.titleMedium,
+            ),
+          )
+        else
         Expanded(
           child: Obx(() => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +344,7 @@ class _Greeting extends StatelessWidget {
               )),
         ),
         // One tap from home: read an e-money card's balance over NFC.
-        if (EmoneyNfcService.isSupported)
+        if (!compact && EmoneyNfcService.isSupported)
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: FilledButton.tonalIcon(
@@ -248,12 +352,7 @@ class _Greeting extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              onPressed: () async {
-                final created = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const EmoneyNfcView()));
-                if (created == true && Get.isRegistered<DashboardController>(tag: 'dashboard')) {
-                  Get.find<DashboardController>(tag: 'dashboard').refresh();
-                }
-              },
+              onPressed: () => _openCardCheck(context),
               icon: const Icon(Icons.contactless_rounded, size: 20),
               label: const Text('Cek kartu'),
             ),
@@ -287,9 +386,18 @@ class _Greeting extends StatelessWidget {
 }
 
 class _NetWorthCard extends StatelessWidget {
-  const _NetWorthCard({required this.controller, required this.hidden, required this.onToggle, required this.onBudget});
+  const _NetWorthCard({
+    required this.controller,
+    required this.hidden,
+    required this.onToggle,
+    required this.onBudget,
+    this.compact = false,
+  });
   final DashboardController controller;
   final bool hidden;
+
+  /// Phone layout: a shorter card that also carries this month's in and out.
+  final bool compact;
   final VoidCallback onToggle;
   final VoidCallback onBudget;
 
@@ -304,11 +412,11 @@ class _NetWorthCard extends StatelessWidget {
     final budget = m.overallBudget.value;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 192),
-      padding: const EdgeInsets.fromLTRB(24, 20, 16, 24),
+      constraints: BoxConstraints(minHeight: compact ? 0 : 192),
+      padding: compact ? const EdgeInsets.fromLTRB(20, 10, 12, 16) : const EdgeInsets.fromLTRB(24, 20, 16, 24),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? c.surfaceRaised : ink,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(compact ? 20 : 24),
         gradient: Theme.of(context).brightness == Brightness.dark ? null
           : const LinearGradient(colors: [ink, Color(0xFF0A725A)],
               begin: Alignment.topLeft, end: Alignment.bottomRight),
@@ -362,7 +470,7 @@ class _NetWorthCard extends StatelessWidget {
                 value: m.netWorth.value,
                 hidden: hidden,
                 inDisplayCurrency: true,
-                style: AppTypography.display(size: 40, weight: FontWeight.w500, color: cream),
+                style: AppTypography.display(size: compact ? 32 : 40, weight: FontWeight.w500, color: cream),
               ),
             ),
           ),
@@ -374,9 +482,38 @@ class _NetWorthCard extends StatelessWidget {
                 style: TextStyle(color: muted, fontSize: 12.5),
               ),
             ),
-          const SizedBox(height: 20),
-          Text('Seluruh rekening & dompet',
-            style: TextStyle(color: muted, fontSize: 12)),
+          if (compact) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _Figure(
+                    label: 'Masuk bulan ini',
+                    icon: Icons.south_west_rounded,
+                    value: m.monthIncome.value,
+                    hidden: hidden,
+                    color: cream,
+                    muted: muted,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _Figure(
+                    label: 'Keluar bulan ini',
+                    icon: Icons.north_east_rounded,
+                    value: m.monthExpense.value,
+                    hidden: hidden,
+                    color: cream,
+                    muted: muted,
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 20),
+            Text('Seluruh rekening & dompet',
+              style: TextStyle(color: muted, fontSize: 12)),
+          ],
           if (budget != null && budget.limit > 0) ...[
             const SizedBox(height: 14),
             _BudgetLine(budget: budget, hidden: hidden, cream: cream, muted: muted, onTap: onBudget),
@@ -385,6 +522,43 @@ class _NetWorthCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _Figure extends StatelessWidget {
+  const _Figure({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.hidden,
+    required this.color,
+    required this.muted,
+  });
+  final String label;
+  final IconData icon;
+  final int value;
+  final bool hidden;
+  final Color color;
+  final Color muted;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: muted),
+              const SizedBox(width: 4),
+              Flexible(child: Text(label, maxLines: 1, style: TextStyle(color: muted, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: AnimatedMoney(value: value, hidden: hidden, style: AppTypography.numeric(size: 16, weight: FontWeight.w600, color: color)),
+          ),
+        ],
+      );
 }
 
 /// This month's overall budget as one line inside the hero card.
