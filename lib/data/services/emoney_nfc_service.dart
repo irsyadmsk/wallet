@@ -139,7 +139,8 @@ class EmoneyNfcService {
   static String _friendly(String raw) {
     final r = raw.toLowerCase();
     if (r.contains('tidak dikenal') || r.contains('not e-money')) {
-      return 'Kartu tidak dikenali. Yang didukung: e-Money Mandiri, Brizzi (BRI), TapCash (BNI), dan Flazz (BCA).';
+      return 'Kartu ini belum bisa dibaca. Yang didukung: e-Money Mandiri, Brizzi (BRI), TapCash (BNI), dan Flazz (BCA). '
+          'JakCard dan kartu lain belum didukung; saldonya bisa dicatat manual lewat akun Kartu Prabayar.';
     }
     if (r.contains('terlepas') || r.contains('tag was lost') || r.contains('ioexception')) {
       return 'Kartu terlepas sebelum selesai dibaca. Tahan kartu 2–3 detik tanpa digeser.';

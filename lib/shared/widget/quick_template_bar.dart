@@ -14,7 +14,15 @@ class QuickTemplateBar extends StatelessWidget {
     super.key,
     required this.templates,
     required this.onRecorded,
+    this.showHeader = true,
+    this.trailing = const [],
   });
+
+  /// False drops the "Catat Cepat 1-Tap" heading, for use as a plain row.
+  final bool showHeader;
+
+  /// Extra chips shown after the templates, in the same scrolling row.
+  final List<Widget> trailing;
 
   final List<QuickTemplateModel> templates;
   final VoidCallback onRecorded;
@@ -33,11 +41,12 @@ class QuickTemplateBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    if (templates.isEmpty) return const SizedBox.shrink();
+    if (templates.isEmpty && trailing.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (showHeader) ...[
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -62,13 +71,15 @@ class QuickTemplateBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
+        ],
         SizedBox(
           height: 44,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: templates.length,
+            itemCount: templates.length + trailing.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
+              if (index >= templates.length) return Center(child: trailing[index - templates.length]);
               final t = templates[index];
               final icon = _iconMap[t.iconName] ?? Icons.receipt_long_rounded;
               final tColor = Color(t.colorValue);

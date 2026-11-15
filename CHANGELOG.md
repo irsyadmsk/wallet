@@ -8,6 +8,24 @@ Teks singkat untuk kolom *"Yang baru di rilis ini"* di Play Console ada di
 [`docs/play-store/whatsnew-id-ID.txt`](docs/play-store/whatsnew-id-ID.txt)
 (maksimal 500 karakter).
 
+## 1.5.1 — 16 November 2026
+
+Pembaruan penuh untuk web dan Android (versionCode 10501). Paket Android
+dibangun oleh CI dengan kunci unggah yang sama; AAB diunggah ke Play Console
+secara manual oleh pemilik.
+
+### Baru
+- **Catat cepat**: dari Beranda, ketuk Pengeluaran atau Pemasukan, ketik
+  nominal di keypad, pilih kategori, lalu Simpan. Kategori yang paling sering
+  dipakai tampil lebih dulu; "Detail" membuka formulir lengkap.
+
+### Tampilan
+- Beranda di HP kini memuat tombol catat, template, dan Transfer/Cek kartu di
+  bagian atas, dengan kartu saldo yang lebih ringkas dan menampilkan
+  pemasukan serta pengeluaran bulan ini.
+- Pesan Cek kartu menjelaskan kartu yang belum didukung (misalnya JakCard) dan
+  menyarankan mencatat saldonya manual.
+
 ## 1.5.0 — 13 November 2026
 
 Rilis penuh untuk web dan Android (versionCode 10500). Paket Android dibangun
